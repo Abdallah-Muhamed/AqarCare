@@ -1,0 +1,94 @@
+# AqarCare Progress Log
+Last updated: 2026-07-18
+Current phase: 6 — Frontend Implementation (IN PROGRESS)
+
+## ✅ Completed Phases
+
+### Phase 1 — Infrastructure
+- EF Core 8 + SQL Server packages installed
+- All Entities created: PropertyUnit, PropertyMedia, FinishingPackage, PackageSection,
+  PackageFeatureItem, PackagePaymentPhase, PackageNote, PackageMedia
+- AqarCareDbContext with Fluent API configurations
+- InitialCreate migration generated and applied
+- Connection string updated to aspmonster cloud DB:
+  Server=db60259.public.databaseasp.net; Database=db60259
+- Database tables created and schema verified ✓
+
+### Phase 2 — Property Marketing API
+- PropertyService: GetPublished (paginated+filtered), GetById, Create, Update, Delete, AddMedia, RemoveMedia
+- Public endpoints: GET /api/properties (filter: city, type, listing, price, area, bedrooms, featured)
+- Public endpoints: GET /api/properties/{id}
+- Admin endpoints (X-Api-Key protected): POST/PUT/DELETE /api/admin/properties
+- Admin endpoints: POST/DELETE /api/admin/properties/{id}/media
+- DTOs: PropertyListItemDto, PropertyDetailDto, PropertyMediaDto, CreatePropertyRequest, UpdatePropertyRequest, PagedResult<T>
+
+### Phase 3 — Finishing Packages API
+- FinishingPackageService: GetAll, GetByIdOrSlug, Create, Update, Delete, AddSection, AddFeatureItem, AddNote, AddMedia
+- Public endpoints: GET /api/finishing-packages, GET /api/finishing-packages/{idOrSlug}
+- Admin endpoints: Full CRUD for packages, sections, features, notes
+- Seeded 6 HMA Group packages:
+    Classic (1800 EGP/m²) — full data with sections, features, payment phases, notes
+    Silver (2500 EGP/m²) — structure + payment phases seeded
+    Gold (3500 EGP/m²) — structure + payment phases seeded
+    Platinum (4500 EGP/m²) — structure + payment phases seeded
+    VIP (7000 EGP/m²) — structure + payment phases seeded
+    Ultra Super VIP (9000 EGP/m²) — structure + payment phases seeded
+
+### Phase 4 — Cloudinary + Auth
+- CloudinaryService: Upload image/video from IFormFile, Delete by publicId
+- Admin upload endpoint: POST /api/admin/media/upload
+- Admin delete endpoint: DELETE /api/admin/media/{publicId}
+- ApiKeyAuthMiddleware: validates X-Api-Key header on /api/admin/* routes
+- Swagger UI: API Key security scheme configured (lock icon in Swagger)
+- CORS: open in Development, restricted in Production
+
+### Phase 5 — Verification & Documentation
+- DB migration applied to aspmonster SQL Server ✓
+- All endpoints registered and functional
+- PROGRESS.txt created ✓
+
+### Phase 6 — Frontend Implementation (IN PROGRESS)
+- React + Vite + TypeScript project initialized
+- TailwindCSS configured with custom design system
+- API client with typed interfaces (Property, Package)
+- Components: Navbar, Footer, PropertyCard, PackageCard, Pagination, ImageGallery
+- Pages: HomePage, PropertiesPage, PropertyDetailPage (✓)
+- Pages: PackagesPage, PackageDetailPage (✓)
+
+## 📋 Config Still Needed
+
+| Setting | Status | Notes |
+|---------|--------|-------|
+| Connection String | ✅ Set | aspmonster cloud SQL Server |
+| Admin API Key | ⚠️ Default | Change "Admin:ApiKey" in appsettings.json before production |
+| Cloudinary CloudName | ❌ Not set | Update "Cloudinary:CloudName" in appsettings.json |
+| Cloudinary ApiKey | ❌ Not set | Update "Cloudinary:ApiKey" in appsettings.json |
+| Cloudinary ApiSecret | ❌ Not set | Update "Cloudinary:ApiSecret" in appsettings.json |
+
+## 🔗 API Endpoints Summary
+
+### Public (no auth)
+- GET  /api/properties                  — list with filters + pagination
+- GET  /api/properties/{id}             — property detail + media
+- GET  /api/finishing-packages          — package cards list
+- GET  /api/finishing-packages/{idOrSlug} — full package detail
+
+### Admin (X-Api-Key header required — default: "aqarcare-dev-admin-key-change-me")
+- POST   /api/admin/properties              — create property
+- PUT    /api/admin/properties/{id}         — update property
+- DELETE /api/admin/properties/{id}         — delete property
+- POST   /api/admin/properties/{id}/media   — link media to property
+- DELETE /api/admin/properties/{id}/media/{mediaId} — remove media
+- POST   /api/admin/finishing-packages      — create package
+- PUT    /api/admin/finishing-packages/{id} — update package
+- DELETE /api/admin/finishing-packages/{id} — delete package
+- POST   /api/admin/media/upload            — upload to Cloudinary
+- DELETE /api/admin/media/{publicId}        — delete from Cloudinary
+
+## 🔜 Next Steps (Future)
+
+1. Set Cloudinary credentials in appsettings.json
+2. Change Admin:ApiKey to a secure value before production
+3. Frontend — React / Blazor / Static HTML
+4. Lead capture / contact forms (out of scope for now)
+5. Consider ASP.NET Identity + JWT to replace API Key if needed

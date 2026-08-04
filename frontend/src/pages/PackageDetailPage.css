@@ -1,0 +1,159 @@
+/* Package detail header */
+.pkg-detail-header {
+  position: relative;
+  border-radius: var(--radius-lg);
+  padding: var(--space-xl);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card-lg);
+}
+.pkg-detail-header::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(135deg, rgba(0,0,0,0.05) 0%, rgba(0,0,0,0.25) 100%);
+  pointer-events: none;
+}
+.pkg-detail-header__content { position: relative; z-index: 1; }
+.pkg-detail-header__name {
+  font-size: clamp(1.4rem, 3vw, 2rem);
+  font-weight: 800;
+  margin-bottom: var(--space-sm);
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+.pkg-detail-header__desc {
+  font-size: 0.95rem;
+  opacity: 0.92;
+  line-height: 1.6;
+  max-width: 520px;
+}
+.pkg-detail-header__price {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+  padding: var(--space-lg) var(--space-xl);
+  border-radius: var(--radius-md);
+  border: 1px solid rgba(255,255,255,0.22);
+  min-width: 160px;
+}
+.pkg-detail-header__price-amount {
+  display: block;
+  font-size: 1.6rem;
+  font-weight: 900;
+  line-height: 1.1;
+}
+.pkg-detail-header__price-amount small {
+  font-size: 0.75rem;
+  font-weight: 400;
+  opacity: 0.85;
+}
+.pkg-detail-header__price-sup {
+  display: block;
+  font-size: 0.85rem;
+  opacity: 0.9;
+  margin-top: 4px;
+}
+
+/* Package sections */
+.pkg-sections { display: flex; flex-direction: column; gap: var(--space-md); }
+.pkg-section {
+  background: var(--clr-bg2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+}
+.pkg-section__title {
+  font-size: 1rem;
+  font-weight: 700;
+  margin-bottom: var(--space-md);
+  color: var(--clr-text);
+  padding-bottom: var(--space-sm);
+  border-bottom: 2px solid var(--clr-gold);
+  display: inline-block;
+}
+.pkg-section__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--space-sm);
+}
+.pkg-section__feature {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--clr-text-muted);
+  padding: 6px 0;
+}
+.pkg-section__feature svg { color: var(--clr-success); flex-shrink: 0; }
+
+/* Payment phases */
+.pkg-phases { display: flex; flex-direction: column; gap: var(--space-sm); }
+.pkg-phase {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--clr-bg2);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+}
+.pkg-phase__percent {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  color: var(--clr-gold);
+  border: 1px solid var(--clr-border);
+  padding: 6px 12px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 0.9rem;
+  min-width: 70px;
+  justify-content: center;
+}
+.pkg-phase__desc { flex: 1; font-size: 0.9rem; color: var(--clr-text-muted); }
+
+/* Notes */
+.pkg-notes { display: flex; flex-direction: column; gap: var(--space-sm); }
+.pkg-note {
+  padding: var(--space-md) var(--space-lg);
+  background: var(--clr-bg2);
+  border-right: 3px solid var(--clr-gold);
+  border-radius: var(--radius-sm);
+  font-size: 0.9rem;
+  color: var(--clr-text-muted);
+  line-height: 1.6;
+  border: 1px solid var(--clr-border);
+  border-right: 3px solid var(--clr-gold);
+}
+
+/* Tier-aware price card (package detail sidebar) */
+.price-card[style*="--tier-accent"]::before {
+  background: linear-gradient(90deg, var(--tier-accent), var(--tier-accent));
+  opacity: 0.85;
+}
+.price-card[style*="--tier-accent"] .price-card__amount {
+  color: var(--tier-accent);
+}
+.price-card[style*="--tier-accent"] .price-card__glow {
+  background: radial-gradient(ellipse, var(--tier-dim), transparent 70%);
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .pkg-detail-header {
+    flex-direction: column;
+    text-align: center;
+  }
+  .pkg-detail-header__desc { max-width: none; }
+  .pkg-detail-header__price { width: 100%; }
+  .pkg-section__features { grid-template-columns: 1fr; }
+}

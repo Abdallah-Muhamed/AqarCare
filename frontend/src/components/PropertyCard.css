@@ -1,0 +1,87 @@
+.prop-card { display: block; text-decoration: none; }
+
+.prop-card__img-wrap {
+  position: relative;
+  height: 220px;
+  overflow: hidden;
+  background: var(--clr-bg3);
+}
+.prop-card__img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+.prop-card:hover .prop-card__img { transform: scale(1.05); }
+
+.prop-card__overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.55) 0%, transparent 50%);
+}
+
+.prop-card__featured {
+  position: absolute; top: 12px; right: 12px;
+  display: flex; align-items: center; gap: 4px;
+  background: linear-gradient(135deg, #b8860b, #d4a017);
+  color: #fff;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(184, 134, 11, 0.35);
+}
+.prop-card__listing {
+  position: absolute; top: 12px; left: 12px;
+  font-size: 0.72rem;
+}
+.prop-card__status {
+  position: absolute; bottom: 14px; right: 12px;
+  font-size: 0.72rem;
+}
+
+.prop-card__body {
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  background: #fff;
+}
+
+.prop-card__type {
+  font-size: 0.75rem;
+  color: var(--clr-gold);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  margin-bottom: 4px;
+}
+.prop-card__title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--clr-text);
+  margin-bottom: var(--space-xs);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.4;
+}
+.prop-card__location {
+  display: flex; align-items: center; gap: 4px;
+  color: var(--clr-text-muted); font-size: 0.83rem;
+  margin-bottom: var(--space-md);
+}
+.prop-card__specs {
+  display: flex; gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--clr-bg2);
+  border-radius: var(--radius-sm);
+}
+.prop-card__spec {
+  display: flex; align-items: center; gap: 4px;
+  color: var(--clr-text-muted); font-size: 0.83rem;
+}
+.prop-card__spec svg { color: var(--clr-text-faint); flex-shrink: 0; }
+.prop-card__price {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--clr-text);
+}
+.prop-card__price span { font-size: 0.8rem; color: var(--clr-gold); font-weight: 600; }

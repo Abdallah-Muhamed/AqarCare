@@ -1,0 +1,58 @@
+import { Link } from 'react-router-dom'
+import { BedDouble, Bath, Maximize2, MapPin, Star } from 'lucide-react'
+import type { PropertyListItem } from '../types'
+import './PropertyCard.css'
+
+interface Props { property: PropertyListItem }
+
+const PLACEHOLDER = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
+
+const listingLabel: Record<string, string> = { Sale: 'للبيع', Rent: 'للإيجار' }
+const typeLabel: Record<string, string>    = { Apartment: 'شقة', Villa: 'فيلا', Studio: 'استوديو', Office: 'مكتب', Shop: 'محل' }
+const statusBadge: Record<string, { label: string; cls: string }> = {
+  Available:  { label: 'متاح', cls: 'badge-green' },
+  Reserved:   { label: 'محجوز', cls: 'badge-gold' },
+  Sold:       { label: 'مباع', cls: 'badge' },
+}
+
+export default function PropertyCard({ property: p }: Props) {
+  const st = statusBadge[p.status] ?? { label: p.status, cls: 'badge' }
+  return (
+    <Link to={`/properties/${p.id}`} className="prop-card card">
+      {/* Image */}
+      <div className="prop-card__img-wrap">
+        <img src={p.primaryImageUrl ?? PLACEHOLDER} alt={p.title} className="prop-card__img" loading="lazy" />
+        <div className="prop-card__overlay" />
+        {p.isFeatured && (
+          <div className="prop-card__featured"><Star size={12} fill="currentColor" />مميز</div>
+        )}
+        <div className={`prop-card__listing badge ${p.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
+          {listingLabel[p.listingType] ?? p.listingType}
+        </div>
+        <div className={`prop-card__status badge ${st.cls}`}>{st.label}</div>
+      </div>
+
+      {/* Body */}
+      <div className="prop-card__body">
+        <p className="prop-card__type">{typeLabel[p.propertyType] ?? p.propertyType}</p>
+        <h3 className="prop-card__title">{p.title}</h3>
+        <div className="prop-card__location">
+          <MapPin size={13} />
+          <span>{p.district}، {p.city}</span>
+        </div>
+
+        {/* Specs */}
+        <div className="prop-card__specs">
+          <div className="prop-card__spec"><BedDouble size={15} />{p.bedrooms} غرف</div>
+          <div className="prop-card__spec"><Bath size={15} />{p.bathrooms} حمام</div>
+          <div className="prop-card__spec"><Maximize2 size={15} />{p.areaSqm} م²</div>
+        </div>
+
+        {/* Price */}
+        <div className="prop-card__price">
+          {p.price.toLocaleString('ar-EG')} <span>جنيه</span>
+        </div>
+      </div>
+    </Link>
+  )
+}
