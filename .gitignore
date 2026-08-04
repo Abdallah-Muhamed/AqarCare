@@ -11,7 +11,6 @@ publish/
 
 # ASP.NET Core
 appsettings.Development.json
-appsettings.Production.json
 
 # Database
 *.db

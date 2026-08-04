@@ -60,7 +60,7 @@ export interface PackageListItem {
   pricePerSqm: number
   shortDescription: string
   sortOrder: number
-  supervisionPercent: number
+  supervisionPercent?: number
   primaryImageUrl: string | null
 }
 
