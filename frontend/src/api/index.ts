@@ -1,9 +1,12 @@
 import type { PagedResult, PropertyListItem, PropertyDetail, PropertyQuery, PackageListItem, PackageDetail } from '../types'
+import { API_BASE_URL } from '../constants/api'
 
 const BASE = '/api'
 
 async function get<T>(path: string, params?: Record<string, string | number | boolean | undefined>): Promise<T> {
-  const url = new URL(path, window.location.origin)
+  // Use relative URL for Vercel proxy, fallback to absolute URL
+  const baseUrl = API_BASE_URL || window.location.origin
+  const url = new URL(path, baseUrl)
   if (params) {
     Object.entries(params).forEach(([k, v]) => {
       if (v !== undefined && v !== null && v !== '') {

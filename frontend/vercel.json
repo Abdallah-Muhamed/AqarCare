@@ -6,11 +6,15 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/api/:path*",
+      "destination": "https://aqarcare.runasp.net/api/:path*"
+    },
+    {
       "source": "/(.*)",
       "destination": "/index.html"
     }
   ],
   "env": {
-    "VITE_API_BASE_URL": "https://aqarcare.runasp.net"
+    "VITE_API_BASE_URL": ""
   }
 }
