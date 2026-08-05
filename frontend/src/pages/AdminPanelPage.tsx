@@ -805,11 +805,10 @@ export default function AdminPanelPage() {
                   {filteredProperties.map((property) => (
                     <div key={property.id} className="admin-property-card">
                       <div className="property-image">
-                        {property.primaryImageUrl ? (
-                          <img src={property.primaryImageUrl} alt={property.title ?? ''} />
-                        ) : (
-                          <div className="no-image">🏠<span>لا توجد صورة</span></div>
-                        )}
+                        <img 
+                          src={property.primaryImageUrl || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'} 
+                          alt={property.title ?? ''} 
+                        />
                         <div className="property-image__badges">
                           {property.listingType && (
                             <span className={`admin-badge admin-badge--${property.listingType.toLowerCase()}`}>
