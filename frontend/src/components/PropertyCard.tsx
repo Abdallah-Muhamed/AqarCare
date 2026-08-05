@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BedDouble, Bath, Maximize2, MapPin, Star, Play, Building2 } from 'lucide-react'
+import { BedDouble, Bath, Maximize2, MapPin, Star, Play } from 'lucide-react'
 import type { PropertyListItem } from '../types'
 import './PropertyCard.css'
 
