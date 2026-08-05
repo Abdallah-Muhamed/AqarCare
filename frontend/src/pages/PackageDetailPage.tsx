@@ -85,12 +85,6 @@ export default function PackageDetailPage() {
             {/* Gallery */}
             {pkg.media.length > 0 && <ImageGallery media={pkg.media} />}
 
-            {/* Description */}
-            <div className="detail-card">
-              <h2 className="detail-section-title">نبذة عن الباقة</h2>
-              <p>{pkg.description || 'لا يوجد وصف متاح لهذه الباقة.'}</p>
-            </div>
-
             {/* Sections */}
             {pkg.sections.length > 0 && (
               <div className="detail-card">
