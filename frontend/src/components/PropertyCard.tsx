@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { BedDouble, Bath, Maximize2, MapPin, MessageCircle, Star } from 'lucide-react'
+import { BedDouble, Bath, Maximize2, MapPin, Star } from 'lucide-react'
 import type { PropertyListItem } from '../types'
 import './PropertyCard.css'
 
@@ -18,8 +18,7 @@ const statusBadge: Record<string, { label: string; cls: string }> = {
 export default function PropertyCard({ property: p }: Props) {
   const st = statusBadge[p.status] ?? { label: p.status, cls: 'badge' }
   return (
-    <article className="prop-card card">
-      <Link to={`/properties/${p.id}`} style={{ display: 'block', color: 'inherit', gridColumn: '1 / -1' }}>
+    <Link to={`/properties/${p.id}`} className="prop-card card">
       {/* Image */}
       <div className="prop-card__img-wrap">
         <img src={p.primaryImageUrl ?? PLACEHOLDER} alt={p.title ?? ''} className="prop-card__img" loading="lazy" />
@@ -58,15 +57,6 @@ export default function PropertyCard({ property: p }: Props) {
             : <span>السعر غير محدد</span>}
         </div>
       </div>
-      </Link>
-      <a
-        href="https://wa.me/201055937687"
-        target="_blank"
-        rel="noreferrer"
-        style={{ gridColumn: '1 / -1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '7px', margin: '0 1.1rem 1.1rem', padding: '.7rem 1rem', borderRadius: '10px', background: '#25d366', color: '#fff', fontSize: '.84rem', fontWeight: 800 }}
-      >
-        <MessageCircle size={17} /> تواصل معنا
-      </a>
-    </article>
+    </Link>
   )
 }
