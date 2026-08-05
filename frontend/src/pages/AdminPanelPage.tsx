@@ -4,27 +4,27 @@ import { API_BASE_URL } from '../constants/api';
 
 interface Property {
   id: number;
-  title: string;
-  description: string;
-  price: number;
-  soldPrice?: number;
-  areaSqm: number;
-  bedrooms: number;
-  bathrooms: number;
-  propertyType: string;
-  listingType: string;
-  finishingStatus: string;
-  finishingPackageId?: number;
+  title: string | null;
+  description: string | null;
+  price: number | null;
+  soldPrice?: number | null;
+  areaSqm: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  propertyType: string | null;
+  listingType: string | null;
+  finishingStatus: string | null;
+  finishingPackageId?: number | null;
   installmentAvailable: boolean;
-  city: string;
-  district: string;
-  address: string;
+  city: string | null;
+  district: string | null;
+  address: string | null;
   status: string;
   isFeatured: boolean;
   isPublished: boolean;
-  waterMeterNumber?: string;
-  electricityMeterNumber?: string;
-  gasMeterNumber?: string;
+  waterMeterAvailable?: boolean;
+  electricityMeterAvailable?: boolean;
+  gasMeterAvailable?: boolean;
   // The admin list endpoint returns a single primary image URL, not a media array.
   primaryImageUrl?: string | null;
 }
@@ -87,9 +87,9 @@ export default function AdminPanelPage() {
     status: 'Available',
     isFeatured: false,
     isPublished: true,
-    waterMeterNumber: '',
-    electricityMeterNumber: '',
-    gasMeterNumber: '',
+    waterMeterAvailable: false,
+    electricityMeterAvailable: false,
+    gasMeterAvailable: false,
   });
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -222,16 +222,13 @@ export default function AdminPanelPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          price: parseFloat(formData.price),
+          price: formData.price ? parseFloat(formData.price) : null,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
-          areaSqm: parseFloat(formData.areaSqm),
-          bedrooms: parseInt(formData.bedrooms),
-          bathrooms: parseInt(formData.bathrooms),
+          areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
+          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
+          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
-          waterMeterNumber: formData.waterMeterNumber || null,
-          electricityMeterNumber: formData.electricityMeterNumber || null,
-          gasMeterNumber: formData.gasMeterNumber || null,
         }),
       });
 
@@ -275,27 +272,27 @@ export default function AdminPanelPage() {
   const handleEdit = (property: Property) => {
     setEditingProperty(property);
     setFormData({
-      title: property.title,
-      description: property.description,
-      price: property.price.toString(),
-      soldPrice: property.soldPrice?.toString() || '',
-      areaSqm: property.areaSqm.toString(),
-      bedrooms: property.bedrooms.toString(),
-      bathrooms: property.bathrooms.toString(),
-      propertyType: property.propertyType,
-      listingType: property.listingType,
-      finishingStatus: property.finishingStatus,
+      title: property.title ?? '',
+      description: property.description ?? '',
+      price: property.price?.toString() ?? '',
+      soldPrice: property.soldPrice?.toString() ?? '',
+      areaSqm: property.areaSqm?.toString() ?? '',
+      bedrooms: property.bedrooms?.toString() ?? '',
+      bathrooms: property.bathrooms?.toString() ?? '',
+      propertyType: property.propertyType ?? 'Apartment',
+      listingType: property.listingType ?? 'Sale',
+      finishingStatus: property.finishingStatus ?? 'Core-Shell',
       finishingPackageId: property.finishingPackageId?.toString() || '',
       installmentAvailable: property.installmentAvailable,
-      city: property.city,
-      district: property.district,
-      address: property.address,
-      status: property.status,
+      city: property.city ?? '',
+      district: property.district ?? '',
+      address: property.address ?? '',
+      status: property.status ?? 'Available',
       isFeatured: property.isFeatured,
       isPublished: property.isPublished,
-      waterMeterNumber: property.waterMeterNumber || '',
-      electricityMeterNumber: property.electricityMeterNumber || '',
-      gasMeterNumber: property.gasMeterNumber || '',
+      waterMeterAvailable: property.waterMeterAvailable ?? false,
+      electricityMeterAvailable: property.electricityMeterAvailable ?? false,
+      gasMeterAvailable: property.gasMeterAvailable ?? false,
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -321,9 +318,9 @@ export default function AdminPanelPage() {
       status: 'Available',
       isFeatured: false,
       isPublished: true,
-      waterMeterNumber: '',
-      electricityMeterNumber: '',
-      gasMeterNumber: '',
+      waterMeterAvailable: false,
+      electricityMeterAvailable: false,
+      gasMeterAvailable: false,
     });
   };
 
@@ -448,13 +445,12 @@ export default function AdminPanelPage() {
                   <h3 className="form-section__title">📋 المعلومات الأساسية</h3>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label>عنوان العقار <span className="required">*</span></label>
+                      <label>عنوان العقار</label>
                       <input
                         type="text"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         placeholder="مثال: شقة 3 غرف مدينة نصر"
-                        required
                       />
                     </div>
 
@@ -531,13 +527,12 @@ export default function AdminPanelPage() {
                   <h3 className="form-section__title">💰 التسعير والمساحة</h3>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>السعر (جنيه) <span className="required">*</span></label>
+                      <label>السعر (جنيه)</label>
                       <input
                         type="number"
                         value={formData.price}
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         placeholder="0"
-                        required
                       />
                     </div>
 
@@ -552,35 +547,32 @@ export default function AdminPanelPage() {
                     </div>
 
                     <div className="form-group">
-                      <label>المساحة (م²) <span className="required">*</span></label>
+                      <label>المساحة (م²)</label>
                       <input
                         type="number"
                         value={formData.areaSqm}
                         onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
                         placeholder="0"
-                        required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>غرف النوم <span className="required">*</span></label>
+                      <label>غرف النوم</label>
                       <input
                         type="number"
                         value={formData.bedrooms}
                         onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
                         min="0"
-                        required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>الحمامات <span className="required">*</span></label>
+                      <label>الحمامات</label>
                       <input
                         type="number"
                         value={formData.bathrooms}
                         onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
                         min="0"
-                        required
                       />
                     </div>
                   </div>
@@ -591,35 +583,32 @@ export default function AdminPanelPage() {
                   <h3 className="form-section__title">📍 الموقع</h3>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>المدينة <span className="required">*</span></label>
+                      <label>المدينة</label>
                       <input
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
                         placeholder="مثال: القاهرة"
-                        required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>الحي <span className="required">*</span></label>
+                      <label>الحي</label>
                       <input
                         type="text"
                         value={formData.district}
                         onChange={(e) => setFormData({ ...formData, district: e.target.value })}
                         placeholder="مثال: مدينة نصر"
-                        required
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label>العنوان التفصيلي <span className="required">*</span></label>
+                      <label>العنوان التفصيلي</label>
                       <input
                         type="text"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                         placeholder="مثال: شارع عباس العقاد، بجوار..."
-                        required
                       />
                     </div>
                   </div>
@@ -627,49 +616,37 @@ export default function AdminPanelPage() {
 
                 {/* Section: Utility Meters */}
                 <div className="form-section">
-                  <h3 className="form-section__title">🔢 أرقام العدادات</h3>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label className="meter-label">
-                        <span className="meter-icon meter-icon--water">💧</span>
-                        عداد المياه
-                      </label>
+                  <h3 className="form-section__title">🔢 العدادات</h3>
+                  <div className="checkbox-row">
+                    <label className="checkbox-card">
                       <input
-                        type="text"
-                        value={formData.waterMeterNumber}
-                        onChange={(e) => setFormData({ ...formData, waterMeterNumber: e.target.value })}
-                        placeholder="رقم عداد المياه"
-                        className="meter-input meter-input--water"
+                        type="checkbox"
+                        checked={formData.waterMeterAvailable}
+                        onChange={(e) => setFormData({ ...formData, waterMeterAvailable: e.target.checked })}
                       />
-                    </div>
+                      <span className="checkbox-card__icon">💧</span>
+                      <span>عداد مياه متاح</span>
+                    </label>
 
-                    <div className="form-group">
-                      <label className="meter-label">
-                        <span className="meter-icon meter-icon--electricity">⚡</span>
-                        عداد الكهرباء
-                      </label>
+                    <label className="checkbox-card">
                       <input
-                        type="text"
-                        value={formData.electricityMeterNumber}
-                        onChange={(e) => setFormData({ ...formData, electricityMeterNumber: e.target.value })}
-                        placeholder="رقم عداد الكهرباء"
-                        className="meter-input meter-input--electricity"
+                        type="checkbox"
+                        checked={formData.electricityMeterAvailable}
+                        onChange={(e) => setFormData({ ...formData, electricityMeterAvailable: e.target.checked })}
                       />
-                    </div>
+                      <span className="checkbox-card__icon">⚡</span>
+                      <span>عداد كهرباء متاح</span>
+                    </label>
 
-                    <div className="form-group">
-                      <label className="meter-label">
-                        <span className="meter-icon meter-icon--gas">🔥</span>
-                        عداد الغاز
-                      </label>
+                    <label className="checkbox-card">
                       <input
-                        type="text"
-                        value={formData.gasMeterNumber}
-                        onChange={(e) => setFormData({ ...formData, gasMeterNumber: e.target.value })}
-                        placeholder="رقم عداد الغاز"
-                        className="meter-input meter-input--gas"
+                        type="checkbox"
+                        checked={formData.gasMeterAvailable}
+                        onChange={(e) => setFormData({ ...formData, gasMeterAvailable: e.target.checked })}
                       />
-                    </div>
+                      <span className="checkbox-card__icon">🔥</span>
+                      <span>عداد غاز متاح</span>
+                    </label>
                   </div>
                 </div>
 
@@ -678,13 +655,12 @@ export default function AdminPanelPage() {
                   <h3 className="form-section__title">📝 الوصف والوسائط</h3>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label>الوصف <span className="required">*</span></label>
+                      <label>الوصف</label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                         rows={5}
                         placeholder="اكتب وصفاً تفصيلياً للعقار..."
-                        required
                       />
                     </div>
 
@@ -807,36 +783,46 @@ export default function AdminPanelPage() {
                           <div className="no-image">🏠<span>لا توجد صورة</span></div>
                         )}
                         <div className="property-image__badges">
-                          <span className={`admin-badge admin-badge--${property.listingType.toLowerCase()}`}>
-                            {property.listingType === 'Sale' ? 'بيع' : 'إيجار'}
-                          </span>
+                          {property.listingType && (
+                            <span className={`admin-badge admin-badge--${property.listingType.toLowerCase()}`}>
+                              {property.listingType === 'Sale' ? 'بيع' : 'إيجار'}
+                            </span>
+                          )}
                           {property.isFeatured && <span className="admin-badge admin-badge--featured">⭐ مميز</span>}
                         </div>
                       </div>
                       <div className="property-info">
-                        <h3>{property.title}</h3>
-                        <p className="price">{property.price.toLocaleString('ar-EG')} جنيه</p>
-                        <p className="location">📍 {property.city}، {property.district}</p>
+                        <h3>{property.title || 'غير محدد'}</h3>
+                        <p className="price">
+                          {property.price != null
+                            ? `${property.price.toLocaleString('ar-EG')} جنيه`
+                            : 'السعر غير محدد'}
+                        </p>
+                        <p className="location">
+                          📍 {[property.city, property.district].filter(Boolean).join('، ') || 'غير محدد'}
+                        </p>
                         <p className="details">
-                          🛏 {property.bedrooms} غرف &nbsp;•&nbsp;
-                          🚿 {property.bathrooms} حمام &nbsp;•&nbsp;
-                          📐 {property.areaSqm} م²
+                          🛏 {property.bedrooms ?? '—'} غرف &nbsp;•&nbsp;
+                          🚿 {property.bathrooms ?? '—'} حمام &nbsp;•&nbsp;
+                          📐 {property.areaSqm ?? '—'} م²
                         </p>
-                        <p className="finishing">
-                          🎨 {finishingLabel(property.finishingStatus)}
-                        </p>
+                        {property.finishingStatus && (
+                          <p className="finishing">
+                            🎨 {finishingLabel(property.finishingStatus)}
+                          </p>
+                        )}
 
-                        {/* Meter numbers */}
-                        {(property.waterMeterNumber || property.electricityMeterNumber || property.gasMeterNumber) && (
+                        {/* Available meters */}
+                        {(property.waterMeterAvailable || property.electricityMeterAvailable || property.gasMeterAvailable) && (
                           <div className="meter-numbers">
-                            {property.waterMeterNumber && (
-                              <span className="meter-num meter-num--water">💧 {property.waterMeterNumber}</span>
+                            {property.waterMeterAvailable && (
+                              <span className="meter-num meter-num--water">💧 مياه</span>
                             )}
-                            {property.electricityMeterNumber && (
-                              <span className="meter-num meter-num--electricity">⚡ {property.electricityMeterNumber}</span>
+                            {property.electricityMeterAvailable && (
+                              <span className="meter-num meter-num--electricity">⚡ كهرباء</span>
                             )}
-                            {property.gasMeterNumber && (
-                              <span className="meter-num meter-num--gas">🔥 {property.gasMeterNumber}</span>
+                            {property.gasMeterAvailable && (
+                              <span className="meter-num meter-num--gas">🔥 غاز</span>
                             )}
                           </div>
                         )}

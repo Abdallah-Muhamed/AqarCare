@@ -49,3 +49,8 @@ logs/
 # Temporary files
 *.tmp
 *.temp
+
+# Claude Code
+.claude/
+CLAUDE.md
+Claude Setup.exe

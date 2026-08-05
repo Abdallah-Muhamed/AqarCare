@@ -8,30 +8,31 @@ export interface PropertyMedia {
 
 export interface PropertyListItem {
   id: number
-  title: string
-  price: number
-  areaSqm: number
-  bedrooms: number
-  bathrooms: number
-  propertyType: string
-  listingType: string
-  finishingStatus: string
-  city: string
-  district: string
+  title: string | null
+  price: number | null
+  areaSqm: number | null
+  bedrooms: number | null
+  bathrooms: number | null
+  propertyType: string | null
+  listingType: string | null
+  finishingStatus: string | null
+  city: string | null
+  district: string | null
   status: string
   isFeatured: boolean
   primaryImageUrl: string | null
-  waterMeterNumber?: string
-  electricityMeterNumber?: string
-  gasMeterNumber?: string
+  waterMeterAvailable: boolean
+  electricityMeterAvailable: boolean
+  gasMeterAvailable: boolean
 }
 
 export interface PropertyDetail extends PropertyListItem {
-  description: string
-  address: string
-  soldPrice?: number
-  finishingPackageId?: number
+  description: string | null
+  address: string | null
+  soldPrice?: number | null
+  finishingPackageId?: number | null
   installmentAvailable: boolean
+  floorNumber?: number | null
   isPublished: boolean
   createdAt: string
   updatedAt: string

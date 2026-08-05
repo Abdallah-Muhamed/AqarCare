@@ -71,7 +71,7 @@ export default function PropertyDetailPage() {
           <span>/</span>
           <Link to="/properties">العقارات</Link>
           <span>/</span>
-          <span>{prop.title}</span>
+          <span>{prop.title || 'غير محدد'}</span>
         </div>
       </div>
 
@@ -82,26 +82,30 @@ export default function PropertyDetailPage() {
             <ImageGallery media={prop.media} />
 
             <div className="detail-card">
-              <h1 className="detail-title">{prop.title}</h1>
+              <h1 className="detail-title">{prop.title || 'غير محدد'}</h1>
               <div className="detail-meta">
                 <div className="detail-location">
                   <MapPin size={15} />
-                  {prop.address || `${prop.district}، ${prop.city}`}
+                  {prop.address || [prop.district, prop.city].filter(Boolean).join('، ') || 'غير محدد'}
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                   <span className={`badge ${st.cls}`}>{st.label}</span>
-                  <span className={`badge ${prop.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
-                    {listingLabel[prop.listingType] ?? prop.listingType}
-                  </span>
+                  {prop.listingType && (
+                    <span className={`badge ${prop.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
+                      {listingLabel[prop.listingType] ?? prop.listingType}
+                    </span>
+                  )}
                   {prop.isFeatured && <span className="badge badge-gold"><Star size={11} fill="currentColor" />مميز</span>}
                 </div>
               </div>
 
               <div className="detail-specs">
-                <div className="detail-spec"><BedDouble size={18} /><div><strong>{prop.bedrooms}</strong><small>غرف نوم</small></div></div>
-                <div className="detail-spec"><Bath size={18} /><div><strong>{prop.bathrooms}</strong><small>حمامات</small></div></div>
-                <div className="detail-spec"><Maximize2 size={18} /><div><strong>{prop.areaSqm}</strong><small>م²</small></div></div>
-                <div className="detail-spec"><Tag size={18} /><div><strong>{typeLabel[prop.propertyType] ?? prop.propertyType}</strong><small>النوع</small></div></div>
+                <div className="detail-spec"><BedDouble size={18} /><div><strong>{prop.bedrooms ?? '—'}</strong><small>غرف نوم</small></div></div>
+                <div className="detail-spec"><Bath size={18} /><div><strong>{prop.bathrooms ?? '—'}</strong><small>حمامات</small></div></div>
+                <div className="detail-spec"><Maximize2 size={18} /><div><strong>{prop.areaSqm ?? '—'}</strong><small>م²</small></div></div>
+                {prop.propertyType && (
+                  <div className="detail-spec"><Tag size={18} /><div><strong>{typeLabel[prop.propertyType] ?? prop.propertyType}</strong><small>النوع</small></div></div>
+                )}
                 {prop.finishingStatus && (
                   <div className="detail-spec"><span style={{fontSize:'1.1rem'}}>🎨</span><div><strong>{finishingLabel[prop.finishingStatus] ?? prop.finishingStatus}</strong><small>التشطيب</small></div></div>
                 )}
@@ -119,7 +123,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <div className="detail-info-item">
                   <MapPin size={14} />
-                  <span>{prop.city} — {prop.district}</span>
+                  <span>{[prop.city, prop.district].filter(Boolean).join(' — ') || 'الموقع غير محدد'}</span>
                 </div>
               </div>
             </div>
@@ -131,12 +135,15 @@ export default function PropertyDetailPage() {
               <div className="price-card__glow" />
               <p className="price-card__label">سعر الوحدة</p>
               <div className="price-card__amount">
-                {prop.price.toLocaleString('ar-EG')}
-                <span>جنيه</span>
+                {prop.price != null
+                  ? <>{prop.price.toLocaleString('ar-EG')}<span>جنيه</span></>
+                  : <span>غير محدد</span>}
               </div>
-              <div className="price-card__per-m">
-                {(prop.price / prop.areaSqm).toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه / م²
-              </div>
+              {prop.price != null && prop.areaSqm != null && prop.areaSqm > 0 && (
+                <div className="price-card__per-m">
+                  {(prop.price / prop.areaSqm).toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه / م²
+                </div>
+              )}
 
               <div className="price-card__divider" />
 

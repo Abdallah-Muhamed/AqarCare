@@ -26,31 +26,35 @@ export default function PropertyCard({ property: p }: Props) {
         {p.isFeatured && (
           <div className="prop-card__featured"><Star size={12} fill="currentColor" />مميز</div>
         )}
-        <div className={`prop-card__listing badge ${p.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
-          {listingLabel[p.listingType] ?? p.listingType}
-        </div>
+        {p.listingType && (
+          <div className={`prop-card__listing badge ${p.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
+            {listingLabel[p.listingType] ?? p.listingType}
+          </div>
+        )}
         <div className={`prop-card__status badge ${st.cls}`}>{st.label}</div>
       </div>
 
       {/* Body */}
       <div className="prop-card__body">
-        <p className="prop-card__type">{typeLabel[p.propertyType] ?? p.propertyType}</p>
-        <h3 className="prop-card__title">{p.title}</h3>
+        {p.propertyType && <p className="prop-card__type">{typeLabel[p.propertyType] ?? p.propertyType}</p>}
+        <h3 className="prop-card__title">{p.title || 'غير محدد'}</h3>
         <div className="prop-card__location">
           <MapPin size={13} />
-          <span>{p.district}، {p.city}</span>
+          <span>{[p.district, p.city].filter(Boolean).join('، ') || 'غير محدد'}</span>
         </div>
 
         {/* Specs */}
         <div className="prop-card__specs">
-          <div className="prop-card__spec"><BedDouble size={15} />{p.bedrooms} غرف</div>
-          <div className="prop-card__spec"><Bath size={15} />{p.bathrooms} حمام</div>
-          <div className="prop-card__spec"><Maximize2 size={15} />{p.areaSqm} م²</div>
+          <div className="prop-card__spec"><BedDouble size={15} />{p.bedrooms ?? '—'} غرف</div>
+          <div className="prop-card__spec"><Bath size={15} />{p.bathrooms ?? '—'} حمام</div>
+          <div className="prop-card__spec"><Maximize2 size={15} />{p.areaSqm ?? '—'} م²</div>
         </div>
 
         {/* Price */}
         <div className="prop-card__price">
-          {p.price.toLocaleString('ar-EG')} <span>جنيه</span>
+          {p.price != null
+            ? <>{p.price.toLocaleString('ar-EG')} <span>جنيه</span></>
+            : <span>السعر غير محدد</span>}
         </div>
       </div>
     </Link>
