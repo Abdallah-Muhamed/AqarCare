@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowRight, CheckCircle2, Layers, CreditCard, FileText, Percent } from 'lucide-react'
+import { ArrowRight, CheckCircle2, Layers, CreditCard, FileText, MessageCircle, Percent } from 'lucide-react'
 import { api } from '../api'
 import type { PackageDetail } from '../types'
 import { getTierColors } from '../constants/tierColors'
@@ -177,6 +177,9 @@ export default function PackageDetailPage() {
               <Link to="/properties" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)' }}>
                 استعرض العقارات
               </Link>
+              <a href="https://wa.me/201055937687" target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)', background: '#25d366', color: '#fff' }}>
+                <MessageCircle size={16} /> تواصل معنا
+              </a>
               <Link to="/finishing-packages" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
                 <ArrowRight size={15} />
                 العودة للباقات

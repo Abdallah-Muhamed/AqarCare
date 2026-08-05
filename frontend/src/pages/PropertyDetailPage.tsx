@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowRight, BedDouble, Bath, Maximize2, MapPin, Star, Calendar, Tag, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, BedDouble, Bath, Maximize2, MapPin, Star, Calendar, Tag, CheckCircle2, MessageCircle } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyDetail } from '../types'
 import ImageGallery from '../components/ImageGallery'
@@ -156,6 +156,9 @@ export default function PropertyDetailPage() {
               <Link to="/finishing-packages" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)' }}>
                 استعرض باقات التشطيب
               </Link>
+              <a href="https://wa.me/201055937687" target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)', background: '#25d366', color: '#fff' }}>
+                <MessageCircle size={16} /> تواصل معنا
+              </a>
               <Link to="/properties" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
                 <ArrowRight size={15} />
                 العودة للعقارات
