@@ -18,7 +18,7 @@ export default function PropertyCard({ property: p }: Props) {
   const st = statusBadge[p.status] ?? { label: p.status, cls: 'badge' }
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
   const [imgError, setImgError] = useState(false)
-  const placeholderImage = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'
+  const placeholderImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
   
   return (
     <Link to={`/properties/${p.id}`} className="prop-card card">
