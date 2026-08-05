@@ -2,7 +2,7 @@
 
 .prop-card__img-wrap {
   position: relative;
-  height: 220px;
+  height: 200px;
   overflow: hidden;
   background: var(--clr-bg3);
 }
@@ -15,7 +15,7 @@
 
 .prop-card__overlay {
   position: absolute; inset: 0;
-  background: linear-gradient(to top, rgba(15, 23, 42, 0.55) 0%, transparent 50%);
+  background: linear-gradient(to top, rgba(15, 23, 42, 0.7) 0%, transparent 50%);
 }
 
 .prop-card__featured {
@@ -27,7 +27,6 @@
   border-radius: 999px;
   font-size: 0.72rem;
   font-weight: 700;
-  box-shadow: 0 2px 8px rgba(184, 134, 11, 0.35);
 }
 .prop-card__listing {
   position: absolute; top: 12px; left: 12px;
@@ -40,7 +39,8 @@
 
 .prop-card__body {
   padding: var(--space-md) var(--space-lg) var(--space-lg);
-  background: #fff;
+  background: var(--clr-card-bg);
+  border-top: 1px solid var(--clr-border);
 }
 
 .prop-card__type {
@@ -53,7 +53,7 @@
 .prop-card__title {
   font-size: 1rem;
   font-weight: 700;
-  color: var(--clr-text);
+  color: var(--clr-card-text);
   margin-bottom: var(--space-xs);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -64,24 +64,29 @@
 }
 .prop-card__location {
   display: flex; align-items: center; gap: 4px;
-  color: var(--clr-text-muted); font-size: 0.83rem;
+  color: var(--clr-card-muted); font-size: 0.83rem;
   margin-bottom: var(--space-md);
 }
 .prop-card__specs {
-  display: flex; gap: var(--space-md);
+  display: flex; flex-wrap: wrap; gap: var(--space-sm);
   margin-bottom: var(--space-md);
   padding: var(--space-sm) var(--space-md);
-  background: var(--clr-bg2);
+  background: var(--clr-bg3);
   border-radius: var(--radius-sm);
 }
 .prop-card__spec {
   display: flex; align-items: center; gap: 4px;
-  color: var(--clr-text-muted); font-size: 0.83rem;
+  color: var(--clr-card-muted); font-size: 0.83rem;
 }
 .prop-card__spec svg { color: var(--clr-text-faint); flex-shrink: 0; }
 .prop-card__price {
   font-size: 1.15rem;
   font-weight: 800;
-  color: var(--clr-text);
+  color: var(--clr-card-text);
 }
 .prop-card__price span { font-size: 0.8rem; color: var(--clr-gold); font-weight: 600; }
+
+@media (max-width: 768px) {
+  .prop-card__img-wrap { height: 180px; }
+  .prop-card__body { padding: var(--space-md); }
+}

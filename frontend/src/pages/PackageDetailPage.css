@@ -109,11 +109,11 @@
   display: flex;
   align-items: center;
   gap: 6px;
-  background: #fff;
+  background: var(--clr-bg3);
   color: var(--clr-gold);
   border: 1px solid var(--clr-border);
   padding: 6px 12px;
-  border-radius: var(--radius-full);
+  border-radius: 999px;
   font-weight: 700;
   font-size: 0.9rem;
   min-width: 70px;

@@ -89,7 +89,7 @@ export default function AdminPanelPage() {
 
   /** Verify the key by sending it to the server — server is the only judge. */
   const handleLogin = async () => {
-    if (!apiKey.trim()) { setError('Please enter the API Key'); return; }
+    if (!apiKey.trim()) { setError('من فضلك أدخل مفتاح API'); return; }
     setLoading(true);
     setError('');
     try {
@@ -102,12 +102,12 @@ export default function AdminPanelPage() {
         fetchProperties(apiKey);
         fetchPackages();
       } else if (res.status === 401) {
-        setError('Invalid API Key');
+        setError('مفتاح API غير صحيح');
       } else {
-        setError(`Server error: ${res.status}`);
+        setError(`خطأ في الخادم: ${res.status}`);
       }
     } catch {
-      setError('Cannot reach the server. Check your connection.');
+      setError('تعذّر الاتصال بالخادم. تحقق من اتصالك.');
     } finally {
       setLoading(false);
     }
@@ -135,7 +135,7 @@ export default function AdminPanelPage() {
         setProperties(data.items ?? []);
       }
     } catch {
-      setError('Failed to fetch properties');
+      setError('فشل تحميل العقارات');
     }
   };
 
@@ -181,7 +181,7 @@ export default function AdminPanelPage() {
         }
       }
     } catch {
-      setError('Failed to upload media');
+      setError('فشل رفع الوسائط');
     } finally {
       setUploading(false);
     }
@@ -224,24 +224,31 @@ export default function AdminPanelPage() {
         fetchProperties();
       } else {
         const body = await res.json().catch(() => null);
-        setError(body?.title ?? 'Failed to save property');
+        setError(body?.title ?? 'فشل حفظ العقار');
       }
     } catch {
-      setError('Failed to save property');
+      setError('فشل حفظ العقار');
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this property?')) return;
+    if (!confirm('هل أنت متأكد من حذف هذا العقار؟')) return;
     try {
       const res = await adminFetch(`/api/admin/properties/${id}`, { method: 'DELETE' });
       if (res.ok) fetchProperties();
-      else setError('Failed to delete property');
+      else setError('فشل حذف العقار');
     } catch {
-      setError('Failed to delete property');
+      setError('فشل حذف العقار');
     }
+  };
+
+  const openAddForm = () => {
+    setShowForm(true);
+    setEditingProperty(null);
+    resetForm();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleEdit = (property: Property) => {
@@ -305,16 +312,16 @@ export default function AdminPanelPage() {
     return (
       <div className="admin-login">
         <div className="login-card">
-          <h2>Admin Login</h2>
+          <h2>لوحة التحكم</h2>
           <input
             type="password"
-            placeholder="Enter API Key"
+            placeholder="أدخل مفتاح API"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           />
           <button onClick={handleLogin} disabled={loading}>
-            {loading ? 'Verifying...' : 'Login'}
+            {loading ? 'جاري التحقق...' : 'دخول'}
           </button>
           {error && <p className="error">{error}</p>}
         </div>
@@ -325,25 +332,25 @@ export default function AdminPanelPage() {
   return (
     <div className="admin-panel">
       <div className="admin-header">
-        <h1>Admin Panel</h1>
-        <button onClick={handleLogout} className="logout-btn">Logout</button>
+        <h1>لوحة التحكم — عقار كير</h1>
+        <div className="admin-header__actions">
+          <button className="admin-add-btn" onClick={openAddForm}>
+            <span>+ إضافة عقار</span>
+            <span aria-hidden="true">+</span>
+          </button>
+          <button onClick={handleLogout} className="logout-btn">خروج</button>
+        </div>
       </div>
 
       <div className="admin-content">
-        <div className="admin-sidebar">
-          <button onClick={() => { setShowForm(true); setEditingProperty(null); resetForm(); }}>
-            + Add Property
-          </button>
-        </div>
-
         <div className="admin-main">
           {showForm ? (
             <div className="property-form-container">
-              <h2>{editingProperty ? 'Edit Property' : 'Add New Property'}</h2>
+              <h2>{editingProperty ? 'تعديل العقار' : 'إضافة عقار جديد'}</h2>
               <form onSubmit={handleSubmit} className="property-form">
                 <div className="form-grid">
                   <div className="form-group">
-                    <label>Title</label>
+                    <label>العنوان</label>
                     <input
                       type="text"
                       value={formData.title}
@@ -353,7 +360,7 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Price (EGP)</label>
+                    <label>السعر (جنيه)</label>
                     <input
                       type="number"
                       value={formData.price}
@@ -363,17 +370,17 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Sold Price (EGP) - if sold</label>
+                    <label>سعر البيع (إن وُجد)</label>
                     <input
                       type="number"
                       value={formData.soldPrice}
                       onChange={(e) => setFormData({ ...formData, soldPrice: e.target.value })}
-                      placeholder="Leave empty if not sold"
+                      placeholder="اتركه فارغاً إن لم يُبَع"
                     />
                   </div>
 
                   <div className="form-group">
-                    <label>Area (m²)</label>
+                    <label>المساحة (م²)</label>
                     <input
                       type="number"
                       value={formData.areaSqm}
@@ -383,7 +390,7 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Bedrooms</label>
+                    <label>غرف النوم</label>
                     <input
                       type="number"
                       value={formData.bedrooms}
@@ -393,7 +400,7 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Bathrooms</label>
+                    <label>الحمامات</label>
                     <input
                       type="number"
                       value={formData.bathrooms}
@@ -403,48 +410,48 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Property Type</label>
+                    <label>نوع العقار</label>
                     <select
                       value={formData.propertyType}
                       onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
                     >
-                      <option value="Apartment">Apartment</option>
-                      <option value="Villa">Villa</option>
-                      <option value="Commercial">Commercial</option>
-                      <option value="Land">Land</option>
+                      <option value="Apartment">شقة</option>
+                      <option value="Villa">فيلا</option>
+                      <option value="Commercial">تجاري</option>
+                      <option value="Land">أرض</option>
                     </select>
                   </div>
 
                   <div className="form-group">
-                    <label>Listing Type</label>
+                    <label>نوع الإعلان</label>
                     <select
                       value={formData.listingType}
                       onChange={(e) => setFormData({ ...formData, listingType: e.target.value })}
                     >
-                      <option value="Sale">Sale</option>
-                      <option value="Rent">Rent</option>
+                      <option value="Sale">بيع</option>
+                      <option value="Rent">إيجار</option>
                     </select>
                   </div>
 
                   <div className="form-group">
-                    <label>Finishing Status</label>
+                    <label>حالة التشطيب</label>
                     <select
                       value={formData.finishingStatus}
                       onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
                     >
-                      <option value="Semi-Finished">Semi-Finished</option>
-                      <option value="Finished">Finished</option>
-                      <option value="Super-Lux">Super-Lux</option>
+                      <option value="Semi-Finished">نصف تشطيب</option>
+                      <option value="Finished">مشطب</option>
+                      <option value="Super-Lux">سوبر لوكس</option>
                     </select>
                   </div>
 
                   <div className="form-group">
-                    <label>Finishing Package</label>
+                    <label>باقة التشطيب</label>
                     <select
                       value={formData.finishingPackageId}
                       onChange={(e) => setFormData({ ...formData, finishingPackageId: e.target.value })}
                     >
-                      <option value="">None</option>
+                      <option value="">بدون</option>
                       {packages.map((pkg) => (
                         <option key={pkg.id} value={pkg.id}>
                           {pkg.name} - {pkg.pricePerSqm} EGP/m²
@@ -454,7 +461,7 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>City</label>
+                    <label>المدينة</label>
                     <input
                       type="text"
                       value={formData.city}
@@ -464,7 +471,7 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>District</label>
+                    <label>الحي</label>
                     <input
                       type="text"
                       value={formData.district}
@@ -474,7 +481,7 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Address</label>
+                    <label>العنوان التفصيلي</label>
                     <input
                       type="text"
                       value={formData.address}
@@ -484,20 +491,20 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group">
-                    <label>Status</label>
+                    <label>الحالة</label>
                     <select
                       value={formData.status}
                       onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                     >
-                      <option value="Available">Available</option>
-                      <option value="Sold">Sold</option>
-                      <option value="Rented">Rented</option>
-                      <option value="Reserved">Reserved</option>
+                      <option value="Available">متاح</option>
+                      <option value="Sold">مباع</option>
+                      <option value="Rented">مؤجر</option>
+                      <option value="Reserved">محجوز</option>
                     </select>
                   </div>
 
                   <div className="form-group full-width">
-                    <label>Description</label>
+                    <label>الوصف</label>
                     <textarea
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -507,14 +514,14 @@ export default function AdminPanelPage() {
                   </div>
 
                   <div className="form-group full-width">
-                    <label>Media (Images/Videos)</label>
+                    <label>الصور والفيديو</label>
                     <input
                       type="file"
                       multiple
                       accept="image/*,video/*"
                       onChange={(e) => setMediaFiles(Array.from(e.target.files || []))}
                     />
-                    {uploading && <p className="uploading">Uploading media...</p>}
+                    {uploading && <p className="uploading">جاري رفع الوسائط...</p>}
                   </div>
 
                   <div className="form-group checkbox-group">
@@ -524,7 +531,7 @@ export default function AdminPanelPage() {
                         checked={formData.installmentAvailable}
                         onChange={(e) => setFormData({ ...formData, installmentAvailable: e.target.checked })}
                       />
-                      Installment Available
+                      متاح بالتقسيط
                     </label>
                   </div>
 
@@ -535,7 +542,7 @@ export default function AdminPanelPage() {
                         checked={formData.isFeatured}
                         onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                       />
-                      Featured Property
+                      عقار مميز
                     </label>
                   </div>
 
@@ -546,17 +553,17 @@ export default function AdminPanelPage() {
                         checked={formData.isPublished}
                         onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
                       />
-                      Published
+                      منشور
                     </label>
                   </div>
                 </div>
 
                 <div className="form-actions">
                   <button type="submit" disabled={loading}>
-                    {loading ? 'Saving...' : editingProperty ? 'Update' : 'Create'}
+                    {loading ? 'جاري الحفظ...' : editingProperty ? 'تحديث' : 'إضافة'}
                   </button>
                   <button type="button" onClick={() => { setShowForm(false); setEditingProperty(null); }}>
-                    Cancel
+                    إلغاء
                   </button>
                 </div>
 
@@ -565,37 +572,39 @@ export default function AdminPanelPage() {
             </div>
           ) : (
             <div className="properties-list">
-              <h2>Properties ({properties.length})</h2>
+              <h2>العقارات ({properties.length})</h2>
               <div className="properties-grid">
                 {properties.map((property) => (
-                  <div key={property.id} className="property-card">
+                  <div key={property.id} className="admin-property-card">
                     <div className="property-image">
                       {property.media.length > 0 ? (
                         <img src={property.media[0].url} alt={property.title} />
                       ) : (
-                        <div className="no-image">No Image</div>
+                        <div className="no-image">لا توجد صورة</div>
                       )}
                     </div>
                     <div className="property-info">
                       <h3>{property.title}</h3>
-                      <p className="price">{property.price.toLocaleString()} EGP</p>
-                      <p className="location">{property.city}, {property.district}</p>
+                      <p className="price">{property.price.toLocaleString('ar-EG')} جنيه</p>
+                      <p className="location">{property.city}، {property.district}</p>
                       <p className="details">
-                        {property.bedrooms} Beds • {property.bathrooms} Baths • {property.areaSqm} m²
+                        {property.bedrooms} غرف • {property.bathrooms} حمام • {property.areaSqm} م²
                       </p>
                       <div className="property-badges">
-                        <span className={`badge ${property.listingType.toLowerCase()}`}>
-                          {property.listingType}
+                        <span className={`admin-badge ${property.listingType.toLowerCase()}`}>
+                          {property.listingType === 'Sale' ? 'بيع' : 'إيجار'}
                         </span>
-                        <span className={`badge ${property.status.toLowerCase()}`}>
-                          {property.status}
+                        <span className={`admin-badge ${property.status.toLowerCase()}`}>
+                          {property.status === 'Available' ? 'متاح' :
+                           property.status === 'Sold' ? 'مباع' :
+                           property.status === 'Rented' ? 'مؤجر' : 'محجوز'}
                         </span>
-                        {property.isFeatured && <span className="badge featured">Featured</span>}
+                        {property.isFeatured && <span className="admin-badge featured">مميز</span>}
                       </div>
                       <div className="property-actions">
-                        <button onClick={() => handleEdit(property)}>Edit</button>
+                        <button onClick={() => handleEdit(property)}>تعديل</button>
                         <button onClick={() => handleDelete(property.id)} className="delete-btn">
-                          Delete
+                          حذف
                         </button>
                       </div>
                     </div>
@@ -606,6 +615,12 @@ export default function AdminPanelPage() {
           )}
         </div>
       </div>
+
+      {!showForm && (
+        <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار">
+          +
+        </button>
+      )}
     </div>
   );
 }

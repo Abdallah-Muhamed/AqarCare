@@ -9,6 +9,7 @@
   align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-md);
+  flex-wrap: wrap;
 }
 .props-page__filter-toggle.active {
   background: var(--clr-gold-dim);
@@ -37,9 +38,13 @@
 .filter-bar__inner { padding-block: var(--space-lg); }
 .filter-row {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: var(--space-md);
   margin-bottom: var(--space-sm);
+}
+@media (max-width: 768px) {
+  .filter-row { grid-template-columns: repeat(2, 1fr); }
+  .props-page__header-inner { flex-direction: column; align-items: stretch; }
 }
 .filter-group { display: flex; flex-direction: column; gap: 6px; }
 .filter-label { font-size: 0.78rem; color: var(--clr-text-muted); font-weight: 600; }
