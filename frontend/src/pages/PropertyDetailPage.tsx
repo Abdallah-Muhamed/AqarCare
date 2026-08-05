@@ -88,6 +88,12 @@ export default function PropertyDetailPage() {
                   <MapPin size={15} />
                   {prop.address || [prop.district, prop.city].filter(Boolean).join('، ') || 'غير محدد'}
                 </div>
+                {prop.district && (
+                  <div className="detail-district">
+                    <MapPin size={15} />
+                    <span>الحي: {prop.district}</span>
+                  </div>
+                )}
                 {prop.detailedAddress && (
                   <div className="detail-detailed-address">
                     <MapPin size={15} />
