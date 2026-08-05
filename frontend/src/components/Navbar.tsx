@@ -27,7 +27,7 @@ export default function Navbar() {
       <div className="container navbar__inner">
         {/* Logo */}
         <Link to="/" className="navbar__logo">
-          <img src="/logo.png" alt="AqarCare" className="navbar__logo-img" />
+          <img src="/logo-navbar.png" alt="AqarCare" className="navbar__logo-img" />
         </Link>
 
         {/* Desktop links */}
