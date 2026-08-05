@@ -14,7 +14,7 @@ export default function HomePage() {
 
   useEffect(() => {
     Promise.all([
-      api.getProperties({ pageSize: 3 }),
+      api.getProperties({ isFeatured: true, pageSize: 3 }),
       api.getPackages(),
     ]).then(([props, pkgs]) => {
       setFeaturedProps(props.items)
