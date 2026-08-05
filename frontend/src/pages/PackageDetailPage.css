@@ -82,7 +82,7 @@
 /* Package sections */
 .pkg-sections { display: flex; flex-direction: column; gap: var(--space-md); }
 .pkg-section {
-  background: var(--clr-bg2);
+  background: #fffdf9;
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-md);
   padding: var(--space-lg);
@@ -125,7 +125,7 @@
   align-items: center;
   gap: var(--space-md);
   padding: var(--space-md) var(--space-lg);
-  background: var(--clr-bg2);
+  background: #fffdf9;
   border: 1px solid var(--clr-border);
   border-radius: var(--radius-md);
 }
@@ -149,7 +149,7 @@
 .pkg-notes { display: flex; flex-direction: column; gap: var(--space-sm); }
 .pkg-note {
   padding: var(--space-md) var(--space-lg);
-  background: var(--clr-bg2);
+  background: #fffdf9;
   border-radius: var(--radius-sm);
   font-size: 0.9rem;
   color: var(--clr-text-muted);

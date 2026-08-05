@@ -1,9 +1,7 @@
 .pkgs-page__header {
   padding-top: calc(var(--navbar-h) + var(--space-2xl));
   padding-bottom: var(--space-xl);
-  background:
-    radial-gradient(ellipse at 60% 0%, rgba(201,168,76,0.08) 0%, transparent 60%),
-    linear-gradient(to bottom, var(--clr-bg2), var(--clr-bg));
+  background: linear-gradient(125deg, #e6eee7, #f8f3eb 65%);
   border-bottom: 1px solid var(--clr-border2);
   position: relative;
   overflow: hidden;
@@ -14,7 +12,7 @@
   top: -60px; left: 50%;
   transform: translateX(-50%);
   width: 600px; height: 200px;
-  background: radial-gradient(ellipse, rgba(201,168,76,0.1), transparent 70%);
+  background: radial-gradient(ellipse, rgba(183,121,61,0.1), transparent 70%);
   pointer-events: none;
 }
 .pkgs-page__header-inner {

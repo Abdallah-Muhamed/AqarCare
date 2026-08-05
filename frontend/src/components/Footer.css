@@ -1,7 +1,8 @@
 .footer {
   position: relative;
-  background: var(--clr-bg2);
-  border-top: 1px solid var(--clr-border2);
+  background: #263d34;
+  color: #fff;
+  border-top: 0;
   overflow: hidden;
   margin-top: var(--space-3xl);
 }
@@ -9,7 +10,7 @@
   position: absolute;
   top: -60px; left: 50%; transform: translateX(-50%);
   width: 400px; height: 120px;
-  background: radial-gradient(ellipse, var(--clr-gold-glow), transparent 70%);
+  background: radial-gradient(ellipse, rgba(220,160,89,.25), transparent 70%);
   pointer-events: none;
 }
 .footer__inner {
@@ -30,7 +31,7 @@
   color: #0a0c12;
 }
 .footer__logo span { color: var(--clr-gold); }
-.footer__tagline { color: var(--clr-text); font-size: 0.9rem; line-height: 1.8; }
+.footer__tagline { color: #d8e2dc; font-size: 0.9rem; line-height: 1.8; }
 .footer__heading {
   font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.08em; color: var(--clr-gold); margin-bottom: var(--space-md);
@@ -38,10 +39,10 @@
 .footer__list { list-style: none; display: flex; flex-direction: column; gap: var(--space-sm); }
 .footer__list a, .footer__list li {
   display: flex; align-items: center; gap: 6px;
-  color: var(--clr-text-muted); font-size: 0.9rem; transition: var(--transition);
+  color: #d8e2dc; font-size: 0.9rem; transition: var(--transition);
 }
 .footer__list a:hover { color: var(--clr-gold); }
-.footer__list--contact li { color: var(--clr-text-muted); font-size: 0.9rem; }
+.footer__list--contact li { color: #d8e2dc; font-size: 0.9rem; }
 
 /* Footer logo image */
 .footer__logo-img {
@@ -59,7 +60,7 @@
   gap: 8px !important;
 }
 .footer__contact-row a {
-  color: var(--clr-text-muted);
+  color: #d8e2dc;
   font-size: 0.9rem;
   transition: var(--transition);
   direction: ltr;
@@ -91,7 +92,7 @@
 .footer__bottom {
   text-align: center; padding: var(--space-md);
   border-top: 1px solid var(--clr-border2);
-  color: var(--clr-text-faint); font-size: 0.82rem;
+  color: #b9c9c0; font-size: 0.82rem;
 }
 @media (max-width: 768px) {
   .footer__inner { grid-template-columns: 1fr; gap: var(--space-xl); }

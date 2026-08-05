@@ -1,9 +1,7 @@
 .props-page__header {
   padding-top: calc(var(--navbar-h) + var(--space-2xl));
   padding-bottom: var(--space-xl);
-  background:
-    radial-gradient(ellipse at 40% 0%, rgba(201,168,76,0.08) 0%, transparent 60%),
-    linear-gradient(to bottom, var(--clr-bg2), var(--clr-bg));
+  background: linear-gradient(125deg, #e6eee7, #f8f3eb 65%);
   border-bottom: 1px solid var(--clr-border2);
   position: relative;
   overflow: hidden;
@@ -30,7 +28,7 @@
 
 /* Filter bar */
 .filter-bar {
-  background: var(--clr-bg2);
+  background: #fffdf9;
   border-bottom: 1px solid var(--clr-border2);
   max-height: 0;
   overflow: hidden;
@@ -38,6 +36,7 @@
 }
 .filter-bar.open {
   max-height: 500px;
+  box-shadow: 0 10px 24px rgba(49,53,43,.05);
 }
 .filter-bar__inner { padding-block: var(--space-lg); }
 .filter-row {
@@ -53,7 +52,7 @@
 .filter-group { display: flex; flex-direction: column; gap: 6px; }
 .filter-label { font-size: 0.78rem; color: var(--clr-text-muted); font-weight: 600; }
 .filter-select, .filter-input {
-  background: var(--clr-surface);
+  background: #fff;
   border: 1px solid var(--clr-border2);
   color: var(--clr-text);
   border-radius: var(--radius-sm);
