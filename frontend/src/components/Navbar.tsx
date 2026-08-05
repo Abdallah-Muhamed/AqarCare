@@ -25,11 +25,6 @@ export default function Navbar() {
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="container navbar__inner">
-        {/* Logo */}
-        <Link to="/" className="navbar__logo">
-          <img src="/logo-navbar.png" alt="AqarCare" className="navbar__logo-img" />
-        </Link>
-
         {/* Desktop links */}
         <nav className="navbar__links">
           {links.map(l => (

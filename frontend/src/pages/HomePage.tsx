@@ -33,6 +33,7 @@ export default function HomePage() {
           {Array.from({ length: 20 }).map((_, i) => <span key={i} className="hero__particle" style={{ '--i': i } as React.CSSProperties} />)}
         </div>
         <div className="container hero__content">
+          <img src="/logo-navbar.png" alt="عقار كير" className="hero__brand-logo" />
           <div className="badge badge-gold hero__badge">
             <Star size={12} fill="currentColor" />
             منصة عقارية موثوقة في مصر
