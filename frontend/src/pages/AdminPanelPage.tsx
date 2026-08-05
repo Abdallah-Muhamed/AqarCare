@@ -25,7 +25,8 @@ interface Property {
   waterMeterNumber?: string;
   electricityMeterNumber?: string;
   gasMeterNumber?: string;
-  media: Array<{ id: number; mediaType: string; url: string; sortOrder: number }>;
+  // The admin list endpoint returns a single primary image URL, not a media array.
+  primaryImageUrl?: string | null;
 }
 
 interface FinishingPackage {
@@ -800,8 +801,8 @@ export default function AdminPanelPage() {
                   {filteredProperties.map((property) => (
                     <div key={property.id} className="admin-property-card">
                       <div className="property-image">
-                        {property.media.length > 0 ? (
-                          <img src={property.media[0].url} alt={property.title} />
+                        {property.primaryImageUrl ? (
+                          <img src={property.primaryImageUrl} alt={property.title} />
                         ) : (
                           <div className="no-image">🏠<span>لا توجد صورة</span></div>
                         )}
