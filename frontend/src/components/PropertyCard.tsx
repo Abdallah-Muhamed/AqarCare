@@ -1,12 +1,10 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BedDouble, Bath, Maximize2, MapPin, Star, Play } from 'lucide-react'
+import { BedDouble, Bath, Maximize2, MapPin, Star, Play, Building2 } from 'lucide-react'
 import type { PropertyListItem } from '../types'
 import './PropertyCard.css'
 
 interface Props { property: PropertyListItem }
-
-const IMAGE_PLACEHOLDER = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
-const VIDEO_PLACEHOLDER = 'https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=600&q=80'
 
 const listingLabel: Record<string, string> = { Sale: 'للبيع', Rent: 'للإيجار' }
 const typeLabel: Record<string, string>    = { Apartment: 'شقة', Villa: 'فيلا', Studio: 'استوديو', Office: 'مكتب', Shop: 'محل' }
@@ -19,13 +17,26 @@ const statusBadge: Record<string, { label: string; cls: string }> = {
 export default function PropertyCard({ property: p }: Props) {
   const st = statusBadge[p.status] ?? { label: p.status, cls: 'badge' }
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
-  const placeholder = isVideo ? VIDEO_PLACEHOLDER : IMAGE_PLACEHOLDER
+  const [imgError, setImgError] = useState(false)
   
   return (
     <Link to={`/properties/${p.id}`} className="prop-card card">
       {/* Image */}
       <div className="prop-card__img-wrap">
-        <img src={p.primaryImageUrl ?? placeholder} alt={p.title ?? ''} className="prop-card__img" loading="lazy" />
+        {imgError || !p.primaryImageUrl ? (
+          <div className="prop-card__placeholder">
+            <Building2 size={48} />
+            <span>صورة غير متوفرة</span>
+          </div>
+        ) : (
+          <img 
+            src={p.primaryImageUrl} 
+            alt={p.title ?? ''} 
+            className="prop-card__img" 
+            loading="lazy" 
+            onError={() => setImgError(true)}
+          />
+        )}
         {isVideo && (
           <div className="prop-card__video-indicator">
             <Play size={24} fill="white" />
