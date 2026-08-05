@@ -122,10 +122,12 @@ export default function PropertyDetailPage() {
                 <div className="detail-spec"><CheckCircle2 size={18} /><div><strong>{prop.installmentAvailable ? 'متاح' : 'غير متاح'}</strong><small>تقسيط</small></div></div>
               </div>
 
-              <div className="detail-description">
-                <h2 className="detail-section-title">وصف العقار</h2>
-                <p>{prop.description || 'لا يوجد وصف متاح لهذا العقار.'}</p>
-              </div>
+              {prop.description && (
+                <div className="detail-description">
+                  <h2 className="detail-section-title">وصف العقار</h2>
+                  <p>{prop.description}</p>
+                </div>
+              )}
 
               <div className="detail-info-grid">
                 <div className="detail-info-item">
@@ -135,6 +137,10 @@ export default function PropertyDetailPage() {
                 <div className="detail-info-item">
                   <MapPin size={14} />
                   <span>{[prop.city, prop.district].filter(Boolean).join(' — ') || 'الموقع غير محدد'}</span>
+                </div>
+                <div className="detail-info-item">
+                  <Tag size={14} />
+                  <span>رقم الوحدة: {prop.id}</span>
                 </div>
               </div>
             </div>
