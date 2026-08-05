@@ -15,16 +15,23 @@ export interface PropertyListItem {
   bathrooms: number
   propertyType: string
   listingType: string
+  finishingStatus: string
   city: string
   district: string
   status: string
   isFeatured: boolean
   primaryImageUrl: string | null
+  waterMeterNumber?: string
+  electricityMeterNumber?: string
+  gasMeterNumber?: string
 }
 
 export interface PropertyDetail extends PropertyListItem {
   description: string
   address: string
+  soldPrice?: number
+  finishingPackageId?: number
+  installmentAvailable: boolean
   isPublished: boolean
   createdAt: string
   updatedAt: string

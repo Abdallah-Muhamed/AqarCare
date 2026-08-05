@@ -8,6 +8,14 @@ import './PropertyDetailPage.css'
 
 const typeLabel: Record<string, string>     = { Apartment: 'شقة', Villa: 'فيلا', Studio: 'استوديو', Office: 'مكتب', Shop: 'محل' }
 const listingLabel: Record<string, string>  = { Sale: 'للبيع', Rent: 'للإيجار' }
+const finishingLabel: Record<string, string> = {
+  'Core-Shell':   'عظم',
+  'Semi-Finished': 'نص تشطيب',
+  'Finished':     'تشطيب',
+  'Lux':          'لوكس',
+  'Super-Lux':    'سوبر لوكس',
+  'High-Lux':     'هاي لوكس',
+}
 const statusLabel: Record<string, { label: string; cls: string }> = {
   Available: { label: 'متاح', cls: 'badge-green' },
   Reserved:  { label: 'محجوز', cls: 'badge-gold' },
@@ -94,6 +102,9 @@ export default function PropertyDetailPage() {
                 <div className="detail-spec"><Bath size={18} /><div><strong>{prop.bathrooms}</strong><small>حمامات</small></div></div>
                 <div className="detail-spec"><Maximize2 size={18} /><div><strong>{prop.areaSqm}</strong><small>م²</small></div></div>
                 <div className="detail-spec"><Tag size={18} /><div><strong>{typeLabel[prop.propertyType] ?? prop.propertyType}</strong><small>النوع</small></div></div>
+                {prop.finishingStatus && (
+                  <div className="detail-spec"><span style={{fontSize:'1.1rem'}}>🎨</span><div><strong>{finishingLabel[prop.finishingStatus] ?? prop.finishingStatus}</strong><small>التشطيب</small></div></div>
+                )}
               </div>
 
               <div className="detail-description">

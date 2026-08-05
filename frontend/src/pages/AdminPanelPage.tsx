@@ -22,6 +22,9 @@ interface Property {
   status: string;
   isFeatured: boolean;
   isPublished: boolean;
+  waterMeterNumber?: string;
+  electricityMeterNumber?: string;
+  gasMeterNumber?: string;
   media: Array<{ id: number; mediaType: string; url: string; sortOrder: number }>;
 }
 
@@ -40,6 +43,19 @@ interface FinishingPackage {
 // We use sessionStorage so the key is cleared when the browser tab closes.
 // ─────────────────────────────────────────────────────────────────────────────
 
+// Map English finishingStatus values → Arabic display labels
+const FINISHING_OPTIONS = [
+  { value: 'Core-Shell',   label: 'عظم' },
+  { value: 'Semi-Finished',label: 'نص تشطيب' },
+  { value: 'Finished',     label: 'تشطيب' },
+  { value: 'Lux',          label: 'لوكس' },
+  { value: 'Super-Lux',    label: 'سوبر لوكس' },
+  { value: 'High-Lux',     label: 'هاي لوكس' },
+];
+
+const finishingLabel = (val: string) =>
+  FINISHING_OPTIONS.find(o => o.value === val)?.label ?? val;
+
 export default function AdminPanelPage() {
   const [apiKey, setApiKey] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -49,6 +65,7 @@ export default function AdminPanelPage() {
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold'>('all');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -60,7 +77,7 @@ export default function AdminPanelPage() {
     bathrooms: '',
     propertyType: 'Apartment',
     listingType: 'Sale',
-    finishingStatus: 'Semi-Finished',
+    finishingStatus: 'Core-Shell',
     finishingPackageId: '',
     installmentAvailable: false,
     city: '',
@@ -69,6 +86,9 @@ export default function AdminPanelPage() {
     status: 'Available',
     isFeatured: false,
     isPublished: true,
+    waterMeterNumber: '',
+    electricityMeterNumber: '',
+    gasMeterNumber: '',
   });
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -76,7 +96,6 @@ export default function AdminPanelPage() {
 
   // ── helpers ──────────────────────────────────────────────────────────────────
 
-  /** Build auth headers using the key stored in state. */
   const auth = (key: string) => ({ 'X-Api-Key': key });
 
   const adminFetch = (path: string, options: RequestInit = {}, key = apiKey) =>
@@ -87,7 +106,6 @@ export default function AdminPanelPage() {
 
   // ── login ─────────────────────────────────────────────────────────────────────
 
-  /** Verify the key by sending it to the server — server is the only judge. */
   const handleLogin = async () => {
     if (!apiKey.trim()) { setError('من فضلك أدخل مفتاح API'); return; }
     setLoading(true);
@@ -97,7 +115,7 @@ export default function AdminPanelPage() {
         headers: auth(apiKey),
       });
       if (res.ok) {
-        sessionStorage.setItem('adminApiKey', apiKey); // cleared when tab closes
+        sessionStorage.setItem('adminApiKey', apiKey);
         setIsAuthenticated(true);
         fetchProperties(apiKey);
         fetchPackages();
@@ -113,7 +131,6 @@ export default function AdminPanelPage() {
     }
   };
 
-  // Restore session if the tab is still open
   useEffect(() => {
     const saved = sessionStorage.getItem('adminApiKey');
     if (saved) {
@@ -211,6 +228,9 @@ export default function AdminPanelPage() {
           bathrooms: parseInt(formData.bathrooms),
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
+          waterMeterNumber: formData.waterMeterNumber || null,
+          electricityMeterNumber: formData.electricityMeterNumber || null,
+          gasMeterNumber: formData.gasMeterNumber || null,
         }),
       });
 
@@ -272,8 +292,12 @@ export default function AdminPanelPage() {
       status: property.status,
       isFeatured: property.isFeatured,
       isPublished: property.isPublished,
+      waterMeterNumber: property.waterMeterNumber || '',
+      electricityMeterNumber: property.electricityMeterNumber || '',
+      gasMeterNumber: property.gasMeterNumber || '',
     });
     setShowForm(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const resetForm = () => {
@@ -287,7 +311,7 @@ export default function AdminPanelPage() {
       bedrooms: '',
       propertyType: 'Apartment',
       listingType: 'Sale',
-      finishingStatus: 'Semi-Finished',
+      finishingStatus: 'Core-Shell',
       finishingPackageId: '',
       installmentAvailable: false,
       city: '',
@@ -296,6 +320,9 @@ export default function AdminPanelPage() {
       status: 'Available',
       isFeatured: false,
       isPublished: true,
+      waterMeterNumber: '',
+      electricityMeterNumber: '',
+      gasMeterNumber: '',
     });
   };
 
@@ -306,24 +333,44 @@ export default function AdminPanelPage() {
     setProperties([]);
   };
 
+  // ── stats ─────────────────────────────────────────────────────────────────────
+
+  const stats = {
+    total: properties.length,
+    available: properties.filter(p => p.status === 'Available').length,
+    sold: properties.filter(p => p.status === 'Sold').length,
+    rented: properties.filter(p => p.status === 'Rented').length,
+    featured: properties.filter(p => p.isFeatured).length,
+  };
+
+  const filteredProperties = properties.filter(p => {
+    if (activeTab === 'available') return p.status === 'Available';
+    if (activeTab === 'sold') return p.status === 'Sold' || p.status === 'Rented';
+    return true;
+  });
+
   // ── render ────────────────────────────────────────────────────────────────────
 
   if (!isAuthenticated) {
     return (
       <div className="admin-login">
         <div className="login-card">
-          <h2>لوحة التحكم</h2>
+          <div className="login-card__icon">🔐</div>
+          <h2>لوحة تحكم عقار كير</h2>
+          <p className="login-card__sub">أدخل مفتاح الوصول للمتابعة</p>
           <input
             type="password"
-            placeholder="أدخل مفتاح API"
+            placeholder="مفتاح API"
             value={apiKey}
             onChange={(e) => setApiKey(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
           />
           <button onClick={handleLogin} disabled={loading}>
-            {loading ? 'جاري التحقق...' : 'دخول'}
+            {loading ? (
+              <><span className="btn-spinner" />جاري التحقق...</>
+            ) : 'دخول →'}
           </button>
-          {error && <p className="error">{error}</p>}
+          {error && <p className="error-msg">⚠ {error}</p>}
         </div>
       </div>
     );
@@ -331,286 +378,486 @@ export default function AdminPanelPage() {
 
   return (
     <div className="admin-panel">
-      <div className="admin-header">
-        <h1>لوحة التحكم — عقار كير</h1>
+      {/* ── Header ── */}
+      <header className="admin-header">
+        <div className="admin-header__brand">
+          <span className="admin-header__logo">🏠</span>
+          <div>
+            <h1>لوحة التحكم</h1>
+            <span className="admin-header__sub">عقار كير — نظام الإدارة</span>
+          </div>
+        </div>
         <div className="admin-header__actions">
           <button className="admin-add-btn" onClick={openAddForm}>
-            <span>+ إضافة عقار</span>
-            <span aria-hidden="true">+</span>
+            <span>＋</span> إضافة عقار
           </button>
-          <button onClick={handleLogout} className="logout-btn">خروج</button>
+          <button onClick={handleLogout} className="logout-btn">خروج ↩</button>
         </div>
-      </div>
+      </header>
 
-      <div className="admin-content">
-        <div className="admin-main">
+      <div className="admin-body">
+        {/* ── Stats Dashboard ── */}
+        {!showForm && (
+          <div className="admin-stats">
+            <div className="stat-card stat-card--total">
+              <div className="stat-card__icon">🏢</div>
+              <div className="stat-card__val">{stats.total}</div>
+              <div className="stat-card__lbl">إجمالي العقارات</div>
+            </div>
+            <div className="stat-card stat-card--available">
+              <div className="stat-card__icon">✅</div>
+              <div className="stat-card__val">{stats.available}</div>
+              <div className="stat-card__lbl">متاحة</div>
+            </div>
+            <div className="stat-card stat-card--sold">
+              <div className="stat-card__icon">🔑</div>
+              <div className="stat-card__val">{stats.sold}</div>
+              <div className="stat-card__lbl">مُباعة</div>
+            </div>
+            <div className="stat-card stat-card--rented">
+              <div className="stat-card__icon">🏷️</div>
+              <div className="stat-card__val">{stats.rented}</div>
+              <div className="stat-card__lbl">مُؤجرة</div>
+            </div>
+            <div className="stat-card stat-card--featured">
+              <div className="stat-card__icon">⭐</div>
+              <div className="stat-card__val">{stats.featured}</div>
+              <div className="stat-card__lbl">مميزة</div>
+            </div>
+          </div>
+        )}
+
+        <div className="admin-content">
           {showForm ? (
+            /* ── Property Form ── */
             <div className="property-form-container">
-              <h2>{editingProperty ? 'تعديل العقار' : 'إضافة عقار جديد'}</h2>
+              <div className="form-header">
+                <h2>{editingProperty ? '✏️ تعديل العقار' : '➕ إضافة عقار جديد'}</h2>
+                <button
+                  type="button"
+                  className="form-close-btn"
+                  onClick={() => { setShowForm(false); setEditingProperty(null); }}
+                >✕ إغلاق</button>
+              </div>
+
               <form onSubmit={handleSubmit} className="property-form">
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>العنوان</label>
-                    <input
-                      type="text"
-                      value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      required
-                    />
-                  </div>
 
-                  <div className="form-group">
-                    <label>السعر (جنيه)</label>
-                    <input
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      required
-                    />
-                  </div>
+                {/* Section: Basic Info */}
+                <div className="form-section">
+                  <h3 className="form-section__title">📋 المعلومات الأساسية</h3>
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <label>عنوان العقار <span className="required">*</span></label>
+                      <input
+                        type="text"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="مثال: شقة 3 غرف مدينة نصر"
+                        required
+                      />
+                    </div>
 
-                  <div className="form-group">
-                    <label>سعر البيع (إن وُجد)</label>
-                    <input
-                      type="number"
-                      value={formData.soldPrice}
-                      onChange={(e) => setFormData({ ...formData, soldPrice: e.target.value })}
-                      placeholder="اتركه فارغاً إن لم يُبَع"
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label>نوع العقار</label>
+                      <select
+                        value={formData.propertyType}
+                        onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+                      >
+                        <option value="Apartment">شقة</option>
+                        <option value="Villa">فيلا</option>
+                        <option value="Commercial">تجاري</option>
+                        <option value="Land">أرض</option>
+                        <option value="Studio">استوديو</option>
+                        <option value="Office">مكتب</option>
+                      </select>
+                    </div>
 
-                  <div className="form-group">
-                    <label>المساحة (م²)</label>
-                    <input
-                      type="number"
-                      value={formData.areaSqm}
-                      onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
-                      required
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label>نوع الإعلان</label>
+                      <select
+                        value={formData.listingType}
+                        onChange={(e) => setFormData({ ...formData, listingType: e.target.value })}
+                      >
+                        <option value="Sale">بيع</option>
+                        <option value="Rent">إيجار</option>
+                      </select>
+                    </div>
 
-                  <div className="form-group">
-                    <label>غرف النوم</label>
-                    <input
-                      type="number"
-                      value={formData.bedrooms}
-                      onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-                      required
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label>حالة التشطيب</label>
+                      <select
+                        value={formData.finishingStatus}
+                        onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
+                      >
+                        {FINISHING_OPTIONS.map(opt => (
+                          <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="form-group">
-                    <label>الحمامات</label>
-                    <input
-                      type="number"
-                      value={formData.bathrooms}
-                      onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
-                      required
-                    />
-                  </div>
+                    <div className="form-group">
+                      <label>باقة التشطيب</label>
+                      <select
+                        value={formData.finishingPackageId}
+                        onChange={(e) => setFormData({ ...formData, finishingPackageId: e.target.value })}
+                      >
+                        <option value="">بدون باقة</option>
+                        {packages.map((pkg) => (
+                          <option key={pkg.id} value={pkg.id}>
+                            {pkg.name} — {pkg.pricePerSqm.toLocaleString('ar-EG')} ج/م²
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                  <div className="form-group">
-                    <label>نوع العقار</label>
-                    <select
-                      value={formData.propertyType}
-                      onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
-                    >
-                      <option value="Apartment">شقة</option>
-                      <option value="Villa">فيلا</option>
-                      <option value="Commercial">تجاري</option>
-                      <option value="Land">أرض</option>
-                    </select>
+                    <div className="form-group">
+                      <label>الحالة</label>
+                      <select
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                      >
+                        <option value="Available">متاح</option>
+                        <option value="Sold">مباع</option>
+                        <option value="Rented">مؤجر</option>
+                        <option value="Reserved">محجوز</option>
+                      </select>
+                    </div>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <label>نوع الإعلان</label>
-                    <select
-                      value={formData.listingType}
-                      onChange={(e) => setFormData({ ...formData, listingType: e.target.value })}
-                    >
-                      <option value="Sale">بيع</option>
-                      <option value="Rent">إيجار</option>
-                    </select>
+                {/* Section: Pricing */}
+                <div className="form-section">
+                  <h3 className="form-section__title">💰 التسعير والمساحة</h3>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>السعر (جنيه) <span className="required">*</span></label>
+                      <input
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>سعر البيع الفعلي</label>
+                      <input
+                        type="number"
+                        value={formData.soldPrice}
+                        onChange={(e) => setFormData({ ...formData, soldPrice: e.target.value })}
+                        placeholder="اتركه فارغاً إن لم يُبَع"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>المساحة (م²) <span className="required">*</span></label>
+                      <input
+                        type="number"
+                        value={formData.areaSqm}
+                        onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
+                        placeholder="0"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>غرف النوم <span className="required">*</span></label>
+                      <input
+                        type="number"
+                        value={formData.bedrooms}
+                        onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
+                        min="0"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>الحمامات <span className="required">*</span></label>
+                      <input
+                        type="number"
+                        value={formData.bathrooms}
+                        onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                        min="0"
+                        required
+                      />
+                    </div>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <label>حالة التشطيب</label>
-                    <select
-                      value={formData.finishingStatus}
-                      onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
-                    >
-                      <option value="Semi-Finished">نصف تشطيب</option>
-                      <option value="Finished">مشطب</option>
-                      <option value="Super-Lux">سوبر لوكس</option>
-                    </select>
+                {/* Section: Location */}
+                <div className="form-section">
+                  <h3 className="form-section__title">📍 الموقع</h3>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label>المدينة <span className="required">*</span></label>
+                      <input
+                        type="text"
+                        value={formData.city}
+                        onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                        placeholder="مثال: القاهرة"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>الحي <span className="required">*</span></label>
+                      <input
+                        type="text"
+                        value={formData.district}
+                        onChange={(e) => setFormData({ ...formData, district: e.target.value })}
+                        placeholder="مثال: مدينة نصر"
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>العنوان التفصيلي <span className="required">*</span></label>
+                      <input
+                        type="text"
+                        value={formData.address}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="مثال: شارع عباس العقاد، بجوار..."
+                        required
+                      />
+                    </div>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <label>باقة التشطيب</label>
-                    <select
-                      value={formData.finishingPackageId}
-                      onChange={(e) => setFormData({ ...formData, finishingPackageId: e.target.value })}
-                    >
-                      <option value="">بدون</option>
-                      {packages.map((pkg) => (
-                        <option key={pkg.id} value={pkg.id}>
-                          {pkg.name} - {pkg.pricePerSqm} EGP/m²
-                        </option>
-                      ))}
-                    </select>
+                {/* Section: Utility Meters */}
+                <div className="form-section">
+                  <h3 className="form-section__title">🔢 أرقام العدادات</h3>
+                  <div className="form-grid">
+                    <div className="form-group">
+                      <label className="meter-label">
+                        <span className="meter-icon meter-icon--water">💧</span>
+                        عداد المياه
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.waterMeterNumber}
+                        onChange={(e) => setFormData({ ...formData, waterMeterNumber: e.target.value })}
+                        placeholder="رقم عداد المياه"
+                        className="meter-input meter-input--water"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="meter-label">
+                        <span className="meter-icon meter-icon--electricity">⚡</span>
+                        عداد الكهرباء
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.electricityMeterNumber}
+                        onChange={(e) => setFormData({ ...formData, electricityMeterNumber: e.target.value })}
+                        placeholder="رقم عداد الكهرباء"
+                        className="meter-input meter-input--electricity"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="meter-label">
+                        <span className="meter-icon meter-icon--gas">🔥</span>
+                        عداد الغاز
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.gasMeterNumber}
+                        onChange={(e) => setFormData({ ...formData, gasMeterNumber: e.target.value })}
+                        placeholder="رقم عداد الغاز"
+                        className="meter-input meter-input--gas"
+                      />
+                    </div>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <label>المدينة</label>
-                    <input
-                      type="text"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      required
-                    />
+                {/* Section: Description & Media */}
+                <div className="form-section">
+                  <h3 className="form-section__title">📝 الوصف والوسائط</h3>
+                  <div className="form-grid">
+                    <div className="form-group full-width">
+                      <label>الوصف <span className="required">*</span></label>
+                      <textarea
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        rows={5}
+                        placeholder="اكتب وصفاً تفصيلياً للعقار..."
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>الصور والفيديو</label>
+                      <div className="file-upload-area">
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*,video/*"
+                          onChange={(e) => setMediaFiles(Array.from(e.target.files || []))}
+                          id="media-upload"
+                          className="file-upload-input"
+                        />
+                        <label htmlFor="media-upload" className="file-upload-label">
+                          <span>📁</span>
+                          {mediaFiles.length > 0
+                            ? `${mediaFiles.length} ملف تم اختياره`
+                            : 'اضغط لاختيار الصور أو الفيديو'}
+                        </label>
+                      </div>
+                      {uploading && <p className="uploading">⏳ جاري رفع الوسائط...</p>}
+                    </div>
                   </div>
+                </div>
 
-                  <div className="form-group">
-                    <label>الحي</label>
-                    <input
-                      type="text"
-                      value={formData.district}
-                      onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>العنوان التفصيلي</label>
-                    <input
-                      type="text"
-                      value={formData.address}
-                      onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label>الحالة</label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    >
-                      <option value="Available">متاح</option>
-                      <option value="Sold">مباع</option>
-                      <option value="Rented">مؤجر</option>
-                      <option value="Reserved">محجوز</option>
-                    </select>
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label>الوصف</label>
-                    <textarea
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      rows={4}
-                      required
-                    />
-                  </div>
-
-                  <div className="form-group full-width">
-                    <label>الصور والفيديو</label>
-                    <input
-                      type="file"
-                      multiple
-                      accept="image/*,video/*"
-                      onChange={(e) => setMediaFiles(Array.from(e.target.files || []))}
-                    />
-                    {uploading && <p className="uploading">جاري رفع الوسائط...</p>}
-                  </div>
-
-                  <div className="form-group checkbox-group">
-                    <label>
+                {/* Section: Flags */}
+                <div className="form-section">
+                  <h3 className="form-section__title">⚙️ الإعدادات</h3>
+                  <div className="checkbox-row">
+                    <label className="checkbox-card">
                       <input
                         type="checkbox"
                         checked={formData.installmentAvailable}
                         onChange={(e) => setFormData({ ...formData, installmentAvailable: e.target.checked })}
                       />
-                      متاح بالتقسيط
+                      <span className="checkbox-card__icon">💳</span>
+                      <span>متاح بالتقسيط</span>
                     </label>
-                  </div>
-
-                  <div className="form-group checkbox-group">
-                    <label>
+                    <label className="checkbox-card">
                       <input
                         type="checkbox"
                         checked={formData.isFeatured}
                         onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                       />
-                      عقار مميز
+                      <span className="checkbox-card__icon">⭐</span>
+                      <span>عقار مميز</span>
                     </label>
-                  </div>
-
-                  <div className="form-group checkbox-group">
-                    <label>
+                    <label className="checkbox-card">
                       <input
                         type="checkbox"
                         checked={formData.isPublished}
                         onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
                       />
-                      منشور
+                      <span className="checkbox-card__icon">📢</span>
+                      <span>منشور</span>
                     </label>
                   </div>
                 </div>
 
+                {error && <p className="error-msg">⚠ {error}</p>}
+
                 <div className="form-actions">
-                  <button type="submit" disabled={loading}>
-                    {loading ? 'جاري الحفظ...' : editingProperty ? 'تحديث' : 'إضافة'}
+                  <button type="submit" disabled={loading} className="btn-save">
+                    {loading ? (
+                      <><span className="btn-spinner" /> جاري الحفظ...</>
+                    ) : editingProperty ? '💾 تحديث العقار' : '✅ إضافة العقار'}
                   </button>
-                  <button type="button" onClick={() => { setShowForm(false); setEditingProperty(null); }}>
+                  <button
+                    type="button"
+                    className="btn-cancel"
+                    onClick={() => { setShowForm(false); setEditingProperty(null); }}
+                  >
                     إلغاء
                   </button>
                 </div>
-
-                {error && <p className="error">{error}</p>}
               </form>
             </div>
           ) : (
-            <div className="properties-list">
-              <h2>العقارات ({properties.length})</h2>
-              <div className="properties-grid">
-                {properties.map((property) => (
-                  <div key={property.id} className="admin-property-card">
-                    <div className="property-image">
-                      {property.media.length > 0 ? (
-                        <img src={property.media[0].url} alt={property.title} />
-                      ) : (
-                        <div className="no-image">لا توجد صورة</div>
-                      )}
-                    </div>
-                    <div className="property-info">
-                      <h3>{property.title}</h3>
-                      <p className="price">{property.price.toLocaleString('ar-EG')} جنيه</p>
-                      <p className="location">{property.city}، {property.district}</p>
-                      <p className="details">
-                        {property.bedrooms} غرف • {property.bathrooms} حمام • {property.areaSqm} م²
-                      </p>
-                      <div className="property-badges">
-                        <span className={`admin-badge ${property.listingType.toLowerCase()}`}>
-                          {property.listingType === 'Sale' ? 'بيع' : 'إيجار'}
-                        </span>
-                        <span className={`admin-badge ${property.status.toLowerCase()}`}>
-                          {property.status === 'Available' ? 'متاح' :
-                           property.status === 'Sold' ? 'مباع' :
-                           property.status === 'Rented' ? 'مؤجر' : 'محجوز'}
-                        </span>
-                        {property.isFeatured && <span className="admin-badge featured">مميز</span>}
-                      </div>
-                      <div className="property-actions">
-                        <button onClick={() => handleEdit(property)}>تعديل</button>
-                        <button onClick={() => handleDelete(property.id)} className="delete-btn">
-                          حذف
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            /* ── Properties List ── */
+            <div className="properties-section">
+              <div className="properties-section__header">
+                <h2>العقارات</h2>
+                <div className="filter-tabs">
+                  <button
+                    className={`filter-tab ${activeTab === 'all' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('all')}
+                  >
+                    الكل ({stats.total})
+                  </button>
+                  <button
+                    className={`filter-tab ${activeTab === 'available' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('available')}
+                  >
+                    متاحة ({stats.available})
+                  </button>
+                  <button
+                    className={`filter-tab ${activeTab === 'sold' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('sold')}
+                  >
+                    مباعة/مؤجرة ({stats.sold + stats.rented})
+                  </button>
+                </div>
               </div>
+
+              {filteredProperties.length === 0 ? (
+                <div className="empty-admin">
+                  <span>🏠</span>
+                  <p>لا توجد عقارات في هذه الفئة</p>
+                  <button className="admin-add-btn" onClick={openAddForm}>+ إضافة أول عقار</button>
+                </div>
+              ) : (
+                <div className="properties-grid">
+                  {filteredProperties.map((property) => (
+                    <div key={property.id} className="admin-property-card">
+                      <div className="property-image">
+                        {property.media.length > 0 ? (
+                          <img src={property.media[0].url} alt={property.title} />
+                        ) : (
+                          <div className="no-image">🏠<span>لا توجد صورة</span></div>
+                        )}
+                        <div className="property-image__badges">
+                          <span className={`admin-badge admin-badge--${property.listingType.toLowerCase()}`}>
+                            {property.listingType === 'Sale' ? 'بيع' : 'إيجار'}
+                          </span>
+                          {property.isFeatured && <span className="admin-badge admin-badge--featured">⭐ مميز</span>}
+                        </div>
+                      </div>
+                      <div className="property-info">
+                        <h3>{property.title}</h3>
+                        <p className="price">{property.price.toLocaleString('ar-EG')} جنيه</p>
+                        <p className="location">📍 {property.city}، {property.district}</p>
+                        <p className="details">
+                          🛏 {property.bedrooms} غرف &nbsp;•&nbsp;
+                          🚿 {property.bathrooms} حمام &nbsp;•&nbsp;
+                          📐 {property.areaSqm} م²
+                        </p>
+                        <p className="finishing">
+                          🎨 {finishingLabel(property.finishingStatus)}
+                        </p>
+
+                        {/* Meter numbers */}
+                        {(property.waterMeterNumber || property.electricityMeterNumber || property.gasMeterNumber) && (
+                          <div className="meter-numbers">
+                            {property.waterMeterNumber && (
+                              <span className="meter-num meter-num--water">💧 {property.waterMeterNumber}</span>
+                            )}
+                            {property.electricityMeterNumber && (
+                              <span className="meter-num meter-num--electricity">⚡ {property.electricityMeterNumber}</span>
+                            )}
+                            {property.gasMeterNumber && (
+                              <span className="meter-num meter-num--gas">🔥 {property.gasMeterNumber}</span>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="property-badges">
+                          <span className={`admin-badge admin-badge--status-${property.status.toLowerCase()}`}>
+                            {property.status === 'Available' ? 'متاح' :
+                             property.status === 'Sold' ? 'مباع' :
+                             property.status === 'Rented' ? 'مؤجر' : 'محجوز'}
+                          </span>
+                          {!property.isPublished && <span className="admin-badge admin-badge--draft">مسودة</span>}
+                        </div>
+
+                        <div className="property-actions">
+                          <button className="btn-edit" onClick={() => handleEdit(property)}>✏️ تعديل</button>
+                          <button className="btn-delete" onClick={() => handleDelete(property.id)}>🗑 حذف</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -618,7 +865,7 @@ export default function AdminPanelPage() {
 
       {!showForm && (
         <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار">
-          +
+          ＋
         </button>
       )}
     </div>
