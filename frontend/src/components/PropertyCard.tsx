@@ -18,25 +18,19 @@ export default function PropertyCard({ property: p }: Props) {
   const st = statusBadge[p.status] ?? { label: p.status, cls: 'badge' }
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
   const [imgError, setImgError] = useState(false)
+  const placeholderImage = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=600&q=80'
   
   return (
     <Link to={`/properties/${p.id}`} className="prop-card card">
       {/* Image */}
       <div className="prop-card__img-wrap">
-        {imgError || !p.primaryImageUrl ? (
-          <div className="prop-card__placeholder">
-            <Building2 size={48} />
-            <span>صورة غير متوفرة</span>
-          </div>
-        ) : (
-          <img 
-            src={p.primaryImageUrl} 
-            alt={p.title ?? ''} 
-            className="prop-card__img" 
-            loading="lazy" 
-            onError={() => setImgError(true)}
-          />
-        )}
+        <img 
+          src={imgError || !p.primaryImageUrl ? placeholderImage : p.primaryImageUrl} 
+          alt={p.title ?? ''} 
+          className="prop-card__img" 
+          loading="lazy" 
+          onError={() => setImgError(true)}
+        />
         {isVideo && (
           <div className="prop-card__video-indicator">
             <Play size={24} fill="white" />
