@@ -1,4 +1,19 @@
-.detail-page { padding-top: var(--navbar-h); }
+.detail-page {
+  padding-top: var(--navbar-h);
+  background: var(--clr-bg);
+}
+
+/* Gradient background for detail pages */
+.detail-page::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 80% 10%, rgba(201,168,76,0.05) 0%, transparent 50%),
+    radial-gradient(ellipse at 20% 90%, rgba(59,130,246,0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
 
 .detail-page__breadcrumb {
   background: var(--clr-bg2);
