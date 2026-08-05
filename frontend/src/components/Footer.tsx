@@ -11,6 +11,7 @@ export default function Footer() {
         <div className="footer__brand">
           <div className="footer__logo">
             <img src="/logo.png" alt="AqarCare" className="footer__logo-img" />
+            <span className="footer__brand-name">Aqar Care</span>
           </div>
           <p className="footer__tagline">
             منصة عقارية متكاملة لتسويق الوحدات السكنية وخدمات التشطيب الفاخرة في مصر.
