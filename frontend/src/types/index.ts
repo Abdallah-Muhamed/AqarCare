@@ -18,6 +18,8 @@ export interface PropertyListItem {
   finishingStatus: string | null
   city: string | null
   district: string | null
+  address: string | null
+  detailedAddress: string | null
   status: string
   isFeatured: boolean
   primaryImageUrl: string | null

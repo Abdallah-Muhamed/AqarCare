@@ -134,6 +134,7 @@ public class PropertyService
             City = request.City,
             District = request.District,
             Address = request.Address,
+            DetailedAddress = request.DetailedAddress,
             Status = string.IsNullOrWhiteSpace(request.Status) ? "Available" : request.Status,
             IsFeatured = request.IsFeatured,
             IsPublished = request.IsPublished,
@@ -180,6 +181,7 @@ public class PropertyService
         entity.City = request.City;
         entity.District = request.District;
         entity.Address = request.Address;
+        entity.DetailedAddress = request.DetailedAddress;
         entity.Status = string.IsNullOrWhiteSpace(request.Status) ? "Available" : request.Status;
         entity.IsFeatured = request.IsFeatured;
         entity.IsPublished = request.IsPublished;
@@ -255,6 +257,8 @@ public class PropertyService
             x.FloorNumber,
             x.City,
             x.District,
+            x.Address,
+            x.DetailedAddress,
             x.Status,
             x.IsFeatured,
             x.Media.OrderBy(m => m.SortOrder).FirstOrDefault(m => m.MediaType == "Image")?.Url
@@ -284,6 +288,7 @@ public class PropertyService
             x.City,
             x.District,
             x.Address,
+            x.DetailedAddress,
             x.Status,
             x.IsFeatured,
             x.IsPublished,

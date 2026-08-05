@@ -88,6 +88,16 @@ export default function PropertyDetailPage() {
                   <MapPin size={15} />
                   {prop.address || [prop.district, prop.city].filter(Boolean).join('، ') || 'غير محدد'}
                 </div>
+                {prop.detailedAddress && (
+                  <div className="detail-detailed-address">
+                    <MapPin size={15} />
+                    <span>{prop.detailedAddress}</span>
+                  </div>
+                )}
+                <div className="detail-id">
+                  <Tag size={15} />
+                  <span>رقم الوحدة: {prop.id}</span>
+                </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                   <span className={`badge ${st.cls}`}>{st.label}</span>
                   {prop.listingType && (
@@ -138,10 +148,6 @@ export default function PropertyDetailPage() {
                   <MapPin size={14} />
                   <span>{[prop.city, prop.district].filter(Boolean).join(' — ') || 'الموقع غير محدد'}</span>
                 </div>
-                <div className="detail-info-item">
-                  <Tag size={14} />
-                  <span>رقم الوحدة: {prop.id}</span>
-                </div>
               </div>
             </div>
           </div>
@@ -166,7 +172,6 @@ export default function PropertyDetailPage() {
 
               <div className="price-card__features">
                 <div className="price-card__feature"><CheckCircle2 size={15} />متابعة مستمرة</div>
-                <div className="price-card__feature"><CheckCircle2 size={15} />توثيق قانوني</div>
                 <div className="price-card__feature"><CheckCircle2 size={15} />إمكانية التشطيب</div>
               </div>
 

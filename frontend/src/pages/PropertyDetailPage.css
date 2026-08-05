@@ -68,6 +68,16 @@
   display: flex; align-items: center; gap: 6px;
   color: var(--clr-card-muted); font-size: 0.9rem;
 }
+.detail-id {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--clr-gold); font-size: 0.9rem;
+  font-weight: 600;
+}
+.detail-detailed-address {
+  display: flex; align-items: center; gap: 6px;
+  color: var(--clr-card-muted); font-size: 0.85rem;
+  margin-top: 4px;
+}
 
 .detail-specs {
   display: grid;

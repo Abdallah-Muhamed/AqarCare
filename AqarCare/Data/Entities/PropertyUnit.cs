@@ -20,6 +20,7 @@ public class PropertyUnit
     public string? City { get; set; }
     public string? District { get; set; }
     public string? Address { get; set; }
+    public string? DetailedAddress { get; set; }
     public string Status { get; set; } = "Available"; // Available, Sold, Unavailable, Reserved, Rented
     public bool IsFeatured { get; set; }
     public bool IsPublished { get; set; }
