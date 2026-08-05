@@ -21,7 +21,7 @@ export default function PropertyCard({ property: p }: Props) {
     <Link to={`/properties/${p.id}`} className="prop-card card">
       {/* Image */}
       <div className="prop-card__img-wrap">
-        <img src={p.primaryImageUrl ?? PLACEHOLDER} alt={p.title} className="prop-card__img" loading="lazy" />
+        <img src={p.primaryImageUrl ?? PLACEHOLDER} alt={p.title ?? ''} className="prop-card__img" loading="lazy" />
         <div className="prop-card__overlay" />
         {p.isFeatured && (
           <div className="prop-card__featured"><Star size={12} fill="currentColor" />مميز</div>

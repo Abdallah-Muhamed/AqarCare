@@ -778,7 +778,7 @@ export default function AdminPanelPage() {
                     <div key={property.id} className="admin-property-card">
                       <div className="property-image">
                         {property.primaryImageUrl ? (
-                          <img src={property.primaryImageUrl} alt={property.title} />
+                          <img src={property.primaryImageUrl} alt={property.title ?? ''} />
                         ) : (
                           <div className="no-image">🏠<span>لا توجد صورة</span></div>
                         )}
