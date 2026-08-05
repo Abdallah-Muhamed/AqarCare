@@ -26,7 +26,8 @@ public record PropertyListItemDto(
     string? PrimaryImageUrl,
     bool WaterMeterAvailable,
     bool ElectricityMeterAvailable,
-    bool GasMeterAvailable);
+    bool GasMeterAvailable,
+    bool ElevatorAvailable);
 
 public record PropertyDetailDto(
     int Id,
@@ -55,6 +56,7 @@ public record PropertyDetailDto(
     bool WaterMeterAvailable,
     bool ElectricityMeterAvailable,
     bool GasMeterAvailable,
+    bool ElevatorAvailable,
     IReadOnlyList<PropertyMediaDto> Media);
 
 public record CreatePropertyRequest(
@@ -78,7 +80,8 @@ public record CreatePropertyRequest(
     bool IsPublished,
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
-    bool GasMeterAvailable = false);
+    bool GasMeterAvailable = false,
+    bool ElevatorAvailable = false);
 
 public record UpdatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -102,7 +105,8 @@ public record UpdatePropertyRequest(
     bool IsPublished,
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
-    bool GasMeterAvailable = false);
+    bool GasMeterAvailable = false,
+    bool ElevatorAvailable = false);
 
 public record AddPropertyMediaRequest(
     string MediaType,

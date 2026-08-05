@@ -24,6 +24,7 @@ export interface PropertyListItem {
   waterMeterAvailable: boolean
   electricityMeterAvailable: boolean
   gasMeterAvailable: boolean
+  elevatorAvailable: boolean
 }
 
 export interface PropertyDetail extends PropertyListItem {

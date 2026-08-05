@@ -28,6 +28,7 @@ public class PropertyUnit
     public bool WaterMeterAvailable { get; set; }
     public bool ElectricityMeterAvailable { get; set; }
     public bool GasMeterAvailable { get; set; }
+    public bool ElevatorAvailable { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 

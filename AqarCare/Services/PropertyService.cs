@@ -140,6 +140,7 @@ public class PropertyService
             WaterMeterAvailable = request.WaterMeterAvailable,
             ElectricityMeterAvailable = request.ElectricityMeterAvailable,
             GasMeterAvailable = request.GasMeterAvailable,
+            ElevatorAvailable = request.ElevatorAvailable,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -185,6 +186,7 @@ public class PropertyService
         entity.WaterMeterAvailable = request.WaterMeterAvailable;
         entity.ElectricityMeterAvailable = request.ElectricityMeterAvailable;
         entity.GasMeterAvailable = request.GasMeterAvailable;
+        entity.ElevatorAvailable = request.ElevatorAvailable;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(ct);
@@ -259,7 +261,8 @@ public class PropertyService
                 ?? x.Media.OrderBy(m => m.SortOrder).FirstOrDefault()?.Url,
             x.WaterMeterAvailable,
             x.ElectricityMeterAvailable,
-            x.GasMeterAvailable);
+            x.GasMeterAvailable,
+            x.ElevatorAvailable);
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(
@@ -289,6 +292,7 @@ public class PropertyService
             x.WaterMeterAvailable,
             x.ElectricityMeterAvailable,
             x.GasMeterAvailable,
+            x.ElevatorAvailable,
             x.Media
                 .OrderBy(m => m.SortOrder)
                 .Select(m => new PropertyMediaDto(m.Id, m.MediaType, m.Url, m.SortOrder))

@@ -26,6 +26,7 @@ interface Property {
   waterMeterAvailable?: boolean;
   electricityMeterAvailable?: boolean;
   gasMeterAvailable?: boolean;
+  elevatorAvailable?: boolean;
   // The admin list endpoint returns a single primary image URL, not a media array.
   primaryImageUrl?: string | null;
 }
@@ -92,6 +93,7 @@ export default function AdminPanelPage() {
     waterMeterAvailable: false,
     electricityMeterAvailable: false,
     gasMeterAvailable: false,
+    elevatorAvailable: false,
   });
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
@@ -297,6 +299,7 @@ export default function AdminPanelPage() {
       waterMeterAvailable: property.waterMeterAvailable ?? false,
       electricityMeterAvailable: property.electricityMeterAvailable ?? false,
       gasMeterAvailable: property.gasMeterAvailable ?? false,
+      elevatorAvailable: property.elevatorAvailable ?? false,
     });
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -326,6 +329,7 @@ export default function AdminPanelPage() {
       waterMeterAvailable: false,
       electricityMeterAvailable: false,
       gasMeterAvailable: false,
+      elevatorAvailable: false,
     });
   };
 
@@ -661,6 +665,15 @@ export default function AdminPanelPage() {
                       />
                       <span className="checkbox-card__icon">🔥</span>
                       <span>عداد غاز متاح</span>
+                    </label>
+                    <label className="checkbox-card">
+                      <input
+                        type="checkbox"
+                        checked={formData.elevatorAvailable}
+                        onChange={(e) => setFormData({ ...formData, elevatorAvailable: e.target.checked })}
+                      />
+                      <span className="checkbox-card__icon">🛗</span>
+                      <span>يوجد أسانسير</span>
                     </label>
                   </div>
                 </div>
