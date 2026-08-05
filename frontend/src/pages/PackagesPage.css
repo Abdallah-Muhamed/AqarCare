@@ -22,6 +22,9 @@
   gap: var(--space-md);
   position: relative;
 }
+.pkgs-page__header .section-title { color: #20382e; text-shadow: 0 1px 0 rgba(255,255,255,.65); }
+.pkgs-page__header .section-title span { color: #9b5d29; }
+.pkgs-page__header .section-subtitle { color: #40574a; font-weight: 600; }
 .pkgs-page__badge {
   display: flex;
   align-items: center;

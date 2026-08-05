@@ -934,3 +934,29 @@
   .property-form-container { padding: var(--space-md); }
   .form-section { padding: var(--space-md); }
 }
+
+/* Light, focused workspace treatment for the management area */
+.admin-login { background: linear-gradient(135deg, #e5eee7, #f6eee2); }
+.login-card { background: #fffdf9; border: 1px solid #ddd3c3; box-shadow: 0 24px 55px rgba(42,54,44,.14); }
+.login-card h2, .admin-header h1, .properties-section__header h2, .form-header h2 { color: #25312c; }
+.login-card__sub, .admin-header__sub { color: #667068; }
+.login-card input, .form-group input, .form-group select, .form-group textarea { background: #fff; border-color: #d8cfbd; color: #25312c; }
+.login-card button, .admin-add-btn, .btn-save, .admin-fab { background: #2d4a3e; color: #fff; box-shadow: 0 8px 18px rgba(45,74,62,.2); }
+.admin-panel { background: #f7f5f0; min-height: 100vh; }
+.admin-header { background: rgba(255,253,249,.94); border-bottom: 1px solid #e2dacd; box-shadow: 0 3px 14px rgba(45,48,35,.05); }
+.admin-header__logo { background: #e7efe9; color: #2d4a3e; border-radius: 12px; padding: .45rem; }
+.logout-btn, .btn-cancel { color: #48574e; background: #fff; border-color: #d8cfbd; }
+.admin-body { max-width: 1280px; margin: auto; }
+.stat-card { background: #fffdf9; border: 1px solid #e0d7c9; box-shadow: 0 9px 22px rgba(45,48,35,.07); }
+.stat-card:hover { box-shadow: 0 16px 30px rgba(45,48,35,.12); }
+.stat-card__val { color: #2d4a3e; }.stat-card__lbl { color: #667068; }
+.property-form-container, .form-section { background: #fffdf9; border-color: #e0d7c9; box-shadow: 0 9px 22px rgba(45,48,35,.06); }
+.form-section__title { color: #2d4a3e; border-color: #eadfce; }
+.checkbox-card { background: #fff; border-color: #ded5c8; color: #445148; }
+.checkbox-card:has(input:checked) { background: #e9f1eb; border-color: #759686; }
+.filter-tabs { background: #ebe9e2; border-color: #ded8cc; }.filter-tab { color: #536158; }.filter-tab.active { background: #2d4a3e; color: #fff; }.filter-tab:not(.active):hover { background: #fff; color: #2d4a3e; }
+.admin-property-card { background: #fffdf9; border-color: #ded5c8; box-shadow: 0 10px 24px rgba(45,48,35,.08); }.admin-property-card:hover { border-color: #c8a77d; box-shadow: 0 18px 35px rgba(45,48,35,.14); }
+.property-image { background: #e9e5db; }.property-info h3 { color: #25312c; }.property-info .price { color: #2d4a3e; }.property-info .location, .property-info .finishing { color: #667068; }.property-info .details { color: #778178; }
+.btn-edit { background: #edf4ee; color: #2d4a3e; border-color: #a8c0af; }.btn-edit:hover { background: #2d4a3e; color: #fff; }.btn-delete { background: #fff1ef; color: #a84239; border-color: #efc5c0; }.btn-delete:hover { background: #b34b42; }
+.empty-admin { background: #fffdf9; border-color: #d8cfbd; color: #667068; }.error-msg { color: #a84239; background: #fff1ef; border-color: #efc5c0; }
+@media (max-width: 768px) { .admin-header { position: sticky; top: 0; z-index: 10; }.admin-header__actions { gap: .4rem; }.admin-add-btn { padding: .58rem .75rem; }.logout-btn { padding: .55rem .65rem; }.admin-body { padding: 1rem; }.stat-card { border-radius: 14px; }.property-form-container { border-radius: 18px; } }
