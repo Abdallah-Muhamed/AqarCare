@@ -18,11 +18,15 @@ public record PropertyListItemDto(
     string ListingType,
     string FinishingStatus,
     bool InstallmentAvailable,
+    int? FloorNumber,
     string City,
     string District,
     string Status,
     bool IsFeatured,
-    string? PrimaryImageUrl);
+    string? PrimaryImageUrl,
+    string? WaterMeterNumber,
+    string? ElectricityMeterNumber,
+    string? GasMeterNumber);
 
 public record PropertyDetailDto(
     int Id,
@@ -39,6 +43,7 @@ public record PropertyDetailDto(
     int? FinishingPackageId,
     string? FinishingPackageName,
     bool InstallmentAvailable,
+    int? FloorNumber,
     string City,
     string District,
     string Address,
@@ -47,6 +52,9 @@ public record PropertyDetailDto(
     bool IsPublished,
     DateTime CreatedAt,
     DateTime UpdatedAt,
+    string? WaterMeterNumber,
+    string? ElectricityMeterNumber,
+    string? GasMeterNumber,
     IReadOnlyList<PropertyMediaDto> Media);
 
 public record CreatePropertyRequest(
@@ -61,12 +69,16 @@ public record CreatePropertyRequest(
     [Required][MaxLength(50)] string FinishingStatus,
     int? FinishingPackageId,
     bool InstallmentAvailable,
+    int? FloorNumber,
     [Required][MaxLength(100)] string City,
     [MaxLength(100)] string District,
     [MaxLength(300)] string Address,
     [Required][MaxLength(20)] string Status,
     bool IsFeatured,
-    bool IsPublished);
+    bool IsPublished,
+    [MaxLength(50)] string? WaterMeterNumber = null,
+    [MaxLength(50)] string? ElectricityMeterNumber = null,
+    [MaxLength(50)] string? GasMeterNumber = null);
 
 public record UpdatePropertyRequest(
     [Required][MaxLength(200)] string Title,
@@ -81,12 +93,16 @@ public record UpdatePropertyRequest(
     [Required][MaxLength(50)] string FinishingStatus,
     int? FinishingPackageId,
     bool InstallmentAvailable,
+    int? FloorNumber,
     [Required][MaxLength(100)] string City,
     [MaxLength(100)] string District,
     [MaxLength(300)] string Address,
     [Required][MaxLength(20)] string Status,
     bool IsFeatured,
-    bool IsPublished);
+    bool IsPublished,
+    [MaxLength(50)] string? WaterMeterNumber = null,
+    [MaxLength(50)] string? ElectricityMeterNumber = null,
+    [MaxLength(50)] string? GasMeterNumber = null);
 
 public record AddPropertyMediaRequest(
     string MediaType,

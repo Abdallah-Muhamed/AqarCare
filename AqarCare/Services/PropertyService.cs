@@ -130,12 +130,16 @@ public class PropertyService
             FinishingStatus = request.FinishingStatus,
             FinishingPackageId = request.FinishingPackageId,
             InstallmentAvailable = request.InstallmentAvailable,
+            FloorNumber = request.FloorNumber,
             City = request.City,
             District = request.District,
             Address = request.Address,
             Status = request.Status,
             IsFeatured = request.IsFeatured,
             IsPublished = request.IsPublished,
+            WaterMeterNumber = request.WaterMeterNumber,
+            ElectricityMeterNumber = request.ElectricityMeterNumber,
+            GasMeterNumber = request.GasMeterNumber,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -171,12 +175,16 @@ public class PropertyService
         entity.FinishingStatus = request.FinishingStatus;
         entity.FinishingPackageId = request.FinishingPackageId;
         entity.InstallmentAvailable = request.InstallmentAvailable;
+        entity.FloorNumber = request.FloorNumber;
         entity.City = request.City;
         entity.District = request.District;
         entity.Address = request.Address;
         entity.Status = request.Status;
         entity.IsFeatured = request.IsFeatured;
         entity.IsPublished = request.IsPublished;
+        entity.WaterMeterNumber = request.WaterMeterNumber;
+        entity.ElectricityMeterNumber = request.ElectricityMeterNumber;
+        entity.GasMeterNumber = request.GasMeterNumber;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(ct);
@@ -242,12 +250,16 @@ public class PropertyService
             x.ListingType,
             x.FinishingStatus,
             x.InstallmentAvailable,
+            x.FloorNumber,
             x.City,
             x.District,
             x.Status,
             x.IsFeatured,
             x.Media.OrderBy(m => m.SortOrder).FirstOrDefault(m => m.MediaType == "Image")?.Url
-                ?? x.Media.OrderBy(m => m.SortOrder).FirstOrDefault()?.Url);
+                ?? x.Media.OrderBy(m => m.SortOrder).FirstOrDefault()?.Url,
+            x.WaterMeterNumber,
+            x.ElectricityMeterNumber,
+            x.GasMeterNumber);
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(
@@ -265,6 +277,7 @@ public class PropertyService
             x.FinishingPackageId,
             x.FinishingPackage?.Name,
             x.InstallmentAvailable,
+            x.FloorNumber,
             x.City,
             x.District,
             x.Address,
@@ -273,6 +286,9 @@ public class PropertyService
             x.IsPublished,
             x.CreatedAt,
             x.UpdatedAt,
+            x.WaterMeterNumber,
+            x.ElectricityMeterNumber,
+            x.GasMeterNumber,
             x.Media
                 .OrderBy(m => m.SortOrder)
                 .Select(m => new PropertyMediaDto(m.Id, m.MediaType, m.Url, m.SortOrder))
