@@ -367,8 +367,8 @@
 }
 
 .form-group select option {
-  background: #1e293b;
-  color: var(--clr-text);
+  background: #fffdf9;
+  color: #25312c;
 }
 
 .form-group textarea {
