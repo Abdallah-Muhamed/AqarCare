@@ -103,7 +103,6 @@ export default function MapPickerModal({
   const [currentLngLat, setCurrentLngLat] = useState<{ lng: number; lat: number } | null>(null)
   const [normalized, setNormalized]   = useState<{ x: number; y: number } | null>(null)
   const [streets, setStreets]         = useState<Street[]>([])
-  const [streetSearch, setStreetSearch] = useState('')
   const [streetId, setStreetId]       = useState<number | ''>('')
   const [saving, setSaving]           = useState(false)
   const [error, setError]             = useState<string | null>(null)
@@ -256,10 +255,8 @@ export default function MapPickerModal({
       setError('يرجى الضغط على الخريطة أو سحب الدبوس لتحديد موقع العقار أولاً')
       return
     }
-    if (!streetId) {
-      setError('يرجى اختيار الشارع التابع له العقار')
-      return
-    }
+
+    const targetStreetId = streetId || (streets.length > 0 ? streets[0].id : 1)
 
     setSaving(true)
     setError(null)
@@ -273,7 +270,7 @@ export default function MapPickerModal({
             'X-Api-Key': apiKey,
           },
           body: JSON.stringify({
-            mapStreetId: streetId,
+            mapStreetId: targetStreetId,
             x: normalized.x,
             y: normalized.y,
           }),
@@ -309,11 +306,6 @@ export default function MapPickerModal({
       setSaving(false)
     }
   }
-
-  // Filtered streets based on search input
-  const filteredStreets = streets.filter(s =>
-    !streetSearch || s.name.toLowerCase().includes(streetSearch.toLowerCase())
-  )
 
   return (
     <div className="map-picker-overlay" onClick={e => { if (e.target === e.currentTarget) onClose() }}>
@@ -365,32 +357,8 @@ export default function MapPickerModal({
           </div>
         </div>
 
-        {/* ── Street Selection Bar ─────────────────────────────────── */}
+        {/* ── Coordinates & Instructions Bar ──────────────────────── */}
         <div className="map-picker-toolbar">
-          <div className="map-picker-street-box">
-            <label>اختر الشارع:</label>
-            <input
-              type="text"
-              className="map-picker-search-input"
-              placeholder="ابحث عن الشارع بالاسم..."
-              value={streetSearch}
-              onChange={e => setStreetSearch(e.target.value)}
-            />
-            <select
-              className="map-picker-select"
-              value={streetId}
-              onChange={e => setStreetId(Number(e.target.value))}
-            >
-              {filteredStreets.length === 0 ? (
-                <option value="">لا توجد نتائج</option>
-              ) : (
-                filteredStreets.map(s => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))
-              )}
-            </select>
-          </div>
-
           {normalized ? (
             <div className="map-picker-coords-badge">
               <span>📍 خط العرض: {currentLngLat?.lat.toFixed(6)}</span>
@@ -399,7 +367,7 @@ export default function MapPickerModal({
             </div>
           ) : (
             <div className="map-picker-instructions">
-              👆 اضغط على أي مكان بالخريطة أو اسحب الدبوس لوضع العقار
+              👆 اضغط على أي مكان بالخريطة أو اسحب الدبوس لتحديد الموقع
             </div>
           )}
         </div>
