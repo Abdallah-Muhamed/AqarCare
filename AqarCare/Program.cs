@@ -84,6 +84,73 @@ namespace AqarCare
                 db.Database.Migrate();
             }
 
+            if (args.Contains("--sync-local-map-to-prod", StringComparer.OrdinalIgnoreCase))
+            {
+                var localOptions = new DbContextOptionsBuilder<AqarCareDbContext>()
+                    .UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=AqarCareDb;Trusted_Connection=True;TrustServerCertificate=True;")
+                    .Options;
+                var prodOptions = new DbContextOptionsBuilder<AqarCareDbContext>()
+                    .UseSqlServer("Server=db60259.public.databaseasp.net; Database=db60259; User Id=db60259; Password=fW%7+9Lkp_4Q; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True;")
+                    .Options;
+
+                using var localDb = new AqarCareDbContext(localOptions);
+                using var prodDb = new AqarCareDbContext(prodOptions);
+
+                var localCity = localDb.MapCities
+                    .Include(c => c.Streets)
+                    .ThenInclude(s => s.Aliases)
+                    .FirstOrDefault(c => c.Slug == "mansheyat-el-bakry");
+
+                if (localCity != null)
+                {
+                    var prodCity = prodDb.MapCities.FirstOrDefault(c => c.Slug == "mansheyat-el-bakry");
+                    if (prodCity == null)
+                    {
+                        prodCity = new AqarCare.Data.Entities.MapCity
+                        {
+                            Name = localCity.Name,
+                            Slug = localCity.Slug,
+                            IsActive = localCity.IsActive,
+                            CreatedAt = localCity.CreatedAt,
+                            UpdatedAt = localCity.UpdatedAt
+                        };
+                        prodDb.MapCities.Add(prodCity);
+                        prodDb.SaveChanges();
+                    }
+
+                    var existingNames = prodDb.MapStreets.Where(s => s.MapCityId == prodCity.Id).Select(s => s.Name).ToHashSet();
+                    foreach (var s in localCity.Streets)
+                    {
+                        if (existingNames.Contains(s.Name)) continue;
+                        var newStreet = new AqarCare.Data.Entities.MapStreet
+                        {
+                            MapCityId = prodCity.Id,
+                            Name = s.Name,
+                            WidthMeters = s.WidthMeters,
+                            LengthMeters = s.LengthMeters,
+                            StreetType = s.StreetType,
+                            TrafficDirection = s.TrafficDirection,
+                            SurfaceType = s.SurfaceType,
+                            Importance = s.Importance,
+                            GeometryJson = s.GeometryJson,
+                            AttributesJson = s.AttributesJson,
+                            SortOrder = s.SortOrder,
+                            IsActive = s.IsActive,
+                            CreatedAt = s.CreatedAt,
+                            UpdatedAt = s.UpdatedAt
+                        };
+                        foreach (var a in s.Aliases)
+                        {
+                            newStreet.Aliases.Add(new AqarCare.Data.Entities.MapStreetAlias { Name = a.Name });
+                        }
+                        prodDb.MapStreets.Add(newStreet);
+                    }
+                    prodDb.SaveChanges();
+                    Console.WriteLine("SYNC SUCCESS! Imported streets to production DB.");
+                }
+                return;
+            }
+
             if (args.Contains("--import-mansheyat-el-bakry-roads", StringComparer.OrdinalIgnoreCase))
             {
                 using var scope = app.Services.CreateScope();
