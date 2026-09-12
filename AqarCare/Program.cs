@@ -47,24 +47,32 @@ namespace AqarCare
             builder.Services.AddSingleton(cloudinarySettings);
             builder.Services.AddSingleton<CloudinaryService>();
             builder.Services.AddScoped<PropertyService>();
+            builder.Services.AddScoped<MapService>();
+            builder.Services.AddHttpClient<MansheyatElBakryOsmImportService>(client =>
+            {
+                client.DefaultRequestHeaders.UserAgent.ParseAdd("AqarCare-MapImporter/1.0");
+                client.Timeout = TimeSpan.FromSeconds(120);
+            });
             builder.Services.AddScoped<FinishingPackageService>();
+
+            builder.Services.Configure<ForwardedHeadersOptions>(options =>
+            {
+                options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
+                                           Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+                options.KnownNetworks.Clear();
+                options.KnownProxies.Clear();
+            });
 
             builder.Services.AddCors(options =>
             {
                 options.AddPolicy("DevelopmentCors", policy =>
                     policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());
 
-                // Read allowed origins from config (Cors:AllowedOrigins in appsettings.Production.json)
-                var allowedOrigins = builder.Configuration
-                    .GetSection("Cors:AllowedOrigins")
-                    .Get<string[]>() ?? [];
-
                 options.AddPolicy("ProductionCors", policy =>
                 {
-                    if (allowedOrigins.Length > 0)
-                        policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod();
-                    else
-                        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+                    policy.SetIsOriginAllowed(origin => true)
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
                 });
             });
 
@@ -76,11 +84,21 @@ namespace AqarCare
                 db.Database.Migrate();
             }
 
-            // Swagger only in Development — do NOT expose in Production
+            if (args.Contains("--import-mansheyat-el-bakry-roads", StringComparer.OrdinalIgnoreCase))
+            {
+                using var scope = app.Services.CreateScope();
+                var importer = scope.ServiceProvider.GetRequiredService<MansheyatElBakryOsmImportService>();
+                var result = importer.ImportAsync().GetAwaiter().GetResult();
+                Console.WriteLine($"Imported {result.StreetsImported} streets and {result.RoadSegmentsImported} road segments for {result.MapName}.");
+                return;
+            }
+
+            app.UseForwardedHeaders();
+            app.UseSwagger();
+            app.UseSwaggerUI();
+
             if (app.Environment.IsDevelopment())
             {
-                app.UseSwagger();
-                app.UseSwaggerUI();
                 app.UseCors("DevelopmentCors");
             }
             else

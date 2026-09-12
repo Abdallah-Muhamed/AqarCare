@@ -10,13 +10,26 @@ public class PropertyUnit
     public decimal? AreaSqm { get; set; }
     public int? Bedrooms { get; set; }
     public int? Bathrooms { get; set; }
-    public string? PropertyType { get; set; } // Apartment, Villa, Commercial, etc.
+    public string? PropertyType { get; set; } // Apartment, House, Land, Commercial, etc.
     public string? ListingType { get; set; } // Sale, Rent
     public string? FinishingStatus { get; set; } // Semi-Finished, Finished, Super-Lux
     public int? FinishingPackageId { get; set; } // Foreign key to FinishingPackage
     public FinishingPackage? FinishingPackage { get; set; }
     public bool InstallmentAvailable { get; set; }
     public int? FloorNumber { get; set; }
+    
+    // House-specific fields
+    public int? NumberOfFloors { get; set; }
+    public string? FloorsFinishing { get; set; } // JSON or text describing each floor's finishing
+    
+    // Land-specific fields
+    public decimal? FrontageWidth { get; set; } // in meters
+    public decimal? FrontageLength { get; set; } // in meters
+    public string? StreetWidth { get; set; } // width of street facing the land
+    public bool HasElectricity { get; set; }
+    public bool HasWater { get; set; }
+    public bool HasSewerage { get; set; }
+    public bool HasGas { get; set; }
     public string? City { get; set; }
     public string? District { get; set; }
     public string? Address { get; set; }
@@ -34,4 +47,5 @@ public class PropertyUnit
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
+    public PropertyMapLocation? MapLocation { get; set; }
 }

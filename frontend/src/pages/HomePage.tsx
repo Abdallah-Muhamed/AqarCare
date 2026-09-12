@@ -1,25 +1,20 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Building2, Layers, Star, TrendingUp, Shield } from 'lucide-react'
+import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield } from 'lucide-react'
 import { api } from '../api'
-import type { PropertyListItem, PackageListItem } from '../types'
+import type { PropertyListItem } from '../types'
+// PackageListItem, PackageCard, api.getPackages — kept for future use, currently hidden
 import PropertyCard from '../components/PropertyCard'
-import PackageCard from '../components/PackageCard'
 import './HomePage.css'
 
 export default function HomePage() {
   const [featuredProps, setFeaturedProps] = useState<PropertyListItem[]>([])
-  const [packages, setPackages] = useState<PackageListItem[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    Promise.all([
-      api.getProperties({ isFeatured: true, pageSize: 3 }),
-      api.getPackages(),
-    ]).then(([props, pkgs]) => {
-      setFeaturedProps(props.items)
-      setPackages(pkgs)
-    }).catch(console.error)
+    api.getProperties({ isFeatured: true, pageSize: 3 })
+      .then(r => setFeaturedProps(r.items))
+      .catch(console.error)
       .finally(() => setLoading(false))
   }, [])
 
@@ -36,42 +31,42 @@ export default function HomePage() {
           <img src="/logo-navbar.png" alt="عقار كير" className="hero__brand-logo" />
           <div className="badge badge-gold hero__badge">
             <Star size={12} fill="currentColor" />
-            منصة عقارية موثوقة في مصر
+            منصة عقارية موثوقة في منشية البكري
           </div>
           <h1 className="hero__title">
-            ابحث عن
+            اعثر على
             <span className="hero__title-accent"> عقارك المثالي</span>
-            <br />وشطّبه بأعلى المعايير
+            <br />في منشية البكري
           </h1>
           <p className="hero__subtitle">
-            نوفر لك أفضل الوحدات السكنية مع باقات تشطيب متدرجة تناسب كل ميزانية، بأسعار تنافسية وجودة مضمونة.
+            تصفّح وحداتنا السكنية والتجارية المتاحة للبيع والإيجار، واستكشفها على الخريطة التفاعلية بشكل بصري احترافي.
           </p>
           <div className="hero__actions">
             <Link to="/properties" className="btn btn-primary">
               <Building2 size={18} />
               تصفح العقارات
             </Link>
-            <Link to="/finishing-packages" className="btn btn-outline">
-              <Layers size={18} />
-              باقات التشطيب
+            <Link to="/map" className="btn btn-outline">
+              <Map size={18} />
+              استكشف الخريطة
             </Link>
           </div>
 
           {/* Stats */}
           <div className="hero__stats">
             <div className="hero__stat">
-              <span className="hero__stat-val">6</span>
-              <span className="hero__stat-lbl">باقات تشطيب</span>
+              <span className="hero__stat-val">منشية</span>
+              <span className="hero__stat-lbl">البكري</span>
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">
-              <span className="hero__stat-val">17.5%</span>
-              <span className="hero__stat-lbl">نسبة إشراف هندسي</span>
+              <span className="hero__stat-val">بيع</span>
+              <span className="hero__stat-lbl">وإيجار</span>
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">
               <span className="hero__stat-val">100%</span>
-              <span className="hero__stat-lbl">مواد معتمدة</span>
+              <span className="hero__stat-lbl">موثوق</span>
             </div>
           </div>
         </div>
@@ -87,9 +82,9 @@ export default function HomePage() {
       <section className="features-strip">
         <div className="container features-strip__grid">
           {[
-            { icon: <Shield size={22} />, title: 'جودة مضمونة', desc: 'مواد معتمدة وضمان على الأعمال' },
-            { icon: <TrendingUp size={22} />, title: 'أسعار تنافسية', desc: 'باقات مرنة تناسب كل ميزانية' },
-            { icon: <Star size={22} />, title: 'إشراف هندسي', desc: 'متابعة مستمرة حتى التسليم' },
+            { icon: <Shield size={22} />, title: 'بيانات موثوقة', desc: 'معلومات دقيقة لكل وحدة' },
+            { icon: <TrendingUp size={22} />, title: 'أسعار تنافسية', desc: 'خيارات تناسب كل ميزانية' },
+            { icon: <Map size={22} />, title: 'خريطة تفاعلية', desc: 'تصفح الوحدات جغرافيًا' },
             { icon: <Building2 size={22} />, title: 'تنوع العقارات', desc: 'شقق، فيلات، مكاتب وأكثر' },
           ].map((f, i) => (
             <div key={i} className="feature-item">
@@ -113,13 +108,13 @@ export default function HomePage() {
               <p className="section-subtitle">أبرز العقارات المتاحة حالياً للبيع والإيجار</p>
             </div>
             {loading ? (
-              <div className="row">
-                {[1,2,3].map(i => <div key={i} className="col-12 col-md-4"><div className="skeleton" style={{ height: 380 }} /></div>)}
+              <div className="grid-3">
+                {[1,2,3].map(i => <div key={i} className="skeleton" style={{ height: 380 }} />)}
               </div>
             ) : (
               <>
-                <div className="row">
-                  {featuredProps.map(p => <div key={p.id} className="col-12 col-md-4"><PropertyCard property={p} /></div>)}
+                <div className="grid-3">
+                  {featuredProps.map(p => <PropertyCard key={p.id} property={p} />)}
                 </div>
                 <div style={{ textAlign: 'center', marginTop: 'var(--space-2xl)' }}>
                   <Link to="/properties" className="btn btn-outline">
@@ -132,45 +127,26 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Finishing Packages ────────────────────────────────────── */}
-      <section className="section packages-section">
-        <div className="packages-section__bg" />
-        <div className="container">
-          <div className="section-header">
-            <span className="gold-line" />
-            <h2 className="section-title">باقات <span>التشطيب</span></h2>
-            <p className="section-subtitle">6 باقات تشطيب متدرجة تناسب احتياجاتك وميزانيتك</p>
-          </div>
-          {loading ? (
-            <div className="row">
-              {[1,2,3].map(i => <div key={i} className="col-12 col-md-4"><div className="skeleton" style={{ height: 300 }} /></div>)}
-            </div>
-          ) : (
-            <>
-              <div className="row">
-                {packages.map(p => <div key={p.id} className="col-12 col-md-4"><PackageCard pkg={p} /></div>)}
-              </div>
-              <div style={{ textAlign: 'center', marginTop: 'var(--space-2xl)' }}>
-                <Link to="/finishing-packages" className="btn btn-primary">
-                  <Layers size={16} />
-                  تفاصيل كل الباقات
-                </Link>
-              </div>
-            </>
-          )}
-        </div>
-      </section>
+      {/* ── Finishing Packages — Hidden, not removed ──────────────── */}
+      {/* To re-enable: remove this comment block and restore the section */}
+      {false && (
+        <section className="section packages-section">
+          {/* Finishing packages section — preserved for future use */}
+        </section>
+      )}
 
       {/* ── CTA Banner ───────────────────────────────────────────── */}
       <section className="section-sm">
         <div className="container">
           <div className="cta-banner">
             <div className="cta-banner__glow" />
-            <h2 className="cta-banner__title">مستعد تبدأ رحلة سكنك المثالي؟</h2>
-            <p className="cta-banner__sub">اختر عقارك، اختر باقتك، ونحن نتكفل بالباقي</p>
+            <h2 className="cta-banner__title">مستعد تبدأ رحلتك العقارية؟</h2>
+            <p className="cta-banner__sub">استكشف الوحدات المتاحة على قائمتنا أو على الخريطة التفاعلية</p>
             <div className="cta-banner__btns">
               <Link to="/properties" className="btn btn-primary">ابحث عن عقار</Link>
-              <Link to="/finishing-packages" className="btn btn-ghost">استعرض الباقات</Link>
+              <Link to="/map" className="btn btn-ghost">
+                <Map size={16} /> استكشف الخريطة
+              </Link>
             </div>
           </div>
         </div>

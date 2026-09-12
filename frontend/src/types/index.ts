@@ -116,3 +116,59 @@ export interface PackageDetail {
   notes: PackageNote[]
   media: PropertyMedia[]
 }
+
+// ── Custom Map types ─────────────────────────────────────────────
+export interface MapStreet {
+  id: number
+  name: string
+  aliases: string[]
+  widthMeters: number | null
+  lengthMeters: number | null
+  streetType: string | null
+  trafficDirection: string | null
+  surfaceType: string | null
+  importance: number
+  geometryJson: string | null   // MultiLineString: { type, coordinates: [[[x,y],...]] }
+  sortOrder: number
+}
+
+export interface MapProperty {
+  id: number
+  title: string | null
+  price: number | null
+  areaSqm: number | null
+  propertyType: string | null
+  listingType: string | null
+  status: string              // Available | Reserved | Sold
+  primaryImageUrl: string | null
+  x: number                   // 0–1 normalized
+  y: number                   // 0–1 normalized
+  streetId: number
+  bedrooms?: number | null
+  bathrooms?: number | null
+  floorNumber?: number | null
+  finishingStatus?: string | null
+  address?: string | null
+  waterMeterAvailable?: boolean
+  electricityMeterAvailable?: boolean
+  gasMeterAvailable?: boolean
+  elevatorAvailable?: boolean
+  installmentAvailable?: boolean
+}
+
+export interface CityMap {
+  id: number
+  name: string
+  slug: string
+  streets: MapStreet[]
+  properties: MapProperty[]
+}
+
+export interface MapFilters {
+  listingType?: string
+  propertyType?: string
+  status?: string
+  minPrice?: number
+  maxPrice?: number
+}
+

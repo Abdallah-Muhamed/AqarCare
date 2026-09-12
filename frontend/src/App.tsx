@@ -7,10 +7,12 @@ import PropertyDetailPage from './pages/PropertyDetailPage'
 import PackagesPage from './pages/PackagesPage'
 import PackageDetailPage from './pages/PackageDetailPage'
 import AdminPanelPage from './pages/AdminPanelPage'
+import MapPage from './pages/MapPage'
 
 export default function App() {
   const { pathname } = useLocation()
   const isAdmin = pathname.startsWith('/admin')
+  const isMap   = pathname === '/map'
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
@@ -23,9 +25,11 @@ export default function App() {
           <Route path="/finishing-packages" element={<PackagesPage />} />
           <Route path="/finishing-packages/:slug" element={<PackageDetailPage />} />
           <Route path="/admin" element={<AdminPanelPage />} />
+          <Route path="/map" element={<MapPage />} />
         </Routes>
       </main>
-      {!isAdmin && <Footer />}
+      {!isAdmin && !isMap && <Footer />}
     </div>
   )
 }
+

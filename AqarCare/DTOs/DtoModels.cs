@@ -29,7 +29,18 @@ public record PropertyListItemDto(
     bool WaterMeterAvailable,
     bool ElectricityMeterAvailable,
     bool GasMeterAvailable,
-    bool ElevatorAvailable);
+    bool ElevatorAvailable,
+    // House-specific fields
+    int? NumberOfFloors,
+    string? FloorsFinishing,
+    // Land-specific fields
+    decimal? FrontageWidth,
+    decimal? FrontageLength,
+    string? StreetWidth,
+    bool HasElectricity,
+    bool HasWater,
+    bool HasSewerage,
+    bool HasGas);
 
 public record PropertyDetailDto(
     int Id,
@@ -60,6 +71,17 @@ public record PropertyDetailDto(
     bool ElectricityMeterAvailable,
     bool GasMeterAvailable,
     bool ElevatorAvailable,
+    // House-specific fields
+    int? NumberOfFloors,
+    string? FloorsFinishing,
+    // Land-specific fields
+    decimal? FrontageWidth,
+    decimal? FrontageLength,
+    string? StreetWidth,
+    bool HasElectricity,
+    bool HasWater,
+    bool HasSewerage,
+    bool HasGas,
     IReadOnlyList<PropertyMediaDto> Media);
 
 public record CreatePropertyRequest(
@@ -82,6 +104,18 @@ public record CreatePropertyRequest(
     string? Status,
     bool IsFeatured,
     bool IsPublished,
+    // House-specific fields
+    int? NumberOfFloors,
+    [MaxLength(1000)] string? FloorsFinishing,
+    // Land-specific fields
+    decimal? FrontageWidth,
+    decimal? FrontageLength,
+    [MaxLength(50)] string? StreetWidth,
+    bool HasElectricity,
+    bool HasWater,
+    bool HasSewerage,
+    bool HasGas,
+    // Utility meters - optional parameters at the end
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
     bool GasMeterAvailable = false,
@@ -108,6 +142,18 @@ public record UpdatePropertyRequest(
     string? Status,
     bool IsFeatured,
     bool IsPublished,
+    // House-specific fields
+    int? NumberOfFloors,
+    [MaxLength(1000)] string? FloorsFinishing,
+    // Land-specific fields
+    decimal? FrontageWidth,
+    decimal? FrontageLength,
+    [MaxLength(50)] string? StreetWidth,
+    bool HasElectricity,
+    bool HasWater,
+    bool HasSewerage,
+    bool HasGas,
+    // Utility meters - optional parameters at the end
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
     bool GasMeterAvailable = false,
@@ -131,6 +177,97 @@ public record PropertyQuery(
     bool? IsFeatured = null,
     int Page = 1,
     int PageSize = 12);
+
+// Custom map contracts. Geometry is intentionally left renderer-neutral so a
+// future client can choose SVG, canvas, WebGL, or another wholly custom map UI.
+public record MapCityListItemDto(int Id, string Name, string Slug);
+
+public record MapStreetDto(
+    int Id,
+    string Name,
+    IReadOnlyList<string> Aliases,
+    decimal? WidthMeters,
+    decimal? LengthMeters,
+    string? StreetType,
+    string? TrafficDirection,
+    string? SurfaceType,
+    int Importance,
+    string? GeometryJson,
+    string? AttributesJson,
+    int SortOrder);
+
+public record MapPropertyDto(
+    int Id,
+    string? Title,
+    decimal? Price,
+    decimal? AreaSqm,
+    string? PropertyType,
+    string? ListingType,
+    string Status,
+    string? PrimaryImageUrl,
+    decimal X,
+    decimal Y,
+    int StreetId,
+    int? Bedrooms = null,
+    int? Bathrooms = null,
+    int? FloorNumber = null,
+    string? FinishingStatus = null,
+    string? Address = null,
+    bool WaterMeterAvailable = false,
+    bool ElectricityMeterAvailable = false,
+    bool GasMeterAvailable = false,
+    bool ElevatorAvailable = false,
+    bool InstallmentAvailable = false);
+
+public record CityMapDto(
+    int Id,
+    string Name,
+    string Slug,
+    IReadOnlyList<MapStreetDto> Streets,
+    IReadOnlyList<MapPropertyDto> Properties);
+
+public record CreateMapCityRequest(
+    [Required][MaxLength(100)] string Name,
+    [Required][MaxLength(100)] string Slug,
+    bool IsActive = true);
+
+public record UpdateMapCityRequest(
+    [Required][MaxLength(100)] string Name,
+    [Required][MaxLength(100)] string Slug,
+    bool IsActive);
+
+public record CreateMapStreetRequest(
+    [Required][MaxLength(200)] string Name,
+    IReadOnlyList<string>? Aliases,
+    [Range(0, 1000)] decimal? WidthMeters,
+    [Range(0, 100000)] decimal? LengthMeters,
+    [MaxLength(50)] string? StreetType,
+    [MaxLength(50)] string? TrafficDirection,
+    [MaxLength(50)] string? SurfaceType,
+    [Range(0, 100)] int Importance,
+    string? GeometryJson,
+    string? AttributesJson,
+    int SortOrder = 0,
+    bool IsActive = true);
+
+public record UpdateMapStreetRequest(
+    [Required][MaxLength(200)] string Name,
+    IReadOnlyList<string>? Aliases,
+    [Range(0, 1000)] decimal? WidthMeters,
+    [Range(0, 100000)] decimal? LengthMeters,
+    [MaxLength(50)] string? StreetType,
+    [MaxLength(50)] string? TrafficDirection,
+    [MaxLength(50)] string? SurfaceType,
+    [Range(0, 100)] int Importance,
+    string? GeometryJson,
+    string? AttributesJson,
+    int SortOrder,
+    bool IsActive);
+
+public record SetPropertyMapLocationRequest(
+    int MapStreetId,
+    [Range(typeof(decimal), "0", "1")] decimal X,
+    [Range(typeof(decimal), "0", "1")] decimal Y);
 
 public record FinishingPackageListItemDto(
     int Id,

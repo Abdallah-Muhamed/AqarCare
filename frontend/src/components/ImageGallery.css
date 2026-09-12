@@ -86,3 +86,15 @@
 .gallery__lb-nav:hover { background: var(--clr-gold); color: #0a0c12; }
 .gallery__lb-nav--prev { right: 24px; }
 .gallery__lb-nav--next { left: 24px; }
+
+@media (max-width: 768px) {
+  .gallery__main { height: 260px; }
+  .gallery__thumb { width: 56px; height: 42px; }
+  .gallery__nav { width: 34px; height: 34px; }
+  .gallery__lb-img { max-width: 96vw; max-height: 80vh; }
+  .gallery__lb-nav { width: 40px; height: 40px; }
+  .gallery__lb-nav--prev { right: 10px; }
+  .gallery__lb-nav--next { left: 10px; }
+  .gallery__lb-close { top: 12px; left: 12px; }
+}
+

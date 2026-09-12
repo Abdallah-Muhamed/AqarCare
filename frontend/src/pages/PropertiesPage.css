@@ -1,3 +1,36 @@
+/* ── View-mode tabs (القائمة | الخريطة) ─────────────────────────── */
+.props-view-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--clr-bg3);
+  border: 1px solid var(--clr-border2);
+  border-radius: 11px;
+  padding: 3px;
+  gap: 2px;
+}
+.props-view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .38rem .75rem;
+  border-radius: 8px;
+  font-size: .8rem;
+  font-weight: 700;
+  color: var(--clr-text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: var(--transition);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.props-view-tab:hover { color: var(--clr-text); background: rgba(255,255,255,.6); }
+.props-view-tab.active {
+  background: var(--clr-surface);
+  color: var(--clr-text);
+  box-shadow: 0 1px 4px rgba(0,0,0,.08);
+}
+
 .props-page__header {
   padding-top: calc(var(--navbar-h) + var(--space-2xl));
   padding-bottom: var(--space-xl);

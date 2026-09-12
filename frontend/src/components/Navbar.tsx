@@ -19,7 +19,8 @@ export default function Navbar() {
   const links = [
     { to: '/', label: 'الرئيسية' },
     { to: '/properties', label: 'العقارات' },
-    { to: '/finishing-packages', label: 'باقات التشطيب' },
+    { to: '/map', label: '🗺 الخريطة' },
+    // { to: '/finishing-packages', label: 'باقات التشطيب' }, // Hidden — not removed
   ]
 
   return (

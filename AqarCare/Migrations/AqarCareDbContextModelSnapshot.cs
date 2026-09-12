@@ -166,6 +166,136 @@ namespace AqarCare.Migrations
                         });
                 });
 
+            modelBuilder.Entity("AqarCare.Data.Entities.MapCity", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
+                    b.ToTable("MapCities");
+                });
+
+            modelBuilder.Entity("AqarCare.Data.Entities.MapStreet", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AttributesJson")
+                        .HasMaxLength(10000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("GeometryJson")
+                        .HasMaxLength(20000)
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("Importance")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("LengthMeters")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("decimal(10,2)");
+
+                    b.Property<int>("MapCityId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("int");
+
+                    b.Property<string>("StreetType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("SurfaceType")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("TrafficDirection")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal?>("WidthMeters")
+                        .HasPrecision(8, 2)
+                        .HasColumnType("decimal(8,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MapCityId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("MapStreets");
+                });
+
+            modelBuilder.Entity("AqarCare.Data.Entities.MapStreetAlias", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MapStreetId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("MapStreetId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("MapStreetAliases");
+                });
+
             modelBuilder.Entity("AqarCare.Data.Entities.PackageFeatureItem", b =>
                 {
                     b.Property<int>("Id")
@@ -2556,6 +2686,41 @@ namespace AqarCare.Migrations
                         });
                 });
 
+            modelBuilder.Entity("AqarCare.Data.Entities.PropertyMapLocation", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MapStreetId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PropertyUnitId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("X")
+                        .HasPrecision(9, 8)
+                        .HasColumnType("decimal(9,8)");
+
+                    b.Property<decimal>("Y")
+                        .HasPrecision(9, 8)
+                        .HasColumnType("decimal(9,8)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MapStreetId");
+
+                    b.HasIndex("PropertyUnitId")
+                        .IsUnique();
+
+                    b.ToTable("PropertyMapLocations");
+                });
+
             modelBuilder.Entity("AqarCare.Data.Entities.PropertyMedia", b =>
                 {
                     b.Property<int>("Id")
@@ -2647,7 +2812,28 @@ namespace AqarCare.Migrations
                     b.Property<int?>("FloorNumber")
                         .HasColumnType("int");
 
+                    b.Property<string>("FloorsFinishing")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<decimal?>("FrontageLength")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("FrontageWidth")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<bool>("GasMeterAvailable")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasElectricity")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasGas")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasSewerage")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("HasWater")
                         .HasColumnType("bit");
 
                     b.Property<bool>("InstallmentAvailable")
@@ -2663,6 +2849,9 @@ namespace AqarCare.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("NumberOfFloors")
+                        .HasColumnType("int");
 
                     b.Property<decimal?>("Price")
                         .HasPrecision(18, 2)
@@ -2681,6 +2870,9 @@ namespace AqarCare.Migrations
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("StreetWidth")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -2704,6 +2896,28 @@ namespace AqarCare.Migrations
                     b.HasIndex("PropertyType");
 
                     b.ToTable("PropertyUnits");
+                });
+
+            modelBuilder.Entity("AqarCare.Data.Entities.MapStreet", b =>
+                {
+                    b.HasOne("AqarCare.Data.Entities.MapCity", "MapCity")
+                        .WithMany("Streets")
+                        .HasForeignKey("MapCityId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MapCity");
+                });
+
+            modelBuilder.Entity("AqarCare.Data.Entities.MapStreetAlias", b =>
+                {
+                    b.HasOne("AqarCare.Data.Entities.MapStreet", "MapStreet")
+                        .WithMany("Aliases")
+                        .HasForeignKey("MapStreetId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MapStreet");
                 });
 
             modelBuilder.Entity("AqarCare.Data.Entities.PackageFeatureItem", b =>
@@ -2761,6 +2975,25 @@ namespace AqarCare.Migrations
                     b.Navigation("FinishingPackage");
                 });
 
+            modelBuilder.Entity("AqarCare.Data.Entities.PropertyMapLocation", b =>
+                {
+                    b.HasOne("AqarCare.Data.Entities.MapStreet", "MapStreet")
+                        .WithMany("PropertyLocations")
+                        .HasForeignKey("MapStreetId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("AqarCare.Data.Entities.PropertyUnit", "PropertyUnit")
+                        .WithOne("MapLocation")
+                        .HasForeignKey("AqarCare.Data.Entities.PropertyMapLocation", "PropertyUnitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MapStreet");
+
+                    b.Navigation("PropertyUnit");
+                });
+
             modelBuilder.Entity("AqarCare.Data.Entities.PropertyMedia", b =>
                 {
                     b.HasOne("AqarCare.Data.Entities.PropertyUnit", "PropertyUnit")
@@ -2792,6 +3025,18 @@ namespace AqarCare.Migrations
                     b.Navigation("Sections");
                 });
 
+            modelBuilder.Entity("AqarCare.Data.Entities.MapCity", b =>
+                {
+                    b.Navigation("Streets");
+                });
+
+            modelBuilder.Entity("AqarCare.Data.Entities.MapStreet", b =>
+                {
+                    b.Navigation("Aliases");
+
+                    b.Navigation("PropertyLocations");
+                });
+
             modelBuilder.Entity("AqarCare.Data.Entities.PackageSection", b =>
                 {
                     b.Navigation("FeatureItems");
@@ -2799,6 +3044,8 @@ namespace AqarCare.Migrations
 
             modelBuilder.Entity("AqarCare.Data.Entities.PropertyUnit", b =>
                 {
+                    b.Navigation("MapLocation");
+
                     b.Navigation("Media");
                 });
 #pragma warning restore 612, 618

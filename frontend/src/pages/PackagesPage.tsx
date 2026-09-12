@@ -33,8 +33,8 @@ export default function PackagesPage() {
       {/* Results */}
       <div className="container section-sm">
         {loading ? (
-          <div className="row">
-            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="col-12 col-md-4 col-lg-4"><div className="skeleton" style={{ height: 420 }} /></div>)}
+          <div className="grid-3">
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 420 }} />)}
           </div>
         ) : packages.length === 0 ? (
           <div className="empty-state">
@@ -43,9 +43,9 @@ export default function PackagesPage() {
             <p>يرجى التواصل معنا للاستفسار عن الباقات المتاحة</p>
           </div>
         ) : (
-          <div className="row">
+          <div className="grid-3">
             {packages.sort((a, b) => a.sortOrder - b.sortOrder).map(pkg => (
-              <div key={pkg.id} className="col-12 col-md-4 col-lg-4"><PackageCard pkg={pkg} /></div>
+              <PackageCard key={pkg.id} pkg={pkg} />
             ))}
           </div>
         )}

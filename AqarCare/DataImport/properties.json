@@ -1,0 +1,29 @@
+[
+  {
+    "title": "منزل للبيع - الشعبية المحلة الكبرى",
+    "description": "دقيقتين من جمال عبد الناصر عند المنار. مساحة 135 متر صافي أرضي وخمس. ثلاث شقق متشطبين الترا سوبر لوكس، وثلاث شقق نصف تشطيب. كامل العدادات.",
+    "price": 9500000,
+    "areaSqm": 135,
+    "propertyType": "Building",
+    "listingType": "Sale",
+    "finishingStatus": "SemiFinished",
+    "installmentAvailable": false,
+    "city": "المحلة الكبرى",
+    "district": "الشعبية",
+    "address": "دقيقتين من جمال عبد الناصر عند المنار",
+    "status": "Available",
+    "isFeatured": false,
+    "isPublished": true,
+    "waterMeterAvailable": true,
+    "electricityMeterAvailable": true,
+    "gasMeterAvailable": true,
+    "elevatorAvailable": false,
+    "media": [
+      {
+        "mediaType": "Video",
+        "url": "C:\\Users\\user\\Videos\\Aqar Care\\video 2",
+        "sortOrder": 0
+      }
+    ]
+  }
+]

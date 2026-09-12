@@ -24,7 +24,7 @@ export default function Footer() {
           <ul className="footer__list">
             <li><Link to="/"><ArrowLeft size={13} />الرئيسية</Link></li>
             <li><Link to="/properties"><ArrowLeft size={13} />العقارات</Link></li>
-            <li><Link to="/finishing-packages"><ArrowLeft size={13} />باقات التشطيب</Link></li>
+
           </ul>
         </div>
 

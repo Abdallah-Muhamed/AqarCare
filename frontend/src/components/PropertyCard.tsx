@@ -7,7 +7,7 @@ import './PropertyCard.css'
 interface Props { property: PropertyListItem }
 
 const listingLabel: Record<string, string> = { Sale: 'للبيع', Rent: 'للإيجار' }
-const typeLabel: Record<string, string>    = { Apartment: 'شقة', Villa: 'فيلا', Studio: 'استوديو', Office: 'مكتب', Shop: 'محل' }
+const typeLabel: Record<string, string>    = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
 const statusBadge: Record<string, { label: string; cls: string }> = {
   Available:  { label: 'متاح', cls: 'badge-green' },
   Reserved:   { label: 'محجوز', cls: 'badge-gold' },

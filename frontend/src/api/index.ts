@@ -1,4 +1,4 @@
-import type { PagedResult, PropertyListItem, PropertyDetail, PropertyQuery, PackageListItem, PackageDetail } from '../types'
+import type { PagedResult, PropertyListItem, PropertyDetail, PropertyQuery, PackageListItem, PackageDetail, CityMap, MapFilters } from '../types'
 import { API_BASE_URL } from '../constants/api'
 
 const BASE = '/api'
@@ -28,11 +28,17 @@ export const api = {
     return get(`${BASE}/properties/${id}`)
   },
 
-  // ── Finishing Packages ─────────────────────────────────────────
+  // ── Finishing Packages — kept for future use ───────────────────
   getPackages(): Promise<PackageListItem[]> {
     return get(`${BASE}/finishing-packages`)
   },
   getPackage(idOrSlug: string | number): Promise<PackageDetail> {
     return get(`${BASE}/finishing-packages/${idOrSlug}`)
   },
+
+  // ── Custom Map ─────────────────────────────────────────────────
+  getMap(citySlug: string, filters?: MapFilters): Promise<CityMap> {
+    return get(`${BASE}/maps/${citySlug}`, filters as Record<string, string | number | boolean | undefined>)
+  },
 }
+

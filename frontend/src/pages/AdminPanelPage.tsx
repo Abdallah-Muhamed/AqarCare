@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import './AdminPanelPage.css';
 import { API_BASE_URL } from '../constants/api';
+import MapPickerModal from '../components/admin/MapPickerModal';
 
 interface Property {
   id: number;
@@ -66,6 +67,7 @@ export default function AdminPanelPage() {
   const [packages, setPackages] = useState<FinishingPackage[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [mapPickerProperty, setMapPickerProperty] = useState<Property | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold'>('all');
@@ -454,7 +456,7 @@ export default function AdminPanelPage() {
                   <h3 className="form-section__title">📋 المعلومات الأساسية</h3>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label>عنوان العقار</label>
+                      <label>العنوان</label>
                       <input
                         type="text"
                         value={formData.title}
@@ -464,17 +466,15 @@ export default function AdminPanelPage() {
                     </div>
 
                     <div className="form-group">
-                      <label>نوع العقار</label>
+                      <label>النوع</label>
                       <select
                         value={formData.propertyType}
                         onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
                       >
                         <option value="Apartment">شقة</option>
-                        <option value="Villa">فيلا</option>
-                        <option value="Commercial">تجاري</option>
+                        <option value="House">بيت</option>
                         <option value="Land">أرض</option>
-                        <option value="Studio">استوديو</option>
-                        <option value="Office">مكتب</option>
+                        <option value="Shop">محل</option>
                       </select>
                     </div>
 
@@ -633,9 +633,9 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
-                {/* Section: Utility Meters */}
+                {/* Section: Utilities & Services */}
                 <div className="form-section">
-                  <h3 className="form-section__title">🔢 العدادات</h3>
+                  <h3 className="form-section__title">🛠️ الخدمات</h3>
                   <div className="checkbox-row">
                     <label className="checkbox-card">
                       <input
@@ -737,15 +737,6 @@ export default function AdminPanelPage() {
                       <span className="checkbox-card__icon">⭐</span>
                       <span>عقار مميز</span>
                     </label>
-                    <label className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.isPublished}
-                        onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
-                      />
-                      <span className="checkbox-card__icon">📢</span>
-                      <span>منشور</span>
-                    </label>
                   </div>
                 </div>
 
@@ -755,7 +746,7 @@ export default function AdminPanelPage() {
                   <button type="submit" disabled={loading} className="btn-save">
                     {loading ? (
                       <><span className="btn-spinner" /> جاري الحفظ...</>
-                    ) : editingProperty ? '💾 تحديث العقار' : '✅ إضافة العقار'}
+                    ) : editingProperty ? '💾 تحديث العقار' : 'اضافة'}
                   </button>
                   <button
                     type="button"
@@ -860,11 +851,11 @@ export default function AdminPanelPage() {
                              property.status === 'Sold' ? 'مباع' :
                              property.status === 'Rented' ? 'مؤجر' : 'محجوز'}
                           </span>
-                          {!property.isPublished && <span className="admin-badge admin-badge--draft">مسودة</span>}
                         </div>
 
                         <div className="property-actions">
                           <button className="btn-edit" onClick={() => handleEdit(property)}>✏️ تعديل</button>
+                          <button className="btn-map" onClick={() => setMapPickerProperty(property)}>📍 الخريطة</button>
                           <button className="btn-delete" onClick={() => handleDelete(property.id)}>🗑 حذف</button>
                         </div>
                       </div>
@@ -876,6 +867,16 @@ export default function AdminPanelPage() {
           )}
         </div>
       </div>
+
+      {mapPickerProperty && (
+        <MapPickerModal
+          propertyId={mapPickerProperty.id}
+          propertyTitle={mapPickerProperty.title || `عقار #${mapPickerProperty.id}`}
+          apiKey={apiKey}
+          onClose={() => setMapPickerProperty(null)}
+          onSaved={() => fetchProperties()}
+        />
+      )}
 
       {!showForm && (
         <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار">

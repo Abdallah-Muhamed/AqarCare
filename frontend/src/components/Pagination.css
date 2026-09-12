@@ -28,3 +28,9 @@
   border-color: transparent;
 }
 .pagination__btn:disabled { opacity: 0.35; cursor: default; }
+
+@media (max-width: 480px) {
+  .pagination { gap: 2px; }
+  .pagination__btn { min-width: 36px; height: 36px; font-size: 0.82rem; }
+}
+

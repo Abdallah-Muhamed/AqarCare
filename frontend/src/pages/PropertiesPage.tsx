@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
-import { SlidersHorizontal, X, Search } from 'lucide-react'
+import { Link } from 'react-router-dom'
+import { SlidersHorizontal, X, Search, Map, List } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import PropertyCard from '../components/PropertyCard'
@@ -7,8 +8,8 @@ import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
 
 const CITIES        = ['القاهرة', 'الجيزة', 'الإسكندرية', 'الشروق', 'مدينة نصر', 'التجمع الخامس', 'أكتوبر']
-const PROP_TYPES    = ['Apartment', 'Villa', 'Studio', 'Office', 'Shop']
-const PROP_LABELS   = { Apartment: 'شقة', Villa: 'فيلا', Studio: 'استوديو', Office: 'مكتب', Shop: 'محل' }
+const PROP_TYPES    = ['Apartment', 'House', 'Land', 'Shop']
+const PROP_LABELS: Record<string, string> = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
 const LISTING_TYPES = [{ val: 'Sale', label: 'للبيع' }, { val: 'Rent', label: 'للإيجار' }]
 
 export default function PropertiesPage() {
@@ -49,11 +50,23 @@ export default function PropertiesPage() {
               {loading ? 'جاري التحميل...' : `${total.toLocaleString('ar-EG')} وحدة عقارية`}
             </p>
           </div>
-          <button className={`btn btn-ghost props-page__filter-toggle ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(s => !s)}>
-            <SlidersHorizontal size={16} />
-            تصفية النتائج
-            {hasFilters && <span className="filter-dot" />}
-          </button>
+          <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            {/* View-mode tabs */}
+            <div className="props-view-tabs">
+              <button className="props-view-tab active">
+                <List size={15} /> القائمة
+              </button>
+              <Link to="/map" className="props-view-tab">
+                <Map size={15} /> الخريطة
+              </Link>
+            </div>
+            {/* Filter toggle */}
+            <button className={`btn btn-ghost props-page__filter-toggle ${showFilters ? 'active' : ''}`} onClick={() => setShowFilters(s => !s)}>
+              <SlidersHorizontal size={16} />
+              تصفية
+              {hasFilters && <span className="filter-dot" />}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -72,7 +85,7 @@ export default function PropertiesPage() {
 
             {/* Type */}
             <div className="filter-group">
-              <label className="filter-label">نوع العقار</label>
+              <label className="filter-label">النوع</label>
               <select className="filter-select" value={query.propertyType ?? ''} onChange={e => set('propertyType', e.target.value)}>
                 <option value="">كل الأنواع</option>
                 {PROP_TYPES.map(t => <option key={t} value={t}>{PROP_LABELS[t as keyof typeof PROP_LABELS]}</option>)}
@@ -121,8 +134,8 @@ export default function PropertiesPage() {
       {/* Results */}
       <div className="container section-sm">
         {loading ? (
-          <div className="row">
-            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="col-12 col-md-4 col-lg-4"><div className="skeleton" style={{ height: 380 }} /></div>)}
+          <div className="grid-3">
+            {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 380 }} />)}
           </div>
         ) : items.length === 0 ? (
           <div className="empty-state">
@@ -133,8 +146,8 @@ export default function PropertiesPage() {
           </div>
         ) : (
           <>
-            <div className="row">
-              {items.map(p => <div key={p.id} className="col-12 col-md-4 col-lg-4"><PropertyCard property={p} /></div>)}
+            <div className="grid-3">
+              {items.map(p => <PropertyCard key={p.id} property={p} />)}
             </div>
             <Pagination page={page} totalPages={totalPages} onChange={setPage} />
           </>

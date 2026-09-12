@@ -142,6 +142,15 @@ public class PropertyService
             ElectricityMeterAvailable = request.ElectricityMeterAvailable,
             GasMeterAvailable = request.GasMeterAvailable,
             ElevatorAvailable = request.ElevatorAvailable,
+            NumberOfFloors = request.NumberOfFloors,
+            FloorsFinishing = request.FloorsFinishing,
+            FrontageWidth = request.FrontageWidth,
+            FrontageLength = request.FrontageLength,
+            StreetWidth = request.StreetWidth,
+            HasElectricity = request.HasElectricity,
+            HasWater = request.HasWater,
+            HasSewerage = request.HasSewerage,
+            HasGas = request.HasGas,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -189,6 +198,15 @@ public class PropertyService
         entity.ElectricityMeterAvailable = request.ElectricityMeterAvailable;
         entity.GasMeterAvailable = request.GasMeterAvailable;
         entity.ElevatorAvailable = request.ElevatorAvailable;
+        entity.NumberOfFloors = request.NumberOfFloors;
+        entity.FloorsFinishing = request.FloorsFinishing;
+        entity.FrontageWidth = request.FrontageWidth;
+        entity.FrontageLength = request.FrontageLength;
+        entity.StreetWidth = request.StreetWidth;
+        entity.HasElectricity = request.HasElectricity;
+        entity.HasWater = request.HasWater;
+        entity.HasSewerage = request.HasSewerage;
+        entity.HasGas = request.HasGas;
         entity.UpdatedAt = DateTime.UtcNow;
 
         await _db.SaveChangesAsync(ct);
@@ -266,7 +284,16 @@ public class PropertyService
             x.WaterMeterAvailable,
             x.ElectricityMeterAvailable,
             x.GasMeterAvailable,
-            x.ElevatorAvailable);
+            x.ElevatorAvailable,
+            x.NumberOfFloors,
+            x.FloorsFinishing,
+            x.FrontageWidth,
+            x.FrontageLength,
+            x.StreetWidth,
+            x.HasElectricity,
+            x.HasWater,
+            x.HasSewerage,
+            x.HasGas);
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(
@@ -298,6 +325,15 @@ public class PropertyService
             x.ElectricityMeterAvailable,
             x.GasMeterAvailable,
             x.ElevatorAvailable,
+            x.NumberOfFloors,
+            x.FloorsFinishing,
+            x.FrontageWidth,
+            x.FrontageLength,
+            x.StreetWidth,
+            x.HasElectricity,
+            x.HasWater,
+            x.HasSewerage,
+            x.HasGas,
             x.Media
                 .OrderBy(m => m.SortOrder)
                 .Select(m => new PropertyMediaDto(m.Id, m.MediaType, m.Url, m.SortOrder))

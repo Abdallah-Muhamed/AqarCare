@@ -12,6 +12,10 @@ public class AqarCareDbContext : DbContext
 
     public DbSet<PropertyUnit> PropertyUnits => Set<PropertyUnit>();
     public DbSet<PropertyMedia> PropertyMedia => Set<PropertyMedia>();
+    public DbSet<MapCity> MapCities => Set<MapCity>();
+    public DbSet<MapStreet> MapStreets => Set<MapStreet>();
+    public DbSet<MapStreetAlias> MapStreetAliases => Set<MapStreetAlias>();
+    public DbSet<PropertyMapLocation> PropertyMapLocations => Set<PropertyMapLocation>();
     public DbSet<FinishingPackage> FinishingPackages => Set<FinishingPackage>();
     public DbSet<PackagePaymentPhase> PackagePaymentPhases => Set<PackagePaymentPhase>();
     public DbSet<PackageSection> PackageSections => Set<PackageSection>();

@@ -1,0 +1,280 @@
+/* =====================================================
+   Map3D.css — 3D Isometric Real Estate Map UI
+   ===================================================== */
+
+/* ── Full-screen page ──────────────────────────────── */
+.map3d-page {
+  position: fixed;
+  inset: 0;
+  top: var(--navbar-h, 60px);
+  display: flex;
+  flex-direction: column;
+  background: #1a1810;
+  overflow: hidden;
+}
+
+/* ── Top bar ───────────────────────────────────────── */
+.map3d-topbar {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  padding: .5rem .75rem;
+  background: rgba(255,253,245,.97);
+  border-bottom: 1px solid #d4c9b0;
+  backdrop-filter: blur(12px);
+  z-index: 20;
+  flex-shrink: 0;
+  box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+
+.map3d-topbar__title {
+  font-size: .9rem;
+  font-weight: 800;
+  color: #1e1c14;
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  flex: 1;
+}
+
+.map3d-topbar__title-badge {
+  font-size: .65rem;
+  background: linear-gradient(135deg, #b77a3d, #8a5a20);
+  color: #fff;
+  padding: .15rem .5rem;
+  border-radius: 99px;
+  font-weight: 700;
+  letter-spacing: .02em;
+}
+
+.map3d-topbar__count {
+  font-size: .75rem;
+  color: #7a6e55;
+  background: #f0ead6;
+  padding: .2rem .6rem;
+  border-radius: 99px;
+  font-weight: 600;
+}
+
+.map3d-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: .35rem;
+  padding: .42rem .8rem;
+  border-radius: 10px;
+  font-size: .78rem;
+  font-weight: 700;
+  border: 1px solid #d4c9b0;
+  background: #f8f4ec;
+  color: #2d2a22;
+  cursor: pointer;
+  transition: all .15s;
+  white-space: nowrap;
+  text-decoration: none;
+}
+.map3d-btn:hover { background: #fff; border-color: #b8a87a; box-shadow: 0 2px 8px rgba(0,0,0,.1); }
+.map3d-btn--muted { color: #7a6e55; }
+.map3d-btn--active { background: #f5f0e0; border-color: #b77a3d; color: #8a5a20; }
+
+/* ── Three.js canvas wrapper ───────────────────────── */
+.map3d-canvas {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+.map3d-canvas canvas {
+  display: block;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* ── Street name labels (HTML overlay) ────────────── */
+.map3d-street-label {
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+  font-family: 'Cairo', sans-serif;
+  font-weight: 800;
+  color: #1e1c14;
+  text-shadow:
+    0 0 6px rgba(240,234,214,.95),
+    0 0 12px rgba(240,234,214,.8),
+    1px 1px 0 rgba(240,234,214,.9),
+    -1px -1px 0 rgba(240,234,214,.9);
+  letter-spacing: .02em;
+}
+
+/* ── Property pin popup ────────────────────────────── */
+.map3d-pin-popup {
+  pointer-events: auto;
+  background: rgba(255,253,245,.97);
+  border: 1px solid #d4c9b0;
+  border-radius: 14px;
+  padding: .65rem .85rem;
+  box-shadow: 0 8px 32px rgba(0,0,0,.2);
+  min-width: 170px;
+  max-width: 220px;
+  font-family: 'Cairo', sans-serif;
+  transform: translateY(-110%);
+  animation: pinPopupIn .18s ease;
+}
+@keyframes pinPopupIn {
+  from { opacity:0; transform: translateY(-100%) scale(.88); }
+  to   { opacity:1; transform: translateY(-110%) scale(1); }
+}
+.map3d-pin-popup__type {
+  font-size: .62rem;
+  color: #b77a3d;
+  font-weight: 800;
+  margin-bottom: 2px;
+}
+.map3d-pin-popup__title {
+  font-size: .84rem;
+  font-weight: 700;
+  color: #1e1c14;
+  margin-bottom: .35rem;
+  line-height: 1.4;
+}
+.map3d-pin-popup__price {
+  font-size: .95rem;
+  font-weight: 900;
+  color: #1e1c14;
+  margin-bottom: .3rem;
+}
+.map3d-pin-popup__price span { font-size: .65rem; color: #b77a3d; margin-inline-start: 3px; }
+.map3d-pin-popup__status {
+  display: inline-block;
+  font-size: .62rem;
+  font-weight: 700;
+  padding: .18rem .5rem;
+  border-radius: 99px;
+  margin-bottom: .5rem;
+}
+.map3d-pin-popup__status--Available { background: #dcfce7; color: #166534; }
+.map3d-pin-popup__status--Reserved  { background: #fef3c7; color: #92400e; }
+.map3d-pin-popup__status--Sold      { background: #fee2e2; color: #991b1b; }
+.map3d-pin-popup__link {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: .48rem;
+  background: #2d4a3e; color: #fff;
+  border-radius: 9px; font-size: .78rem; font-weight: 700;
+  text-decoration: none; transition: background .15s;
+}
+.map3d-pin-popup__link:hover { background: #1f382e; }
+.map3d-pin-popup__close {
+  position: absolute; top: .4rem; inset-inline-end: .5rem;
+  background: none; border: none; cursor: pointer;
+  color: #7a6e55; padding: 0; line-height: 1; font-size: 1rem;
+}
+
+/* ── Right controls ────────────────────────────────── */
+.map3d-controls {
+  position: absolute;
+  bottom: 32px;
+  right: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 10;
+}
+.map3d-control-btn {
+  width: 40px; height: 40px;
+  border-radius: 11px;
+  background: rgba(255,253,245,.95);
+  border: 1px solid #d4c9b0;
+  color: #2d2a22;
+  font-size: 1.25rem;
+  font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0,0,0,.15);
+  transition: all .15s;
+  backdrop-filter: blur(8px);
+}
+.map3d-control-btn:hover { background: #fff; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+.map3d-control-btn svg { pointer-events: none; }
+
+/* ── Legend ────────────────────────────────────────── */
+.map3d-legend {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255,253,245,.95);
+  border: 1px solid #d4c9b0;
+  border-radius: 13px;
+  padding: .6rem .85rem;
+  box-shadow: 0 4px 16px rgba(0,0,0,.12);
+  backdrop-filter: blur(10px);
+  z-index: 10;
+}
+.map3d-legend__item {
+  display: flex; align-items: center; gap: .45rem;
+  font-size: .72rem; color: #5c5240;
+  font-family: 'Cairo', sans-serif;
+  padding: .12rem 0;
+}
+.map3d-legend__dot {
+  width: 11px; height: 11px;
+  border-radius: 50%; border: 2px solid rgba(255,255,255,.7);
+  flex-shrink: 0;
+}
+.map3d-legend__dot--Available { background: #16a34a; }
+.map3d-legend__dot--Reserved  { background: #d97706; }
+.map3d-legend__dot--Sold      { background: #dc2626; }
+
+/* ── Filters button ────────────────────────────────── */
+.map3d-filters-btn {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+}
+
+/* ── Loading / error overlay ───────────────────────── */
+.map3d-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  background: rgba(26,24,16,.9);
+  color: rgba(255,250,235,.8);
+  z-index: 30;
+  font-family: 'Cairo', sans-serif;
+}
+.map3d-overlay h3 { color: rgba(255,250,235,.95); font-size: 1.1rem; margin: 0; }
+.map3d-overlay p  { font-size: .85rem; margin: 0; color: rgba(255,250,235,.55); }
+
+/* ── OSM attribution ───────────────────────────────── */
+.map3d-attribution {
+  position: absolute;
+  bottom: 8px;
+  left: 10px;
+  font-size: .6rem;
+  color: rgba(255,250,235,.4);
+  font-family: 'Cairo', sans-serif;
+  background: rgba(0,0,0,.35);
+  padding: 2px 7px;
+  border-radius: 5px;
+  z-index: 5;
+}
+.map3d-attribution a { color: rgba(255,250,235,.5); text-decoration: none; }
+
+/* ── Spinner ───────────────────────────────────────── */
+.map3d-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid rgba(255,250,235,.15);
+  border-top-color: #b77a3d;
+  border-radius: 50%;
+  animation: spin3d .7s linear infinite;
+}
+@keyframes spin3d { to { transform: rotate(360deg); } }
+
+/* ── Mobile ────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .map3d-legend { top: auto; bottom: 70px; right: 8px; }
+  .map3d-controls { right: 8px; bottom: 70px; display: none; }
+  .map3d-topbar__title-badge { display: none; }
+}

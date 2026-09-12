@@ -6,7 +6,7 @@ import type { PropertyDetail } from '../types'
 import ImageGallery from '../components/ImageGallery'
 import './PropertyDetailPage.css'
 
-const typeLabel: Record<string, string>     = { Apartment: 'شقة', Villa: 'فيلا', Studio: 'استوديو', Office: 'مكتب', Shop: 'محل' }
+const typeLabel: Record<string, string>     = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
 const listingLabel: Record<string, string>  = { Sale: 'للبيع', Rent: 'للإيجار' }
 const finishingLabel: Record<string, string> = {
   'Core-Shell':   'عظم',
@@ -178,13 +178,9 @@ export default function PropertyDetailPage() {
 
               <div className="price-card__features">
                 <div className="price-card__feature"><CheckCircle2 size={15} />متابعة مستمرة</div>
-                <div className="price-card__feature"><CheckCircle2 size={15} />إمكانية التشطيب</div>
               </div>
 
-              <Link to="/finishing-packages" className="btn btn-primary" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)' }}>
-                استعرض باقات التشطيب
-              </Link>
-              <a href="https://wa.me/201055937687" target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)', background: '#25d366', color: '#fff' }}>
+              <a href="https://wa.me/201055937687" target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)', background: '#25d366', color: '#fff' }}>
                 <MessageCircle size={16} /> تواصل معنا
               </a>
               <Link to="/properties" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
@@ -193,6 +189,36 @@ export default function PropertyDetailPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* ── Sticky Mobile CTA Bar ─────────────────────────────────── */}
+      <div className="detail-mobile-cta">
+        <div className="detail-mobile-cta__price">
+          <span className="detail-mobile-cta__label">سعر الوحدة</span>
+          <span className="detail-mobile-cta__amount">
+            {prop.price != null
+              ? <>{prop.price.toLocaleString('ar-EG')}<span>جنيه</span></>
+              : <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)' }}>السعر عند الطلب</span>}
+          </span>
+        </div>
+        <div className="detail-mobile-cta__btns">
+          <a
+            href="https://wa.me/201055937687"
+            target="_blank"
+            rel="noreferrer"
+            className="btn"
+            style={{ background: '#25d366', color: '#fff', minHeight: 42, padding: '0 1rem' }}
+          >
+            <MessageCircle size={16} /> تواصل
+          </a>
+          <Link
+            to="/finishing-packages"
+            className="btn btn-outline"
+            style={{ minHeight: 42, padding: '0 0.9rem', fontSize: '0.82rem' }}
+          >
+            الباقات
+          </Link>
         </div>
       </div>
     </div>

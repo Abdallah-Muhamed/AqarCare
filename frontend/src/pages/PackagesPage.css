@@ -36,3 +36,10 @@
   font-size: 0.88rem;
   font-weight: 600;
 }
+
+@media (max-width: 768px) {
+  .pkgs-page__header { padding-top: calc(var(--navbar-h) + var(--space-xl)); padding-bottom: var(--space-lg); }
+  .pkgs-page__header-inner { flex-direction: column; align-items: stretch; }
+  .pkgs-page__badge { align-self: flex-start; }
+}
+
