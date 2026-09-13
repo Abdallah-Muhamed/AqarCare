@@ -209,6 +209,24 @@ export default function PropertyDetailPage() {
                 <div className="detail-spec"><Zap size={18} /><div><strong>{prop.electricityMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد كهرباء</small></div></div>
                 <div className="detail-spec"><Flame size={18} /><div><strong>{prop.gasMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد غاز</small></div></div>
                 <div className="detail-spec"><CheckCircle2 size={18} /><div><strong>{prop.installmentAvailable ? 'متاح' : 'غير متاح'}</strong><small>تقسيط</small></div></div>
+                {(() => {
+                  const floorPrices = prop.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
+                  const minPrice = floorPrices.length > 0 ? Math.min(...floorPrices) : prop.price;
+                  const maxPrice = floorPrices.length > 0 ? Math.max(...floorPrices) : prop.price;
+                  if (minPrice == null) return null;
+                  const isRange = floorPrices.length > 1 && minPrice !== maxPrice;
+                  return (
+                    <div className="detail-spec">
+                      <span>💵</span>
+                      <div>
+                        <strong>
+                          {isRange ? `يبدأ من ${minPrice.toLocaleString('ar-EG')}` : minPrice.toLocaleString('ar-EG')} ج
+                        </strong>
+                        <small>سعر الكاش</small>
+                      </div>
+                    </div>
+                  );
+                })()}
                 {prop.installmentPrice != null && (
                   <div className="detail-spec"><span>💳</span><div><strong>{prop.installmentPrice.toLocaleString('ar-EG')} ج</strong><small>سعر التقسيط</small></div></div>
                 )}
@@ -326,17 +344,20 @@ export default function PropertyDetailPage() {
               {(() => {
                 const floorPrices = prop.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
                 const displayPrice = floorPrices.length > 0 ? Math.min(...floorPrices) : prop.price;
+                const isRange = floorPrices.length > 1 && Math.min(...floorPrices) !== Math.max(...floorPrices);
                 return (
                   <>
-                    <p className="price-card__label">{floorPrices.length > 0 ? 'يبدأ من' : 'سعر الوحدة'}</p>
+                    <p className="price-card__label">
+                      💵 {isRange ? 'سعر الكاش (يبدأ من)' : 'سعر الكاش'}
+                    </p>
                     <div className="price-card__amount">
                       {displayPrice != null
-                        ? <>{displayPrice.toLocaleString('ar-EG')}<span>جنيه</span></>
+                        ? <>{displayPrice.toLocaleString('ar-EG')}<span>جنيه كاش</span></>
                         : <span>غير محدد</span>}
                     </div>
                     {prop.installmentPrice != null && (
                       <div style={{ marginTop: '0.5rem', padding: '0.45rem 0.75rem', background: 'rgba(183,121,61,0.12)', border: '1px solid rgba(183,121,61,0.25)', borderRadius: '10px', fontSize: '0.85rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
-                        💳 تقسيط: {prop.installmentPrice.toLocaleString('ar-EG')} جنيه
+                        💳 سعر التقسيط: {prop.installmentPrice.toLocaleString('ar-EG')} جنيه
                       </div>
                     )}
                   </>
@@ -360,7 +381,7 @@ export default function PropertyDetailPage() {
                             <div key={fl.id ?? i} style={{ display: 'flex', justifyContent: 'space-between', paddingInlineStart: '6px', marginBottom: '2px' }}>
                               <span>• {label}:</span>
                               <span style={{ fontWeight: 700 }}>
-                                {fl.price != null ? `${fl.price.toLocaleString('ar-EG')} ج` : 'غير محدد'}
+                                {fl.price != null ? `${fl.price.toLocaleString('ar-EG')} ج كاش` : 'غير محدد'}
                                 {fl.pricePerMeter != null && <span style={{ color: 'var(--clr-gold)', fontSize: '0.72rem', marginRight: '4px' }}>({fl.pricePerMeter.toLocaleString('ar-EG')} ج/م²)</span>}
                               </span>
                             </div>
