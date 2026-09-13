@@ -29,6 +29,26 @@ const FINISHING_LABELS: Record<string, string> = {
   'High-Lux':     'هاي لوكس',
 }
 
+const TYPE_LABELS: Record<string, string> = {
+  Apartment:  'شقة',
+  House:      'بيت',
+  Villa:      'فيلا',
+  Land:       'أرض',
+  Shop:       'محل',
+  Commercial: 'تجاري',
+}
+
+const LISTING_LABELS: Record<string, string> = {
+  Sale: 'للبيع',
+  Rent: 'للإيجار',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  Available: 'متاح',
+  Reserved:  'محجوز',
+  Sold:      'مباع',
+}
+
 export default function MapPage() {
   const [data,             setData]             = useState<CityMap | null>(null)
   const [loading,          setLoading]          = useState(true)
@@ -141,102 +161,184 @@ export default function MapPage() {
       )}
 
       {/* ── Mobile Property Bottom Sheet & Outside Click Dismissal ── */}
-      {selectedProperty && (
-        <>
-          <div
-            className="mappage__backdrop"
-            onClick={() => setSelectedProperty(null)}
-          />
-          <div className="mappage__mobile-card-wrap">
-            <div className="mappage__mobile-card" onClick={e => e.stopPropagation()}>
-              <div className="mappage__mobile-card-drag" onClick={() => setSelectedProperty(null)} />
+      {selectedProperty && (() => {
+        const p = selectedProperty
+        const statusLabel = STATUS_LABELS[p.status] ?? p.status
+        const typeLabel = TYPE_LABELS[p.propertyType ?? ''] ?? p.propertyType ?? 'عقار'
+        const listingLabel = LISTING_LABELS[p.listingType ?? ''] ?? ''
+        const finishing = p.finishingStatus ? (FINISHING_LABELS[p.finishingStatus] ?? p.finishingStatus) : ''
 
-              <div className="mappage__mobile-card-top">
+        // Price calculation considering floors
+        const availableFloors = p.floors && p.floors.length > 0 ? p.floors.filter(f => f.isAvailable) : []
+        const targetFloors = availableFloors.length > 0 ? availableFloors : (p.floors || [])
+        const cashPrices = targetFloors.map(f => f.price).filter((pr): pr is number => pr != null && pr > 0)
+        const instPrices = targetFloors.map(f => f.installmentPrice).filter((pr): pr is number => pr != null && pr > 0)
+
+        const minCash = cashPrices.length > 0 ? Math.min(...cashPrices) : (p.price != null && p.price > 0 ? p.price : null)
+        const maxCash = cashPrices.length > 0 ? Math.max(...cashPrices) : (p.price != null && p.price > 0 ? p.price : null)
+
+        const minInst = instPrices.length > 0 ? Math.min(...instPrices) : (p.installmentPrice != null && p.installmentPrice > 0 ? p.installmentPrice : null)
+        const maxInst = instPrices.length > 0 ? Math.max(...instPrices) : (p.installmentPrice != null && p.installmentPrice > 0 ? p.installmentPrice : null)
+
+        const formatRange = (min: number | null, max: number | null) => {
+          if (min == null || max == null) return null
+          if (min === max) return `${min.toLocaleString('ar-EG')} جنيه`
+          return `${min.toLocaleString('ar-EG')} - ${max.toLocaleString('ar-EG')} جنيه`
+        }
+
+        const defaultImg = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
+        const imgUrl = p.primaryImageUrl || defaultImg
+
+        const hasFloors = (p.floors && p.floors.length > 0) || p.floorNumber != null
+        const floorsText = p.floors && p.floors.length > 0
+          ? formatFloorsText(p.floors)
+          : p.floorNumber != null
+            ? (p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`)
+            : null
+
+        const hasServices = p.waterMeterAvailable || p.electricityMeterAvailable || p.gasMeterAvailable || p.elevatorAvailable || p.installmentAvailable || minInst != null
+
+        return (
+          <>
+            <div
+              className="mappage__backdrop"
+              onClick={() => setSelectedProperty(null)}
+            />
+            <div className="mappage__mobile-card-wrap">
+              <div className="mappage__mobile-card" onClick={e => e.stopPropagation()}>
+                <div className="mappage__mobile-card-drag" onClick={() => setSelectedProperty(null)} />
+
+                {/* Full-width image header */}
                 <div className="mappage__mobile-card-img-wrap">
                   <img
-                    src={selectedProperty.primaryImageUrl || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'}
-                    alt={selectedProperty.title || 'وحدة عقارية'}
+                    src={imgUrl}
+                    alt={p.title || 'وحدة عقارية'}
                     className="mappage__mobile-card-img"
                     onError={e => {
-                      ;(e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'
+                      ;(e.currentTarget as HTMLImageElement).src = defaultImg
                     }}
                   />
+
+                  {/* Close button */}
+                  <button
+                    className="mappage__mobile-card-close"
+                    onClick={() => setSelectedProperty(null)}
+                    aria-label="إغلاق"
+                  >
+                    <X size={14} />
+                  </button>
+
+                  {/* Badges on image */}
                   <div className="mappage__mobile-card-badges">
-                    <span className={`mapgl-popup__badge mapgl-popup__badge--${selectedProperty.status}`}>
-                      {selectedProperty.status === 'Available' ? 'متاح' : selectedProperty.status === 'Sold' ? 'مباع' : 'محجوز'}
+                    <span className={`mapgl-popup__badge mapgl-popup__badge--${p.status}`}>
+                      {statusLabel}
                     </span>
-                    {selectedProperty.listingType && (
+                    {listingLabel && (
                       <span className="mapgl-popup__badge mapgl-popup__badge--listing">
-                        {selectedProperty.listingType === 'Sale' ? 'للبيع' : 'للإيجار'}
+                        {listingLabel}
+                      </span>
+                    )}
+                    <span className="mapgl-popup__badge mapgl-popup__badge--type">
+                      {typeLabel}
+                    </span>
+                    {p.isUnderConstruction && (
+                      <span className="mapgl-popup__badge" style={{ background: '#b45309', color: '#fff' }}>
+                        🏗️ تحت الإنشاء
                       </span>
                     )}
                   </div>
                 </div>
 
-                <div className="mappage__mobile-card-info">
-                  <div className="mappage__mobile-card-header">
-                    <h4 className="mappage__mobile-card-title">{selectedProperty.title?.trim() || 'وحدة عقارية'}</h4>
-                    <button
-                      className="mappage__mobile-card-close"
-                      onClick={() => setSelectedProperty(null)}
-                      aria-label="إغلاق"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
+                {/* Card Body */}
+                <div className="mappage__mobile-card-body">
+                  <h3 className="mappage__mobile-card-title">{p.title?.trim() || 'وحدة عقارية'}</h3>
 
-                  {selectedProperty.address && (
+                  {p.address && (
                     <div className="mappage__mobile-card-address">
-                      📍 {selectedProperty.address}
+                      📍 {p.address}
                     </div>
                   )}
 
-                  <div className="mappage__mobile-card-price">
-                    {selectedProperty.price != null
-                      ? `${selectedProperty.price.toLocaleString('ar-EG')} جنيه`
-                      : 'السعر عند الطلب'}
+                  {/* Pricing line */}
+                  <div className="mappage__mobile-card-pricing">
+                    {minCash != null ? (
+                      <div className="mappage__mobile-card-price-line">
+                        <span className="mappage__mobile-card-price-val">
+                          سعر الكاش: {formatRange(minCash, maxCash)}
+                        </span>
+                        {cashPrices.length > 1 && (
+                          <span className="mappage__mobile-card-badge-sub">حسب الدور</span>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="mappage__mobile-card-price-line">
+                        <span className="mappage__mobile-card-price-val">السعر عند الطلب</span>
+                      </div>
+                    )}
+
+                    {minInst != null && (
+                      <div className="mappage__mobile-card-price-line mappage__mobile-card-price-inst">
+                        <span>💳 سعر التقسيط: {formatRange(minInst, maxInst)}</span>
+                        {instPrices.length > 1 && (
+                          <span className="mappage__mobile-card-badge-sub">حسب الدور</span>
+                        )}
+                      </div>
+                    )}
                   </div>
+
+                  {/* Specs row */}
+                  <div className="mappage__mobile-card-specs">
+                    {p.areaSqm != null && (
+                      <div className="mappage__mobile-card-spec">📐 <span>{p.areaSqm} م²</span></div>
+                    )}
+                    {p.bedrooms != null && (
+                      <div className="mappage__mobile-card-spec">🛏️ <span>{p.bedrooms} غرف</span></div>
+                    )}
+                    {p.bathrooms != null && (
+                      <div className="mappage__mobile-card-spec">🚿 <span>{p.bathrooms} حمام</span></div>
+                    )}
+                    {hasFloors && floorsText && (
+                      <div className="mappage__mobile-card-spec">🏢 <span>{floorsText}</span></div>
+                    )}
+                    {finishing && (
+                      <div className="mappage__mobile-card-spec">🎨 <span>{finishing}</span></div>
+                    )}
+                  </div>
+
+                  {/* Services tags */}
+                  {hasServices && (
+                    <div className="mappage__mobile-card-tags">
+                      {p.waterMeterAvailable && (
+                        <span className="mapgl-popup__tag">💧 مياه</span>
+                      )}
+                      {p.electricityMeterAvailable && (
+                        <span className="mapgl-popup__tag">⚡ كهرباء</span>
+                      )}
+                      {p.gasMeterAvailable && (
+                        <span className="mapgl-popup__tag">🔥 غاز</span>
+                      )}
+                      {p.elevatorAvailable && (
+                        <span className="mapgl-popup__tag">🛗 أسانسير</span>
+                      )}
+                      {(p.installmentAvailable || minInst != null) && (
+                        <span className="mapgl-popup__tag mapgl-popup__tag--green">💳 تقسيط متاح</span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Action button */}
+                  <Link
+                    to={`/properties/${p.id}`}
+                    className="mappage__mobile-card-action"
+                  >
+                    عرض التفاصيل الكاملة ←
+                  </Link>
                 </div>
               </div>
-
-              {/* Specs row */}
-              <div className="mappage__mobile-card-specs">
-                {selectedProperty.areaSqm != null && (
-                  <div className="mappage__mobile-card-spec">📐 <span>{selectedProperty.areaSqm} م²</span></div>
-                )}
-                {selectedProperty.bedrooms != null && (
-                  <div className="mappage__mobile-card-spec">🛏️ <span>{selectedProperty.bedrooms} غرف</span></div>
-                )}
-                {selectedProperty.bathrooms != null && (
-                  <div className="mappage__mobile-card-spec">🚿 <span>{selectedProperty.bathrooms} حمام</span></div>
-                )}
-                {selectedProperty.floorNumber != null ? (
-                  <div className="mappage__mobile-card-spec">
-                    🏢 <span>{selectedProperty.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${selectedProperty.floorNumber}`}</span>
-                  </div>
-                ) : selectedProperty.floors && selectedProperty.floors.length > 0 ? (
-                  <div className="mappage__mobile-card-spec">
-                    🏢 <span>{formatFloorsText(selectedProperty.floors)}</span>
-                  </div>
-                ) : null}
-                {selectedProperty.finishingStatus && (
-                  <div className="mappage__mobile-card-spec">
-                    🎨 <span>{FINISHING_LABELS[selectedProperty.finishingStatus] || selectedProperty.finishingStatus}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Action button */}
-              <Link
-                to={`/properties/${selectedProperty.id}`}
-                className="mappage__mobile-card-action"
-              >
-                عرض التفاصيل الكاملة ←
-              </Link>
             </div>
-          </div>
-        </>
-      )}
+          </>
+        )
+      })()}
 
       {/* ── Map (full remaining area) ──────────────────────────── */}
       <div className="mappage__map">
