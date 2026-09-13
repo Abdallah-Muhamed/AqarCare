@@ -85,7 +85,7 @@ export default function HomePage() {
             { icon: <Shield size={22} />, title: 'بيانات موثوقة', desc: 'معلومات دقيقة لكل وحدة' },
             { icon: <TrendingUp size={22} />, title: 'أسعار تنافسية', desc: 'خيارات تناسب كل ميزانية' },
             { icon: <Map size={22} />, title: 'خريطة تفاعلية', desc: 'تصفح الوحدات جغرافيًا' },
-            { icon: <Building2 size={22} />, title: 'تنوع العقارات', desc: 'شقق، فيلات، مكاتب وأكثر' },
+            { icon: <Building2 size={22} />, title: 'تنوع العقارات', desc: 'شقق، بيوت، محلات، أراضي' },
           ].map((f, i) => (
             <div key={i} className="feature-item">
               <div className="feature-item__icon">{f.icon}</div>
