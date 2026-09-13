@@ -284,7 +284,9 @@ export default function PropertyDetailPage() {
                                 ? (item.floorName && !item.floorName.startsWith('الدور')
                                     ? item.floorName
                                     : `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`)
-                                : (item.floorName || group.floorTitle)
+                                : (item.floorName && item.floorName !== group.floorTitle && !item.floorName.startsWith('الدور')
+                                    ? item.floorName
+                                    : (item.areaSqm ? `شقة (${item.areaSqm} م²)` : 'شقة بالدور'))
 
                               return (
                                 <div key={item.id ?? idx} className="floor-spec-card">
@@ -394,53 +396,10 @@ export default function PropertyDetailPage() {
                   </>
                 );
               })()}
-              {prop.floors && prop.floors.length > 0 ? (() => {
-                const groups = groupFloors(prop.floors)
-                return (
-                  <div style={{ marginTop: '0.85rem', padding: '0.75rem 0.85rem', background: 'rgba(24,40,33,0.04)', borderRadius: '12px', fontSize: '0.82rem' }}>
-                    <div style={{ fontWeight: 800, marginBottom: '8px', color: 'var(--clr-text)', fontSize: '0.86rem' }}>
-                      🏢 تفاصيل أسعار الأدوار والشقق:
-                    </div>
-                    {groups.map((g, gIdx) => (
-                      <div key={gIdx} style={{ marginBottom: gIdx < groups.length - 1 ? '10px' : '0', borderBottom: gIdx < groups.length - 1 ? '1px dashed #d5cdbf' : 'none', paddingBottom: '8px' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--clr-gold)', fontSize: '0.82rem', marginBottom: '4px' }}>
-                          🏢 {g.floorTitle}:
-                        </div>
-                        {g.items.map((fl, i) => {
-                          const label = g.items.length > 1
-                            ? (fl.floorName && !fl.floorName.startsWith('الدور')
-                                ? fl.floorName
-                                : `شقة ${i + 1} (${fl.areaSqm ? `${fl.areaSqm}م²` : ''})`)
-                            : (fl.floorName || g.floorTitle)
-                          return (
-                            <div key={fl.id ?? i} style={{ paddingInlineStart: '6px', marginBottom: '6px' }}>
-                              <div style={{ fontWeight: 700, color: 'var(--clr-text)', fontSize: '0.82rem' }}>• {label}</div>
-                              <div style={{ display: 'flex', gap: '8px', fontSize: '0.76rem', marginInlineStart: '10px', marginTop: '3px', flexWrap: 'wrap' }}>
-                                {fl.price != null && (
-                                  <span style={{ color: '#1e2922', fontWeight: 700, background: '#eef4ee', padding: '2px 7px', borderRadius: '4px' }}>
-                                    💵 كاش: {fl.price.toLocaleString('ar-EG')} ج
-                                    {fl.pricePerMeter != null && <span style={{ color: 'var(--clr-gold)', fontSize: '0.7rem', marginInlineStart: '3px' }}>({fl.pricePerMeter.toLocaleString('ar-EG')} ج/م²)</span>}
-                                  </span>
-                                )}
-                                {fl.installmentPrice != null && (
-                                  <span style={{ color: '#1d4ed8', fontWeight: 700, background: '#eff6ff', padding: '2px 7px', borderRadius: '4px' }}>
-                                    💳 تقسيط: {fl.installmentPrice.toLocaleString('ar-EG')} ج
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )
-                        })}
-                      </div>
-                    ))}
-                  </div>
-                )
-              })() : (
-                prop.price != null && prop.areaSqm != null && prop.areaSqm > 0 && (
-                  <div className="price-card__per-m">
-                    {(prop.price / prop.areaSqm).toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه / م²
-                  </div>
-                )
+              {prop.price != null && prop.areaSqm != null && prop.areaSqm > 0 && (!prop.floors || prop.floors.length === 0) && (
+                <div className="price-card__per-m">
+                  {(prop.price / prop.areaSqm).toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه / م²
+                </div>
               )}
 
               <div className="price-card__divider" />
