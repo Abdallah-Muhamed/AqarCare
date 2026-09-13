@@ -9,6 +9,7 @@ import {
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CityMap, MapProperty, MapFilters } from '../../types'
+import { formatFloorsText } from '../../utils/formatters'
 
 // ── Geographic bounds ──────────────────────────────────────────────
 const BOUNDS = {
@@ -35,30 +36,33 @@ const TYPE_AR:    Record<string, string> = {
 const LISTING_AR: Record<string, string> = { Sale:'للبيع', Rent:'للإيجار' }
 const STATUS_AR:  Record<string, string> = { Available:'متاح', Sold:'مباع' }
 
-// ── Inline MapLibre style (tiles through Vite proxy → OSM) ─────────
-// This avoids ALL external style JSON and CORS issues.
-// The /osm-tiles/ path is proxied in vite.config.ts → tile.openstreetmap.org
+// ── High-reliability CartoDB Voyager raster tiles (CORS-enabled, never 403 blocked) ──
 const MAP_STYLE = {
   version: 8 as const,
   sources: {
-    'osm': {
+    'carto': {
       type: 'raster' as const,
-      tiles: ['/osm-tiles/{z}/{x}/{y}.png'],
+      tiles: [
+        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+      ],
       tileSize: 256,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>',
-      maxzoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> © <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
+      maxzoom: 20,
     },
   },
   layers: [
     {
-      id:     'osm-background',
+      id:     'background',
       type:   'background' as const,
-      paint:  { 'background-color': '#f0ebe0' },
+      paint:  { 'background-color': '#f2eee9' },
     },
     {
-      id:      'osm-tiles',
+      id:      'carto-tiles',
       type:    'raster' as const,
-      source:  'osm',
+      source:  'carto',
       minzoom: 0,
       maxzoom: 20,
     },
@@ -89,10 +93,11 @@ export default function MapGLView({ data, filters }: Props) {
 
   // ── Popup HTML (Full Property Details Card) ───────────────────────
   const buildPopupHTML = useCallback((p: MapProperty): string => {
+    const title   = p.title?.trim() || 'وحدة عقارية'
     const type    = TYPE_AR[p.propertyType ?? ''] ?? (p.propertyType ?? 'عقار')
     const listing = LISTING_AR[p.listingType ?? ''] ?? ''
     const status  = STATUS_AR[p.status] ?? p.status
-    const price   = p.price != null ? p.price.toLocaleString('ar-EG') : 'السعر غير محدد'
+    const price   = p.price != null ? `${p.price.toLocaleString('ar-EG')} <span>جنيه</span>` : 'السعر عند الطلب'
     const finishing = p.finishingStatus ? (FINISHING_AR[p.finishingStatus] ?? p.finishingStatus) : ''
     const defaultImg = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'
     const imgUrl  = p.primaryImageUrl || defaultImg
@@ -102,7 +107,11 @@ export default function MapGLView({ data, filters }: Props) {
     if (p.areaSqm != null) specs.push(`<div class="mapgl-popup__spec">📐 <span>${p.areaSqm} م²</span></div>`)
     if (p.bedrooms != null) specs.push(`<div class="mapgl-popup__spec">🛏️ <span>${p.bedrooms} غرف</span></div>`)
     if (p.bathrooms != null) specs.push(`<div class="mapgl-popup__spec">🚿 <span>${p.bathrooms} حمام</span></div>`)
-    if (p.floorNumber != null) specs.push(`<div class="mapgl-popup__spec">🏢 <span>الدور ${p.floorNumber === 0 ? 'الأرضي' : p.floorNumber}</span></div>`)
+    if (p.floorNumber != null) {
+      specs.push(`<div class="mapgl-popup__spec">🏢 <span>${p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}</span></div>`)
+    } else if (p.floors && p.floors.length > 0) {
+      specs.push(`<div class="mapgl-popup__spec">🏢 <span>${formatFloorsText(p.floors)}</span></div>`)
+    }
     if (finishing) specs.push(`<div class="mapgl-popup__spec">🎨 <span>${finishing}</span></div>`)
 
     // Services tags
@@ -116,7 +125,7 @@ export default function MapGLView({ data, filters }: Props) {
     return `
       <div class="mapgl-popup-card">
         <div class="mapgl-popup__img-wrap">
-          <img src="${imgUrl}" alt="${p.title ?? ''}" class="mapgl-popup__img" onerror="this.src='${defaultImg}'" />
+          <img src="${imgUrl}" alt="${title}" class="mapgl-popup__img" onerror="this.src='${defaultImg}'" />
           <div class="mapgl-popup__badges">
             <span class="mapgl-popup__badge mapgl-popup__badge--${p.status}">${status}</span>
             ${listing ? `<span class="mapgl-popup__badge mapgl-popup__badge--listing">${listing}</span>` : ''}
@@ -125,11 +134,11 @@ export default function MapGLView({ data, filters }: Props) {
         </div>
 
         <div class="mapgl-popup__body">
-          <div class="mapgl-popup__title">${p.title ?? 'وحدة عقارية'}</div>
+          <div class="mapgl-popup__title">${title}</div>
           ${p.address ? `<div class="mapgl-popup__address">📍 ${p.address}</div>` : ''}
 
           <div class="mapgl-popup__price-row">
-            <div class="mapgl-popup__price">${price} <span>جنيه</span></div>
+            <div class="mapgl-popup__price">${price}</div>
           </div>
 
           ${specs.length > 0 ? `<div class="mapgl-popup__specs">${specs.join('')}</div>` : ''}
@@ -149,9 +158,10 @@ export default function MapGLView({ data, filters }: Props) {
     const container = containerRef.current
     if (!container || mapRef.current) return
 
-    const hasProps = data.properties && data.properties.length > 0
+    const validProps = (data.properties || []).filter(p => p.x != null && p.y != null && !isNaN(p.x) && !isNaN(p.y))
+    const hasProps = validProps.length > 0
     const initialCenter: [number, number] = hasProps
-      ? propToLonLat(data.properties[0].x, data.properties[0].y)
+      ? propToLonLat(validProps[0].x, validProps[0].y)
       : [31.1487, 30.9449]
 
     const map = new Map({
@@ -170,13 +180,17 @@ export default function MapGLView({ data, filters }: Props) {
     const handleResize = () => map.resize()
     window.addEventListener('resize', handleResize)
     map.on('load', handleResize)
-    const resizeTimer = setTimeout(handleResize, 300)
+    const t1 = setTimeout(handleResize, 100)
+    const t2 = setTimeout(handleResize, 400)
+    const t3 = setTimeout(handleResize, 1000)
 
     mapRef.current = map
 
     return () => {
       window.removeEventListener('resize', handleResize)
-      clearTimeout(resizeTimer)
+      clearTimeout(t1)
+      clearTimeout(t2)
+      clearTimeout(t3)
       markersRef.current.forEach(m => m.remove())
       popupRef.current?.remove()
       map.remove()
@@ -194,7 +208,8 @@ export default function MapGLView({ data, filters }: Props) {
       markersRef.current = []
       popupRef.current?.remove()
 
-      const filtered = data.properties.filter(p => {
+      const filtered = (data.properties || []).filter(p => {
+        if (p.x == null || p.y == null || isNaN(p.x) || isNaN(p.y)) return false
         if (p.status === 'Reserved') return false
         if (filters.status && p.status !== filters.status) return false
         if (filters.listingType && p.listingType !== filters.listingType) return false

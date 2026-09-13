@@ -3,6 +3,7 @@ import './AdminPanelPage.css';
 import { API_BASE_URL } from '../constants/api';
 import MapPickerModal from '../components/admin/MapPickerModal';
 import type { PropertyFloor } from '../types';
+import { formatFloorsText } from '../utils/formatters';
 
 interface Property {
   id: number;
@@ -1129,8 +1130,8 @@ export default function AdminPanelPage() {
                             {property.isPublished ? '🌐 منشور' : '🔒 مسودة'}
                           </span>
                           {property.floors && property.floors.length > 0 && (
-                            <span className="admin-badge admin-badge--floors">
-                              🏢 {property.floors.length} أدوار
+                            <span className="admin-badge admin-badge--floors" title="الأدوار المتاحة">
+                              🏢 {formatFloorsText(property.floors)}
                             </span>
                           )}
                         </div>

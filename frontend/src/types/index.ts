@@ -41,6 +41,7 @@ export interface PropertyListItem {
   electricityMeterAvailable: boolean
   gasMeterAvailable: boolean
   elevatorAvailable: boolean
+  floorNumber?: number | null
   floors?: PropertyFloor[]
   isPublished?: boolean
 }
@@ -175,6 +176,7 @@ export interface MapProperty {
   installmentAvailable?: boolean
   installmentPrice?: number | null
   isUnderConstruction?: boolean
+  floors?: PropertyFloor[]
 }
 
 export interface CityMap {

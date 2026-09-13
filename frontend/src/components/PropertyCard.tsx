@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { BedDouble, Bath, Maximize2, MapPin, Star, Play } from 'lucide-react'
 import type { PropertyListItem } from '../types'
+import { formatFloorsText } from '../utils/formatters'
 import './PropertyCard.css'
 
 interface Props { property: PropertyListItem }
@@ -75,6 +76,15 @@ export default function PropertyCard({ property: p }: Props) {
 
         {/* Specs */}
         <div className="prop-card__specs">
+          {p.floors && p.floors.length > 0 ? (
+            <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title="الأدوار المتاحة">
+              🏢 {formatFloorsText(p.floors)}
+            </div>
+          ) : p.floorNumber != null ? (
+            <div className="prop-card__spec">
+              🏢 {p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}
+            </div>
+          ) : null}
           <div className="prop-card__spec"><BedDouble size={15} />{p.bedrooms ?? '—'} غرف</div>
           <div className="prop-card__spec"><Bath size={15} />{p.bathrooms ?? '—'} حمام</div>
           <div className="prop-card__spec"><Maximize2 size={15} />{p.areaSqm ?? '—'} م²</div>
