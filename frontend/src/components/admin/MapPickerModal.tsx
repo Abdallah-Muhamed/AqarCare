@@ -26,23 +26,23 @@ interface Props {
   onSaved:       () => void
 }
 
-// Coordinate boundaries of منشية البكري
+// Geographic boundaries for normalized coordinates (covers all regions with sub-centimeter precision)
 const BOUNDS = {
-  minLat: 30.937698,
-  maxLat: 30.952062,
-  minLon: 31.144212,
-  maxLon: 31.153085,
+  minLat: 21.5,
+  maxLat: 32.0,
+  minLon: 24.5,
+  maxLon: 37.0,
 }
 
-// Center of the neighborhood
-const CENTER: [number, number] = [31.1487, 30.9449]
+// Default center
+const CENTER: [number, number] = [31.157, 30.947]
 
 function lngLatToNormalized(lng: number, lat: number): { x: number; y: number } {
   const x = (lng - BOUNDS.minLon) / (BOUNDS.maxLon - BOUNDS.minLon)
   const y = (BOUNDS.maxLat - lat) / (BOUNDS.maxLat - BOUNDS.minLat)
   return {
-    x: Math.max(0, Math.min(1, x)),
-    y: Math.max(0, Math.min(1, y)),
+    x: Math.round(Math.max(0, Math.min(1, x)) * 1e8) / 1e8,
+    y: Math.round(Math.max(0, Math.min(1, y)) * 1e8) / 1e8,
   }
 }
 

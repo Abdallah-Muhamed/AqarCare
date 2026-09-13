@@ -13,8 +13,10 @@ import { formatFloorsText } from '../../utils/formatters'
 
 // ── Geographic bounds ──────────────────────────────────────────────
 const BOUNDS = {
-  minLat: 30.937698, maxLat: 30.952062,
-  minLon: 31.144212, maxLon: 31.153085,
+  minLat: 21.5,
+  maxLat: 32.0,
+  minLon: 24.5,
+  maxLon: 37.0,
 }
 
 function propToLonLat(x: number, y: number): [number, number] {
@@ -159,7 +161,7 @@ export default function MapGLView({ data, filters }: Props) {
     const hasProps = validProps.length > 0
     const initialCenter: [number, number] = hasProps
       ? propToLonLat(validProps[0].x, validProps[0].y)
-      : [31.1487, 30.9449]
+      : [31.157, 30.947]
 
     const map = new Map({
       container,
