@@ -66,7 +66,8 @@ public record PropertyListItemDto(
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorDto>? Floors = null,
-    bool IsPublished = true);
+    bool IsPublished = true,
+    int? ApartmentsPerFloor = null);
 
 public record PropertyDetailDto(
     int Id,
@@ -111,7 +112,8 @@ public record PropertyDetailDto(
     IReadOnlyList<PropertyMediaDto> Media,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
-    IReadOnlyList<PropertyFloorDto>? Floors = null);
+    IReadOnlyList<PropertyFloorDto>? Floors = null,
+    int? ApartmentsPerFloor = null);
 
 public record CreatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -151,7 +153,8 @@ public record CreatePropertyRequest(
     bool ElevatorAvailable = false,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
-    IReadOnlyList<PropertyFloorInput>? Floors = null);
+    IReadOnlyList<PropertyFloorInput>? Floors = null,
+    int? ApartmentsPerFloor = null);
 
 public record UpdatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -192,7 +195,8 @@ public record UpdatePropertyRequest(
     bool ElevatorAvailable = false,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
-    IReadOnlyList<PropertyFloorInput>? Floors = null);
+    IReadOnlyList<PropertyFloorInput>? Floors = null,
+    int? ApartmentsPerFloor = null);
 
 public record AddPropertyMediaRequest(
     string MediaType,
@@ -254,7 +258,8 @@ public record MapPropertyDto(
     bool ElevatorAvailable = false,
     bool InstallmentAvailable = false,
     decimal? InstallmentPrice = null,
-    bool IsUnderConstruction = false);
+    bool IsUnderConstruction = false,
+    int? ApartmentsPerFloor = null);
 
 public record CityMapDto(
     int Id,

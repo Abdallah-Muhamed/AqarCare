@@ -18,6 +18,7 @@ public class PropertyUnit
     public FinishingPackage? FinishingPackage { get; set; }
     public bool InstallmentAvailable { get; set; }
     public int? FloorNumber { get; set; }
+    public int? ApartmentsPerFloor { get; set; } // Number of apartments per floor in the building (e.g. 2 or 3)
     
     // House-specific fields
     public int? NumberOfFloors { get; set; }

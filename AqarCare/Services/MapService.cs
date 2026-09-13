@@ -61,7 +61,8 @@ public class MapService
                 x.PropertyUnit.ElevatorAvailable,
                 x.PropertyUnit.InstallmentAvailable,
                 x.PropertyUnit.InstallmentPrice,
-                x.PropertyUnit.IsUnderConstruction))
+                x.PropertyUnit.IsUnderConstruction,
+                x.PropertyUnit.ApartmentsPerFloor))
             .ToListAsync(ct);
 
         return new CityMapDto(

@@ -186,6 +186,21 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="detail-specs" style={{ marginTop: 'var(--space-md)' }}>
+                {prop.apartmentsPerFloor != null && prop.apartmentsPerFloor > 0 && (
+                  <div className="detail-spec">
+                    <Building2 size={18} />
+                    <div>
+                      <strong>
+                        {prop.apartmentsPerFloor === 1
+                          ? 'شقة واحدة'
+                          : prop.apartmentsPerFloor === 2
+                            ? 'شقتين'
+                            : `${prop.apartmentsPerFloor} شقق`}
+                      </strong>
+                      <small>بالدور</small>
+                    </div>
+                  </div>
+                )}
                 {prop.floorNumber != null && (!prop.floors || prop.floors.length === 0) && (
                   <div className="detail-spec"><Building2 size={18} /><div><strong>{prop.floorNumber}</strong><small>رقم الدور</small></div></div>
                 )}

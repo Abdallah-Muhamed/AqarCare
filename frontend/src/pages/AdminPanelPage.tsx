@@ -21,6 +21,7 @@ interface Property {
   finishingPackageId?: number | null;
   installmentAvailable: boolean;
   floorNumber?: number | null;
+  apartmentsPerFloor?: number | null;
   city: string | null;
   district: string | null;
   address: string | null;
@@ -103,6 +104,7 @@ export default function AdminPanelPage() {
     electricityMeterAvailable: false,
     gasMeterAvailable: false,
     elevatorAvailable: false,
+    apartmentsPerFloor: '',
   });
 
   const [floors, setFloors] = useState<PropertyFloor[]>([]);
@@ -321,6 +323,7 @@ export default function AdminPanelPage() {
             ?? (formData.bathrooms ? parseInt(formData.bathrooms) : null),
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
+          apartmentsPerFloor: formData.apartmentsPerFloor ? parseInt(formData.apartmentsPerFloor) : null,
           isUnderConstruction: formData.isUnderConstruction,
           floors: floors.map((f, i) => ({
             id: f.id,
@@ -413,6 +416,7 @@ export default function AdminPanelPage() {
       electricityMeterAvailable: property.electricityMeterAvailable ?? false,
       gasMeterAvailable: property.gasMeterAvailable ?? false,
       elevatorAvailable: property.elevatorAvailable ?? false,
+      apartmentsPerFloor: property.apartmentsPerFloor?.toString() ?? '',
     });
 
     if (property.floors && property.floors.length > 0) {
@@ -458,6 +462,7 @@ export default function AdminPanelPage() {
       electricityMeterAvailable: false,
       gasMeterAvailable: false,
       elevatorAvailable: false,
+      apartmentsPerFloor: '',
     });
     setFloors([]);
   };
@@ -653,6 +658,17 @@ export default function AdminPanelPage() {
                         <option value="Sold">مباع</option>
                         <option value="Rented">مؤجر</option>
                       </select>
+                    </div>
+
+                    <div className="form-group">
+                      <label>عدد الشقق في الدور</label>
+                      <input
+                        type="number"
+                        value={formData.apartmentsPerFloor}
+                        onChange={(e) => setFormData({ ...formData, apartmentsPerFloor: e.target.value })}
+                        placeholder="مثال: 3"
+                        min="1"
+                      />
                     </div>
                   </div>
                 </div>

@@ -155,6 +155,7 @@ public class PropertyService
             ElevatorAvailable = request.ElevatorAvailable,
             NumberOfFloors = request.NumberOfFloors,
             FloorsFinishing = request.FloorsFinishing,
+            ApartmentsPerFloor = request.ApartmentsPerFloor,
             FrontageWidth = request.FrontageWidth,
             FrontageLength = request.FrontageLength,
             StreetWidth = request.StreetWidth,
@@ -253,6 +254,7 @@ public class PropertyService
         entity.ElevatorAvailable = request.ElevatorAvailable;
         entity.NumberOfFloors = request.NumberOfFloors;
         entity.FloorsFinishing = request.FloorsFinishing;
+        entity.ApartmentsPerFloor = request.ApartmentsPerFloor;
         entity.FrontageWidth = request.FrontageWidth;
         entity.FrontageLength = request.FrontageLength;
         entity.StreetWidth = request.StreetWidth;
@@ -418,7 +420,8 @@ public class PropertyService
             x.Floors?.OrderBy(f => f.SortOrder)
                 .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
                 .ToList(),
-            x.IsPublished);
+            x.IsPublished,
+            x.ApartmentsPerFloor);
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(
@@ -468,5 +471,6 @@ public class PropertyService
             x.Floors?
                 .OrderBy(f => f.SortOrder)
                 .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
-                .ToList() ?? new List<PropertyFloorDto>());
+                .ToList() ?? new List<PropertyFloorDto>(),
+            x.ApartmentsPerFloor);
 }

@@ -313,6 +313,11 @@ export default function MapPage() {
                     {hasFloors && floorsText && (
                       <div className="mappage__mobile-card-spec">🏢 <span>{floorsText}</span></div>
                     )}
+                    {p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
+                      <div className="mappage__mobile-card-spec">
+                        🏢 <span>{p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}</span>
+                      </div>
+                    )}
                     {finishing && (
                       <div className="mappage__mobile-card-spec">🎨 <span>{finishing}</span></div>
                     )}

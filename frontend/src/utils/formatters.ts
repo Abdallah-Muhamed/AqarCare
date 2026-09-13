@@ -85,7 +85,7 @@ export function formatFloorsText(
 
   return groups.map(g => {
     if (g.items.length > 1) {
-      return `${g.floorTitle} (${g.items.length} شقق بالدور)`
+      return `${g.floorTitle} (${g.items.length} شقق متاحة بالدور)`
     }
     return g.floorTitle
   }).join(' و ')
