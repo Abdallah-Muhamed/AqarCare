@@ -128,7 +128,23 @@ export default function PropertyDetailPage() {
               <div className="detail-specs">
                 <div className="detail-spec"><BedDouble size={18} /><div><strong>{prop.bedrooms ?? '—'}</strong><small>غرف نوم</small></div></div>
                 <div className="detail-spec"><Bath size={18} /><div><strong>{prop.bathrooms ?? '—'}</strong><small>حمامات</small></div></div>
-                <div className="detail-spec"><Maximize2 size={18} /><div><strong>{prop.areaSqm ?? '—'}</strong><small>م²</small></div></div>
+                <div className="detail-spec">
+                  <Maximize2 size={18} />
+                  <div>
+                    <strong>
+                      {(() => {
+                        const floorAreas = (prop.floors || []).map(f => f.areaSqm).filter((a): a is number => a != null && a > 0);
+                        const areaVal = prop.areaSqm ?? (floorAreas.length > 0 ? (
+                          Math.min(...floorAreas) === Math.max(...floorAreas)
+                            ? Math.min(...floorAreas)
+                            : `${Math.min(...floorAreas)} - ${Math.max(...floorAreas)}`
+                        ) : null);
+                        return areaVal ?? '—';
+                      })()}
+                    </strong>
+                    <small>م²</small>
+                  </div>
+                </div>
                 {prop.propertyType && (
                   <div className="detail-spec"><Tag size={18} /><div><strong>{typeLabel[prop.propertyType] ?? prop.propertyType}</strong><small>النوع</small></div></div>
                 )}
@@ -138,7 +154,7 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="detail-specs" style={{ marginTop: 'var(--space-md)' }}>
-                {prop.floorNumber != null && (
+                {prop.floorNumber != null && (!prop.floors || prop.floors.length === 0) && (
                   <div className="detail-spec"><Building2 size={18} /><div><strong>{prop.floorNumber}</strong><small>رقم الدور</small></div></div>
                 )}
                 <div className="detail-spec"><ArrowUpDown size={18} /><div><strong>{prop.elevatorAvailable ? 'متوفر' : 'غير متوفر'}</strong><small>أسانسير</small></div></div>

@@ -87,7 +87,18 @@ export default function PropertyCard({ property: p }: Props) {
           ) : null}
           <div className="prop-card__spec"><BedDouble size={15} />{p.bedrooms ?? '—'} غرف</div>
           <div className="prop-card__spec"><Bath size={15} />{p.bathrooms ?? '—'} حمام</div>
-          <div className="prop-card__spec"><Maximize2 size={15} />{p.areaSqm ?? '—'} م²</div>
+          <div className="prop-card__spec">
+            <Maximize2 size={15} />
+            {(() => {
+              const floorAreas = (p.floors || []).map(f => f.areaSqm).filter((a): a is number => a != null && a > 0);
+              const areaVal = p.areaSqm ?? (floorAreas.length > 0 ? (
+                Math.min(...floorAreas) === Math.max(...floorAreas)
+                  ? Math.min(...floorAreas)
+                  : `${Math.min(...floorAreas)} - ${Math.max(...floorAreas)}`
+              ) : null);
+              return `${areaVal ?? '—'} م²`;
+            })()}
+          </div>
         </div>
 
         {/* Price */}

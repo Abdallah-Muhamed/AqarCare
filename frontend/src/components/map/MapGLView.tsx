@@ -111,7 +111,13 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
 
     // Build specs items
     const specs: string[] = []
-    if (p.areaSqm != null) specs.push(`<div class="mapgl-popup__spec">📐 <span>${p.areaSqm} م²</span></div>`)
+    const floorAreas = (p.floors || []).map(f => f.areaSqm).filter((a): a is number => a != null && a > 0)
+    const areaVal = p.areaSqm ?? (floorAreas.length > 0 ? (
+      Math.min(...floorAreas) === Math.max(...floorAreas)
+        ? Math.min(...floorAreas)
+        : `${Math.min(...floorAreas)} - ${Math.max(...floorAreas)}`
+    ) : null)
+    if (areaVal != null) specs.push(`<div class="mapgl-popup__spec">📐 <span>${areaVal} م²</span></div>`)
     if (p.bedrooms != null) specs.push(`<div class="mapgl-popup__spec">🛏️ <span>${p.bedrooms} غرف</span></div>`)
     if (p.bathrooms != null) specs.push(`<div class="mapgl-popup__spec">🚿 <span>${p.bathrooms} حمام</span></div>`)
     if (p.floorNumber != null) {

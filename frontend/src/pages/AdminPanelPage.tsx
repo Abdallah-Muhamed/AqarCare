@@ -223,7 +223,9 @@ export default function AdminPanelPage() {
   // ── floor helpers ─────────────────────────────────────────────────────────────
 
   const addFloor = () => {
-    const defaultArea = formData.areaSqm ? parseFloat(formData.areaSqm) : null;
+    const defaultArea = (floors.length > 0 && floors[floors.length - 1].areaSqm)
+      ? floors[floors.length - 1].areaSqm
+      : (formData.areaSqm ? parseFloat(formData.areaSqm) : null);
     setFloors(prev => [
       ...prev,
       {
@@ -305,8 +307,10 @@ export default function AdminPanelPage() {
           price: formData.price ? parseFloat(formData.price) : null,
           installmentPrice: formData.installmentPrice ? parseFloat(formData.installmentPrice) : null,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
-          areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
-          floorNumber: formData.floorNumber ? parseInt(formData.floorNumber) : null,
+          areaSqm: (floors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm)
+            ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null),
+          floorNumber: (floors.length === 1 && floors[0].floorNumber != null ? floors[0].floorNumber : null)
+            ?? (formData.floorNumber ? parseInt(formData.floorNumber) : null),
           bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
           bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
           finishingPackageId: formData.finishingPackageId
@@ -645,39 +649,10 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
-                {/* Section: Specifications & Area */}
+                {/* Section: Specifications */}
                 <div className="form-section">
-                  <h3 className="form-section__title">📐 المساحة والمواصفات</h3>
+                  <h3 className="form-section__title">📐 المواصفات</h3>
                   <div className="form-grid">
-                    <div className="form-group">
-                      <label>المساحة (م²)</label>
-                      <input
-                        type="number"
-                        value={formData.areaSqm}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setFormData({ ...formData, areaSqm: val });
-                          // Auto update floor area if floor has no custom area
-                          if (val && parseFloat(val) > 0) {
-                            const newArea = parseFloat(val);
-                            setFloors(prev => prev.map(f => {
-                              if (!f.areaSqm) {
-                                const updated = { ...f, areaSqm: newArea };
-                                if (updated.pricePerMeter && updated.pricePerMeter > 0) {
-                                  updated.price = Math.round(updated.pricePerMeter * newArea);
-                                } else if (updated.price && updated.price > 0) {
-                                  updated.pricePerMeter = Math.round(updated.price / newArea);
-                                }
-                                return updated;
-                              }
-                              return f;
-                            }));
-                          }
-                        }}
-                        placeholder="0"
-                      />
-                    </div>
-
                     <div className="form-group">
                       <label>سعر البيع الفعلي (إن تم البيع)</label>
                       <input
@@ -685,16 +660,6 @@ export default function AdminPanelPage() {
                         value={formData.soldPrice}
                         onChange={(e) => setFormData({ ...formData, soldPrice: e.target.value })}
                         placeholder="اتركه فارغاً إن لم يُبَع"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>رقم الدور (العام)</label>
-                      <input
-                        type="number"
-                        value={formData.floorNumber}
-                        onChange={(e) => setFormData({ ...formData, floorNumber: e.target.value })}
-                        placeholder="مثال: 3"
                       />
                     </div>
 
