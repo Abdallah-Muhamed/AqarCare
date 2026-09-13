@@ -198,7 +198,9 @@ export default function PropertyDetailPage() {
                           <div className="detail-floors-grid">
                             {group.items.map((item, idx) => {
                               const aptName = group.items.length > 1
-                                ? `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`
+                                ? (item.floorName && !item.floorName.startsWith('الدور')
+                                    ? item.floorName
+                                    : `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`)
                                 : (item.floorName || group.floorTitle)
 
                               return (

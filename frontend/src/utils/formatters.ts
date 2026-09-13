@@ -14,11 +14,20 @@ export interface FloorGroup {
  */
 export function normalizeFloorTitle(floorName?: string | null, floorNumber?: number | null): string {
   if (floorName) {
-    let name = floorName.trim()
+    const name = floorName.trim()
     if (name.includes('7 - 10 - 11') || name.includes('7-10-11') || floorNumber === 71011) {
       return 'الأدوار 7 و 10 و 11'
     }
-    // Standardize prefixes
+  }
+
+  if (floorNumber != null) {
+    if (floorNumber === 71011) return 'الأدوار 7 و 10 و 11'
+    if (floorNumber === 0) return 'الدور الأرضي'
+    return `الدور ${floorNumber}`
+  }
+
+  if (floorName) {
+    const name = floorName.trim()
     if (name.startsWith('الأدوار') || name.startsWith('الدور')) {
       return name
     }
@@ -26,12 +35,6 @@ export function normalizeFloorTitle(floorName?: string | null, floorNumber?: num
       return `الأدوار ${name.replace(/-/g, ' و ').replace(/\s+/g, ' ')}`
     }
     return isNaN(Number(name)) ? name : `الدور ${name}`
-  }
-
-  if (floorNumber != null) {
-    if (floorNumber === 71011) return 'الأدوار 7 و 10 و 11'
-    if (floorNumber === 0) return 'الدور الأرضي'
-    return `الدور ${floorNumber}`
   }
 
   return 'الدور غير محدد'
