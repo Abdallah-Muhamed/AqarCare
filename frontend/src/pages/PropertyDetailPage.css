@@ -305,3 +305,48 @@
   font-size: 0.8rem;
   color: var(--clr-text-muted);
 }
+
+/* Floor group container for multiple apartments on same floor */
+.detail-floors-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.floor-group-box {
+  background: var(--clr-card-bg, #fff);
+  border: 1px solid var(--clr-border, #e5dfd2);
+  border-radius: var(--radius-md, 14px);
+  padding: 1.1rem 1.25rem 1.25rem;
+  box-shadow: 0 4px 12px rgba(45, 48, 35, 0.04);
+}
+
+.floor-group-box__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
+  border-bottom: 1px solid var(--clr-border, #e5dfd2);
+}
+
+.floor-group-box__title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 1.02rem;
+  font-weight: 800;
+  color: var(--clr-text, #25312c);
+}
+
+.floor-group-box__badge {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #865227;
+  background: #fff4e9;
+  border: 1px solid #f1d4b4;
+  padding: 2px 10px;
+  border-radius: 99px;
+}
