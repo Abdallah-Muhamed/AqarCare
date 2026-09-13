@@ -174,7 +174,7 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     const flyAction = () => {
       map.flyTo({
         center: [lon, lat],
-        offset: isMobile ? [0, -70] : [0, 0],
+        offset: isMobile ? [0, -70] : [0, 120],
         zoom: 17,
         pitch: 35,
         bearing: -10,
@@ -343,6 +343,13 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
             })
             return
           }
+
+          // On desktop: ease to position the marker so the popup is completely visible
+          map.easeTo({
+            center: [lon, lat],
+            offset: [0, 120],
+            duration: 350,
+          })
 
           popupRef.current?.remove()
           const popup = new Popup({

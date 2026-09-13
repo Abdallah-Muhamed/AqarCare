@@ -84,10 +84,11 @@
   border-radius: 14px;
   padding: 0;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.22);
-  width: 270px;
-  max-width: 85vw;
+  width: 285px;
+  max-width: 90vw;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
   direction: rtl;
-  overflow: hidden;
 }
 .mapgl-popup .maplibregl-popup-close-button {
   font-size: 1.1rem;
