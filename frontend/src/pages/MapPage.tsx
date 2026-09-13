@@ -193,10 +193,10 @@ export default function MapPage() {
         const minInst = instPrices.length > 0 ? Math.min(...instPrices) : (p.installmentPrice != null && p.installmentPrice > 0 ? p.installmentPrice : null)
         const maxInst = instPrices.length > 0 ? Math.max(...instPrices) : (p.installmentPrice != null && p.installmentPrice > 0 ? p.installmentPrice : null)
 
-        const formatRange = (min: number | null, max: number | null) => {
-          if (min == null || max == null) return null
-          if (min === max) return `${min.toLocaleString('ar-EG')} جنيه`
-          return `${min.toLocaleString('ar-EG')} - ${max.toLocaleString('ar-EG')} جنيه`
+        const formatPrice = (min: number | null, max: number | null) => {
+          if (min == null) return null
+          if (max == null || min === max) return `${min.toLocaleString('ar-EG')} جنيه`
+          return `يبدأ من ${min.toLocaleString('ar-EG')} جنيه`
         }
 
         const defaultImg = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
@@ -277,9 +277,9 @@ export default function MapPage() {
                     {minCash != null ? (
                       <div className="mappage__mobile-card-price-line">
                         <span className="mappage__mobile-card-price-val">
-                          سعر الكاش: {formatRange(minCash, maxCash)}
+                          سعر الكاش: {formatPrice(minCash, maxCash)}
                         </span>
-                        {cashPrices.length > 1 && (
+                        {cashPrices.length > 1 && minCash !== maxCash && (
                           <span className="mappage__mobile-card-badge-sub">حسب الدور</span>
                         )}
                       </div>
@@ -291,8 +291,8 @@ export default function MapPage() {
 
                     {minInst != null && (
                       <div className="mappage__mobile-card-price-line mappage__mobile-card-price-inst">
-                        <span>💳 سعر التقسيط: {formatRange(minInst, maxInst)}</span>
-                        {instPrices.length > 1 && (
+                        <span>💳 سعر التقسيط: {formatPrice(minInst, maxInst)}</span>
+                        {instPrices.length > 1 && minInst !== maxInst && (
                           <span className="mappage__mobile-card-badge-sub">حسب الدور</span>
                         )}
                       </div>

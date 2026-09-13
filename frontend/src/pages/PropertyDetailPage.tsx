@@ -210,26 +210,44 @@ export default function PropertyDetailPage() {
                 <div className="detail-spec"><Flame size={18} /><div><strong>{prop.gasMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد غاز</small></div></div>
                 <div className="detail-spec"><CheckCircle2 size={18} /><div><strong>{prop.installmentAvailable ? 'متاح' : 'غير متاح'}</strong><small>تقسيط</small></div></div>
                 {(() => {
-                  const floorPrices = prop.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
-                  const minPrice = floorPrices.length > 0 ? Math.min(...floorPrices) : prop.price;
-                  const maxPrice = floorPrices.length > 0 ? Math.max(...floorPrices) : prop.price;
-                  if (minPrice == null) return null;
-                  const isRange = floorPrices.length > 1 && minPrice !== maxPrice;
+                  const availableFloors = prop.floors?.filter(f => f.isAvailable) ?? [];
+                  const floorCashPrices = availableFloors.map(f => f.price).filter((p): p is number => p != null && p > 0);
+                  const minCash = floorCashPrices.length > 0 ? Math.min(...floorCashPrices) : prop.price;
+                  const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price;
+                  const isCashRange = floorCashPrices.length > 1 && minCash !== maxCash;
+
+                  const floorInstPrices = availableFloors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
+                  const minInst = floorInstPrices.length > 0 ? Math.min(...floorInstPrices) : prop.installmentPrice;
+                  const maxInst = floorInstPrices.length > 0 ? Math.max(...floorInstPrices) : prop.installmentPrice;
+                  const isInstRange = floorInstPrices.length > 1 && minInst !== maxInst;
+
                   return (
-                    <div className="detail-spec">
-                      <span>💵</span>
-                      <div>
-                        <strong>
-                          {isRange ? `يبدأ من ${minPrice.toLocaleString('ar-EG')}` : minPrice.toLocaleString('ar-EG')} ج
-                        </strong>
-                        <small>سعر الكاش</small>
-                      </div>
-                    </div>
+                    <>
+                      {minCash != null && (
+                        <div className="detail-spec">
+                          <span>💵</span>
+                          <div>
+                            <strong>
+                              {isCashRange ? `يبدأ من ${minCash.toLocaleString('ar-EG')}` : minCash.toLocaleString('ar-EG')} ج
+                            </strong>
+                            <small>سعر الكاش</small>
+                          </div>
+                        </div>
+                      )}
+                      {minInst != null && (
+                        <div className="detail-spec">
+                          <span>💳</span>
+                          <div>
+                            <strong>
+                              {isInstRange ? `يبدأ من ${minInst.toLocaleString('ar-EG')}` : minInst.toLocaleString('ar-EG')} ج
+                            </strong>
+                            <small>سعر التقسيط</small>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
-                {prop.installmentPrice != null && (
-                  <div className="detail-spec"><span>💳</span><div><strong>{prop.installmentPrice.toLocaleString('ar-EG')} ج</strong><small>سعر التقسيط</small></div></div>
-                )}
               </div>
 
               {/* Multiple Floors / Units Section */}
@@ -278,17 +296,17 @@ export default function PropertyDetailPage() {
                                   </div>
                                   <div className="floor-spec-card__price">
                                     {item.price != null
-                                      ? <>{item.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه كاش</span></>
+                                      ? <>💵 كاش: {item.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span></>
                                       : 'السعر عند الطلب'}
                                   </div>
+                                  {item.installmentPrice != null && (
+                                    <div className="floor-spec-card__price" style={{ color: '#1d4ed8', fontSize: '0.98rem', marginTop: '2px' }}>
+                                      💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
+                                    </div>
+                                  )}
                                   {item.pricePerMeter != null && (
                                     <div className="floor-spec-card__sub" style={{ color: 'var(--clr-gold)', fontWeight: 700 }}>
                                       📏 سعر المتر: {item.pricePerMeter.toLocaleString('ar-EG')} ج/م²
-                                    </div>
-                                  )}
-                                  {item.installmentPrice != null && (
-                                    <div className="floor-spec-card__sub" style={{ color: '#2563eb', fontWeight: 700 }}>
-                                      💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} جنيه
                                     </div>
                                   )}
                                   {item.areaSqm != null && (
@@ -342,22 +360,35 @@ export default function PropertyDetailPage() {
             <div className="price-card">
               <div className="price-card__glow" />
               {(() => {
-                const floorPrices = prop.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
-                const displayPrice = floorPrices.length > 0 ? Math.min(...floorPrices) : prop.price;
-                const isRange = floorPrices.length > 1 && Math.min(...floorPrices) !== Math.max(...floorPrices);
+                const availableFloors = prop.floors?.filter(f => f.isAvailable) ?? [];
+                const floorCashPrices = availableFloors.map(f => f.price).filter((p): p is number => p != null && p > 0);
+                const minCash = floorCashPrices.length > 0 ? Math.min(...floorCashPrices) : prop.price;
+                const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price;
+                const isCashRange = floorCashPrices.length > 1 && minCash !== maxCash;
+
+                const floorInstPrices = availableFloors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
+                const minInst = floorInstPrices.length > 0 ? Math.min(...floorInstPrices) : prop.installmentPrice;
+                const maxInst = floorInstPrices.length > 0 ? Math.max(...floorInstPrices) : prop.installmentPrice;
+                const isInstRange = floorInstPrices.length > 1 && minInst !== maxInst;
+
                 return (
                   <>
                     <p className="price-card__label">
-                      💵 {isRange ? 'سعر الكاش (يبدأ من)' : 'سعر الكاش'}
+                      💵 {isCashRange ? 'سعر الكاش (يبدأ من)' : 'سعر الكاش'}
                     </p>
                     <div className="price-card__amount">
-                      {displayPrice != null
-                        ? <>{displayPrice.toLocaleString('ar-EG')}<span>جنيه كاش</span></>
+                      {minCash != null
+                        ? <>{minCash.toLocaleString('ar-EG')}<span>جنيه كاش</span></>
                         : <span>غير محدد</span>}
                     </div>
-                    {prop.installmentPrice != null && (
-                      <div style={{ marginTop: '0.5rem', padding: '0.45rem 0.75rem', background: 'rgba(183,121,61,0.12)', border: '1px solid rgba(183,121,61,0.25)', borderRadius: '10px', fontSize: '0.85rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
-                        💳 سعر التقسيط: {prop.installmentPrice.toLocaleString('ar-EG')} جنيه
+                    {minInst != null && (
+                      <div style={{ marginTop: '0.65rem', padding: '0.6rem 0.85rem', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: '12px' }}>
+                        <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e40af', marginBottom: '2px' }}>
+                          💳 {isInstRange ? 'سعر التقسيط (يبدأ من)' : 'سعر التقسيط'}
+                        </div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#1d4ed8' }}>
+                          {minInst.toLocaleString('ar-EG')} <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>جنيه تقسيط</span>
+                        </div>
                       </div>
                     )}
                   </>
@@ -366,24 +397,37 @@ export default function PropertyDetailPage() {
               {prop.floors && prop.floors.length > 0 ? (() => {
                 const groups = groupFloors(prop.floors)
                 return (
-                  <div style={{ marginTop: '0.75rem', padding: '0.6rem 0.75rem', background: 'rgba(24,40,33,0.04)', borderRadius: '10px', fontSize: '0.82rem' }}>
-                    <div style={{ fontWeight: 800, marginBottom: '6px', color: 'var(--clr-text)' }}>🏢 تفاصيل أسعار الأدوار والشقق:</div>
+                  <div style={{ marginTop: '0.85rem', padding: '0.75rem 0.85rem', background: 'rgba(24,40,33,0.04)', borderRadius: '12px', fontSize: '0.82rem' }}>
+                    <div style={{ fontWeight: 800, marginBottom: '8px', color: 'var(--clr-text)', fontSize: '0.86rem' }}>
+                      🏢 تفاصيل أسعار الأدوار والشقق:
+                    </div>
                     {groups.map((g, gIdx) => (
-                      <div key={gIdx} style={{ marginBottom: gIdx < groups.length - 1 ? '8px' : '0', borderBottom: gIdx < groups.length - 1 ? '1px dashed #d5cdbf' : 'none', paddingBottom: '6px' }}>
-                        <div style={{ fontWeight: 800, color: 'var(--clr-gold)', fontSize: '0.8rem', marginBottom: '3px' }}>
-                          {g.floorTitle}:
+                      <div key={gIdx} style={{ marginBottom: gIdx < groups.length - 1 ? '10px' : '0', borderBottom: gIdx < groups.length - 1 ? '1px dashed #d5cdbf' : 'none', paddingBottom: '8px' }}>
+                        <div style={{ fontWeight: 800, color: 'var(--clr-gold)', fontSize: '0.82rem', marginBottom: '4px' }}>
+                          🏢 {g.floorTitle}:
                         </div>
                         {g.items.map((fl, i) => {
                           const label = g.items.length > 1
-                            ? `شقة ${i + 1} (${fl.areaSqm ? `${fl.areaSqm}م²` : ''})`
+                            ? (fl.floorName && !fl.floorName.startsWith('الدور')
+                                ? fl.floorName
+                                : `شقة ${i + 1} (${fl.areaSqm ? `${fl.areaSqm}م²` : ''})`)
                             : (fl.floorName || g.floorTitle)
                           return (
-                            <div key={fl.id ?? i} style={{ display: 'flex', justifyContent: 'space-between', paddingInlineStart: '6px', marginBottom: '2px' }}>
-                              <span>• {label}:</span>
-                              <span style={{ fontWeight: 700 }}>
-                                {fl.price != null ? `${fl.price.toLocaleString('ar-EG')} ج كاش` : 'غير محدد'}
-                                {fl.pricePerMeter != null && <span style={{ color: 'var(--clr-gold)', fontSize: '0.72rem', marginRight: '4px' }}>({fl.pricePerMeter.toLocaleString('ar-EG')} ج/م²)</span>}
-                              </span>
+                            <div key={fl.id ?? i} style={{ paddingInlineStart: '6px', marginBottom: '6px' }}>
+                              <div style={{ fontWeight: 700, color: 'var(--clr-text)', fontSize: '0.82rem' }}>• {label}</div>
+                              <div style={{ display: 'flex', gap: '8px', fontSize: '0.76rem', marginInlineStart: '10px', marginTop: '3px', flexWrap: 'wrap' }}>
+                                {fl.price != null && (
+                                  <span style={{ color: '#1e2922', fontWeight: 700, background: '#eef4ee', padding: '2px 7px', borderRadius: '4px' }}>
+                                    💵 كاش: {fl.price.toLocaleString('ar-EG')} ج
+                                    {fl.pricePerMeter != null && <span style={{ color: 'var(--clr-gold)', fontSize: '0.7rem', marginInlineStart: '3px' }}>({fl.pricePerMeter.toLocaleString('ar-EG')} ج/م²)</span>}
+                                  </span>
+                                )}
+                                {fl.installmentPrice != null && (
+                                  <span style={{ color: '#1d4ed8', fontWeight: 700, background: '#eff6ff', padding: '2px 7px', borderRadius: '4px' }}>
+                                    💳 تقسيط: {fl.installmentPrice.toLocaleString('ar-EG')} ج
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           )
                         })}

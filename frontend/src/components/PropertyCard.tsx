@@ -145,10 +145,10 @@ export default function PropertyCard({ property: p }: Props) {
               const minInst = installmentPrices.length > 0 ? Math.min(...installmentPrices) : null;
               const maxInst = installmentPrices.length > 0 ? Math.max(...installmentPrices) : null;
 
-              const formatRange = (min: number | null, max: number | null) => {
-                if (min == null || max == null) return null;
-                if (min === max) return `${min.toLocaleString('ar-EG')} جنيه`;
-                return `${min.toLocaleString('ar-EG')} - ${max.toLocaleString('ar-EG')} جنيه`;
+              const formatPrice = (min: number | null, max: number | null) => {
+                if (min == null) return null;
+                if (max == null || min === max) return `${min.toLocaleString('ar-EG')} جنيه`;
+                return `يبدأ من ${min.toLocaleString('ar-EG')} جنيه`;
               };
 
               return (
@@ -156,9 +156,9 @@ export default function PropertyCard({ property: p }: Props) {
                   {minCash != null && (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
                       <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#182821' }}>
-                        سعر الكاش : {formatRange(minCash, maxCash)}
+                        سعر الكاش : {formatPrice(minCash, maxCash)}
                       </span>
-                      {cashPrices.length > 1 && (
+                      {cashPrices.length > 1 && minCash !== maxCash && (
                         <span style={{ fontSize: '0.72rem', color: 'var(--clr-gold)', fontWeight: 700, background: 'rgba(183,121,61,0.1)', padding: '1px 6px', borderRadius: '4px' }}>
                           حسب الدور
                         </span>
@@ -168,9 +168,9 @@ export default function PropertyCard({ property: p }: Props) {
                   {minInst != null && (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
                       <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#2563eb' }}>
-                        💳 سعر التقسيط : {formatRange(minInst, maxInst)}
+                        💳 سعر التقسيط : {formatPrice(minInst, maxInst)}
                       </span>
-                      {installmentPrices.length > 1 && (
+                      {installmentPrices.length > 1 && minInst !== maxInst && (
                         <span style={{ fontSize: '0.72rem', color: 'var(--clr-gold)', fontWeight: 700, background: 'rgba(183,121,61,0.1)', padding: '1px 6px', borderRadius: '4px' }}>
                           حسب الدور
                         </span>

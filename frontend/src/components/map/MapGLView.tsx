@@ -104,10 +104,28 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     const type    = TYPE_AR[p.propertyType ?? ''] ?? (p.propertyType ?? 'عقار')
     const listing = LISTING_AR[p.listingType ?? ''] ?? ''
     const status  = STATUS_AR[p.status] ?? p.status
-    const price   = p.price != null ? `${p.price.toLocaleString('ar-EG')} <span>جنيه</span>` : 'السعر عند الطلب'
     const finishing = p.finishingStatus ? (FINISHING_AR[p.finishingStatus] ?? p.finishingStatus) : ''
     const defaultImg = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'
     const imgUrl  = p.primaryImageUrl || defaultImg
+
+    const availableFloors = (p.floors || []).filter(f => f.isAvailable)
+    const targetFloors = availableFloors.length > 0 ? availableFloors : (p.floors || [])
+    const cashPrices = targetFloors.map(f => f.price).filter((pr): pr is number => pr != null && pr > 0)
+    const instPrices = targetFloors.map(f => f.installmentPrice).filter((pr): pr is number => pr != null && pr > 0)
+
+    const minCash = cashPrices.length > 0 ? Math.min(...cashPrices) : (p.price != null && p.price > 0 ? p.price : null)
+    const maxCash = cashPrices.length > 0 ? Math.max(...cashPrices) : (p.price != null && p.price > 0 ? p.price : null)
+    const minInst = instPrices.length > 0 ? Math.min(...instPrices) : (p.installmentPrice != null && p.installmentPrice > 0 ? p.installmentPrice : null)
+    const maxInst = instPrices.length > 0 ? Math.max(...instPrices) : (p.installmentPrice != null && p.installmentPrice > 0 ? p.installmentPrice : null)
+
+    const formatPriceText = (min: number | null, max: number | null) => {
+      if (min == null) return null
+      if (max == null || min === max) return `${min.toLocaleString('ar-EG')} جنيه`
+      return `يبدأ من ${min.toLocaleString('ar-EG')} جنيه`
+    }
+
+    const cashText = formatPriceText(minCash, maxCash)
+    const instText = formatPriceText(minInst, maxInst)
 
     // Build specs items
     const specs: string[] = []
@@ -163,8 +181,9 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
           <div class="mapgl-popup__title">${title}</div>
           ${p.address ? `<div class="mapgl-popup__address">📍 ${p.address}</div>` : ''}
 
-          <div class="mapgl-popup__price-row">
-            <div class="mapgl-popup__price">${price}</div>
+          <div class="mapgl-popup__price-row" style="display:flex;flex-direction:column;gap:3px;align-items:flex-start;">
+            ${cashText ? `<div class="mapgl-popup__price" style="font-size:0.92rem;">💵 كاش: ${cashText}</div>` : '<div class="mapgl-popup__price">السعر عند الطلب</div>'}
+            ${instText ? `<div style="font-size:0.8rem;font-weight:700;color:#2563eb;">💳 تقسيط: ${instText}</div>` : ''}
           </div>
 
           ${specs.length > 0 ? `<div class="mapgl-popup__specs">${specs.join('')}</div>` : ''}
