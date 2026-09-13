@@ -79,16 +79,29 @@ const FINISHING_AR: Record<string, string> = {
 
 // ── Component ──────────────────────────────────────────────────────
 interface Props {
-  data:    CityMap
-  filters: MapFilters
+  data:              CityMap
+  filters:           MapFilters
+  selectedProperty?: MapProperty | null
+  onSelectProperty?: (p: MapProperty | null) => void
 }
 
-export default function MapGLView({ data, filters }: Props) {
+export default function MapGLView({ data, filters, selectedProperty, onSelectProperty }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef       = useRef<Map | null>(null)
   const markersRef   = useRef<Marker[]>([])
   const popupRef     = useRef<Popup | null>(null)
   const isInitialFit = useRef(true)
+  const onSelectRef  = useRef(onSelectProperty)
+  useEffect(() => {
+    onSelectRef.current = onSelectProperty
+  }, [onSelectProperty])
+
+  // Sync external property deselection
+  useEffect(() => {
+    if (!selectedProperty) {
+      popupRef.current?.remove()
+    }
+  }, [selectedProperty])
 
   // ── Popup HTML (Full Property Details Card) ───────────────────────
   const buildPopupHTML = useCallback((p: MapProperty): string => {
@@ -175,6 +188,11 @@ export default function MapGLView({ data, filters }: Props) {
 
     map.addControl(new NavigationControl({ showCompass: true }), 'bottom-left')
     map.addControl(new ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left')
+
+    map.on('click', () => {
+      popupRef.current?.remove()
+      onSelectRef.current?.(null)
+    })
 
     const handleResize = () => map.resize()
     window.addEventListener('resize', handleResize)
@@ -269,17 +287,35 @@ export default function MapGLView({ data, filters }: Props) {
 
         el.addEventListener('click', (e) => {
           e.stopPropagation()
+          onSelectRef.current?.(prop)
+
+          const isMobile = window.innerWidth <= 768
+          if (isMobile) {
+            popupRef.current?.remove()
+            map.easeTo({
+              center: [lon, lat],
+              offset: [0, -70],
+              duration: 350,
+            })
+            return
+          }
+
           popupRef.current?.remove()
           const popup = new Popup({
             offset: [0, -42],
             className: 'mapgl-popup',
             closeButton: true,
-            closeOnClick: false,
+            closeOnClick: true,
             maxWidth: '290px',
           })
             .setLngLat([lon, lat])
             .setHTML(buildPopupHTML(prop))
             .addTo(map)
+
+          popup.on('close', () => {
+            onSelectRef.current?.(null)
+          })
+
           popupRef.current = popup
         })
 

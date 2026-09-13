@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { List, SlidersHorizontal, X } from 'lucide-react'
 import { api } from '../api'
-import type { CityMap, MapFilters } from '../types'
+import type { CityMap, MapFilters, MapProperty } from '../types'
+import { formatFloorsText } from '../utils/formatters'
 import MapGLView from '../components/map/MapGLView'
 import './MapPage.css'
 
@@ -19,12 +20,22 @@ const FILTER_OPTS = {
   ],
 }
 
+const FINISHING_LABELS: Record<string, string> = {
+  'Core-Shell':   'عظم',
+  'Semi-Finished': 'نص تشطيب',
+  'Finished':     'تشطيب',
+  'Lux':          'لوكس',
+  'Super-Lux':    'سوبر لوكس',
+  'High-Lux':     'هاي لوكس',
+}
+
 export default function MapPage() {
-  const [data,        setData]        = useState<CityMap | null>(null)
-  const [loading,     setLoading]     = useState(true)
-  const [error,       setError]       = useState<string | null>(null)
-  const [filters,     setFilters]     = useState<MapFilters>({})
-  const [filterOpen,  setFilterOpen]  = useState(false)
+  const [data,             setData]             = useState<CityMap | null>(null)
+  const [loading,          setLoading]          = useState(true)
+  const [error,            setError]            = useState<string | null>(null)
+  const [filters,          setFilters]          = useState<MapFilters>({})
+  const [filterOpen,       setFilterOpen]       = useState(false)
+  const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null)
 
   useEffect(() => {
     api.getMap(CITY_SLUG)
@@ -45,7 +56,7 @@ export default function MapPage() {
   }
 
   return (
-    <div className="mappage">
+    <div className={`mappage ${selectedProperty ? 'mappage--card-open' : ''}`}>
 
       {/* ── Floating top bar ──────────────────────────────────── */}
       <div className="mappage__bar">
@@ -63,7 +74,10 @@ export default function MapPage() {
         {/* Filter toggle */}
         <button
           className={`mappage__bar-btn ${filterOpen ? 'mappage__bar-btn--active' : ''}`}
-          onClick={() => setFilterOpen(o => !o)}
+          onClick={() => {
+            setFilterOpen(o => !o)
+            if (!filterOpen) setSelectedProperty(null)
+          }}
         >
           <SlidersHorizontal size={13} />
           فلاتر
@@ -76,68 +90,164 @@ export default function MapPage() {
         </Link>
       </div>
 
-      {/* ── Filter dropdown ────────────────────────────────────── */}
+      {/* ── Filter dropdown with click-outside backdrop ─────────── */}
       {filterOpen && (
-        <div style={{
-          position: 'absolute',
-          top: 60, left: '50%', transform: 'translateX(-50%)',
-          zIndex: 25,
-          background: 'rgba(255,253,248,.98)',
-          border: '1px solid #d4c9b0',
-          borderRadius: 16,
-          padding: '1rem',
-          boxShadow: '0 10px 32px rgba(0,0,0,.2)',
-          backdropFilter: 'blur(16px)',
-          fontFamily: "'Cairo', sans-serif",
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '.6rem',
-          minWidth: 220,
-        }}>
-          {(Object.entries(FILTER_OPTS) as [keyof typeof FILTER_OPTS, {v:string,l:string}[]][]).map(([key, opts]) => (
-            <div key={key}>
-              <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#8a7a60', marginBottom: 4 }}>
-                {({ status:'الحالة', listingType:'نوع الإعلان', propertyType:'النوع' } as Record<string,string>)[key]}
-              </div>
-              <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
-                <button
-                  onClick={() => set(key, '')}
-                  style={{
-                    padding:'3px 9px', borderRadius:99, border:'1px solid #d4c9b0',
-                    background: !filters[key] ? '#2d4a3e' : '#f8f4ec',
-                    color: !filters[key] ? '#fff' : '#5c5240',
-                    fontSize:'.72rem', fontWeight:700, cursor:'pointer', fontFamily:'inherit',
-                  }}
-                >الكل</button>
-                {opts.map(o => (
-                  <button key={o.v}
-                    onClick={() => set(key, o.v)}
+        <>
+          <div
+            className="mappage__filter-backdrop"
+            onClick={() => setFilterOpen(false)}
+          />
+          <div className="mappage__filter-dropdown" onClick={e => e.stopPropagation()}>
+            {(Object.entries(FILTER_OPTS) as [keyof typeof FILTER_OPTS, {v:string,l:string}[]][]).map(([key, opts]) => (
+              <div key={key}>
+                <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#8a7a60', marginBottom: 4 }}>
+                  {({ status:'الحالة', listingType:'نوع الإعلان', propertyType:'النوع' } as Record<string,string>)[key]}
+                </div>
+                <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
+                  <button
+                    onClick={() => set(key, '')}
                     style={{
                       padding:'3px 9px', borderRadius:99, border:'1px solid #d4c9b0',
-                      background: filters[key]===o.v ? '#2d4a3e' : '#f8f4ec',
-                      color: filters[key]===o.v ? '#fff' : '#5c5240',
+                      background: !filters[key] ? '#2d4a3e' : '#f8f4ec',
+                      color: !filters[key] ? '#fff' : '#5c5240',
                       fontSize:'.72rem', fontWeight:700, cursor:'pointer', fontFamily:'inherit',
                     }}
-                  >{o.l}</button>
-                ))}
+                  >الكل</button>
+                  {opts.map(o => (
+                    <button key={o.v}
+                      onClick={() => set(key, o.v)}
+                      style={{
+                        padding:'3px 9px', borderRadius:99, border:'1px solid #d4c9b0',
+                        background: filters[key]===o.v ? '#2d4a3e' : '#f8f4ec',
+                        color: filters[key]===o.v ? '#fff' : '#5c5240',
+                        fontSize:'.72rem', fontWeight:700, cursor:'pointer', fontFamily:'inherit',
+                      }}
+                    >{o.l}</button>
+                  ))}
+                </div>
               </div>
+            ))}
+            {hasFilters && (
+              <button onClick={clearAll} style={{
+                fontSize:'.72rem', color:'#b77a3d', background:'none', border:'none',
+                cursor:'pointer', display:'flex', alignItems:'center', gap:4,
+                fontFamily:'inherit', alignSelf:'flex-end',
+              }}>
+                <X size={11} /> مسح الكل
+              </button>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── Mobile Property Bottom Sheet & Outside Click Dismissal ── */}
+      {selectedProperty && (
+        <>
+          <div
+            className="mappage__backdrop"
+            onClick={() => setSelectedProperty(null)}
+          />
+          <div className="mappage__mobile-card-wrap">
+            <div className="mappage__mobile-card" onClick={e => e.stopPropagation()}>
+              <div className="mappage__mobile-card-drag" onClick={() => setSelectedProperty(null)} />
+
+              <div className="mappage__mobile-card-top">
+                <div className="mappage__mobile-card-img-wrap">
+                  <img
+                    src={selectedProperty.primaryImageUrl || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'}
+                    alt={selectedProperty.title || 'وحدة عقارية'}
+                    className="mappage__mobile-card-img"
+                    onError={e => {
+                      ;(e.currentTarget as HTMLImageElement).src = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'
+                    }}
+                  />
+                  <div className="mappage__mobile-card-badges">
+                    <span className={`mapgl-popup__badge mapgl-popup__badge--${selectedProperty.status}`}>
+                      {selectedProperty.status === 'Available' ? 'متاح' : selectedProperty.status === 'Sold' ? 'مباع' : 'محجوز'}
+                    </span>
+                    {selectedProperty.listingType && (
+                      <span className="mapgl-popup__badge mapgl-popup__badge--listing">
+                        {selectedProperty.listingType === 'Sale' ? 'للبيع' : 'للإيجار'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                <div className="mappage__mobile-card-info">
+                  <div className="mappage__mobile-card-header">
+                    <h4 className="mappage__mobile-card-title">{selectedProperty.title?.trim() || 'وحدة عقارية'}</h4>
+                    <button
+                      className="mappage__mobile-card-close"
+                      onClick={() => setSelectedProperty(null)}
+                      aria-label="إغلاق"
+                    >
+                      <X size={14} />
+                    </button>
+                  </div>
+
+                  {selectedProperty.address && (
+                    <div className="mappage__mobile-card-address">
+                      📍 {selectedProperty.address}
+                    </div>
+                  )}
+
+                  <div className="mappage__mobile-card-price">
+                    {selectedProperty.price != null
+                      ? `${selectedProperty.price.toLocaleString('ar-EG')} جنيه`
+                      : 'السعر عند الطلب'}
+                  </div>
+                </div>
+              </div>
+
+              {/* Specs row */}
+              <div className="mappage__mobile-card-specs">
+                {selectedProperty.areaSqm != null && (
+                  <div className="mappage__mobile-card-spec">📐 <span>{selectedProperty.areaSqm} م²</span></div>
+                )}
+                {selectedProperty.bedrooms != null && (
+                  <div className="mappage__mobile-card-spec">🛏️ <span>{selectedProperty.bedrooms} غرف</span></div>
+                )}
+                {selectedProperty.bathrooms != null && (
+                  <div className="mappage__mobile-card-spec">🚿 <span>{selectedProperty.bathrooms} حمام</span></div>
+                )}
+                {selectedProperty.floorNumber != null ? (
+                  <div className="mappage__mobile-card-spec">
+                    🏢 <span>{selectedProperty.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${selectedProperty.floorNumber}`}</span>
+                  </div>
+                ) : selectedProperty.floors && selectedProperty.floors.length > 0 ? (
+                  <div className="mappage__mobile-card-spec">
+                    🏢 <span>{formatFloorsText(selectedProperty.floors)}</span>
+                  </div>
+                ) : null}
+                {selectedProperty.finishingStatus && (
+                  <div className="mappage__mobile-card-spec">
+                    🎨 <span>{FINISHING_LABELS[selectedProperty.finishingStatus] || selectedProperty.finishingStatus}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Action button */}
+              <Link
+                to={`/properties/${selectedProperty.id}`}
+                className="mappage__mobile-card-action"
+              >
+                عرض التفاصيل الكاملة ←
+              </Link>
             </div>
-          ))}
-          {hasFilters && (
-            <button onClick={clearAll} style={{
-              fontSize:'.72rem', color:'#b77a3d', background:'none', border:'none',
-              cursor:'pointer', display:'flex', alignItems:'center', gap:4,
-              fontFamily:'inherit', alignSelf:'flex-end',
-            }}>
-              <X size={11} /> مسح الكل
-            </button>
-          )}
-        </div>
+          </div>
+        </>
       )}
 
       {/* ── Map (full remaining area) ──────────────────────────── */}
       <div className="mappage__map">
-        {data && <MapGLView data={data} filters={filters} />}
+        {data && (
+          <MapGLView
+            data={data}
+            filters={filters}
+            selectedProperty={selectedProperty}
+            onSelectProperty={setSelectedProperty}
+          />
+        )}
 
         {/* Legend */}
         <div className="mappage__legend">
