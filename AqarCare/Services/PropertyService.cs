@@ -27,10 +27,14 @@ public class PropertyService
 
         if (!string.IsNullOrWhiteSpace(query.City))
             q = q.Where(x => x.City == query.City);
+        if (!string.IsNullOrWhiteSpace(query.District))
+            q = q.Where(x => x.District == query.District);
         if (!string.IsNullOrWhiteSpace(query.PropertyType))
             q = q.Where(x => x.PropertyType == query.PropertyType);
         if (!string.IsNullOrWhiteSpace(query.ListingType))
             q = q.Where(x => x.ListingType == query.ListingType);
+        if (!string.IsNullOrWhiteSpace(query.FinishingStatus))
+            q = q.Where(x => x.FinishingStatus == query.FinishingStatus);
         if (query.MinPrice.HasValue)
             q = q.Where(x => x.Price >= query.MinPrice.Value);
         if (query.MaxPrice.HasValue)
@@ -41,13 +45,38 @@ public class PropertyService
             q = q.Where(x => x.AreaSqm <= query.MaxArea.Value);
         if (query.Bedrooms.HasValue)
             q = q.Where(x => x.Bedrooms >= query.Bedrooms.Value);
+        if (query.Bathrooms.HasValue)
+            q = q.Where(x => x.Bathrooms >= query.Bathrooms.Value);
+        if (query.ElevatorAvailable.HasValue)
+            q = q.Where(x => x.ElevatorAvailable == query.ElevatorAvailable.Value);
+        if (query.InstallmentAvailable.HasValue)
+            q = q.Where(x => x.InstallmentAvailable == query.InstallmentAvailable.Value);
+        if (query.IsUnderConstruction.HasValue)
+            q = q.Where(x => x.IsUnderConstruction == query.IsUnderConstruction.Value);
         if (query.IsFeatured.HasValue)
             q = q.Where(x => x.IsFeatured == query.IsFeatured.Value);
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var s = query.Search.Trim();
+            q = q.Where(x => (x.Title != null && x.Title.Contains(s))
+                          || (x.Address != null && x.Address.Contains(s))
+                          || (x.DetailedAddress != null && x.DetailedAddress.Contains(s))
+                          || (x.District != null && x.District.Contains(s))
+                          || (x.Description != null && x.Description.Contains(s)));
+        }
 
         var total = await q.CountAsync(ct);
-        var entities = await q
-            .OrderByDescending(x => x.IsFeatured)
-            .ThenByDescending(x => x.CreatedAt)
+
+        IOrderedQueryable<PropertyUnit> orderedQ = query.SortBy switch
+        {
+            "price_asc"  => q.OrderBy(x => x.Price ?? 0),
+            "price_desc" => q.OrderByDescending(x => x.Price ?? 0),
+            "area_desc"  => q.OrderByDescending(x => x.AreaSqm ?? 0),
+            "area_asc"   => q.OrderBy(x => x.AreaSqm ?? 0),
+            _            => q.OrderByDescending(x => x.IsFeatured).ThenByDescending(x => x.CreatedAt),
+        };
+
+        var entities = await orderedQ
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);
@@ -80,10 +109,14 @@ public class PropertyService
 
         if (!string.IsNullOrWhiteSpace(query.City))
             q = q.Where(x => x.City == query.City);
+        if (!string.IsNullOrWhiteSpace(query.District))
+            q = q.Where(x => x.District == query.District);
         if (!string.IsNullOrWhiteSpace(query.PropertyType))
             q = q.Where(x => x.PropertyType == query.PropertyType);
         if (!string.IsNullOrWhiteSpace(query.ListingType))
             q = q.Where(x => x.ListingType == query.ListingType);
+        if (!string.IsNullOrWhiteSpace(query.FinishingStatus))
+            q = q.Where(x => x.FinishingStatus == query.FinishingStatus);
         if (query.MinPrice.HasValue)
             q = q.Where(x => x.Price >= query.MinPrice.Value);
         if (query.MaxPrice.HasValue)
@@ -94,13 +127,38 @@ public class PropertyService
             q = q.Where(x => x.AreaSqm <= query.MaxArea.Value);
         if (query.Bedrooms.HasValue)
             q = q.Where(x => x.Bedrooms >= query.Bedrooms.Value);
+        if (query.Bathrooms.HasValue)
+            q = q.Where(x => x.Bathrooms >= query.Bathrooms.Value);
+        if (query.ElevatorAvailable.HasValue)
+            q = q.Where(x => x.ElevatorAvailable == query.ElevatorAvailable.Value);
+        if (query.InstallmentAvailable.HasValue)
+            q = q.Where(x => x.InstallmentAvailable == query.InstallmentAvailable.Value);
+        if (query.IsUnderConstruction.HasValue)
+            q = q.Where(x => x.IsUnderConstruction == query.IsUnderConstruction.Value);
         if (query.IsFeatured.HasValue)
             q = q.Where(x => x.IsFeatured == query.IsFeatured.Value);
+        if (!string.IsNullOrWhiteSpace(query.Search))
+        {
+            var s = query.Search.Trim();
+            q = q.Where(x => (x.Title != null && x.Title.Contains(s))
+                          || (x.Address != null && x.Address.Contains(s))
+                          || (x.DetailedAddress != null && x.DetailedAddress.Contains(s))
+                          || (x.District != null && x.District.Contains(s))
+                          || (x.Description != null && x.Description.Contains(s)));
+        }
 
         var total = await q.CountAsync(ct);
-        var entities = await q
-            .OrderByDescending(x => x.IsFeatured)
-            .ThenByDescending(x => x.CreatedAt)
+
+        IOrderedQueryable<PropertyUnit> orderedQ = query.SortBy switch
+        {
+            "price_asc"  => q.OrderBy(x => x.Price ?? 0),
+            "price_desc" => q.OrderByDescending(x => x.Price ?? 0),
+            "area_desc"  => q.OrderByDescending(x => x.AreaSqm ?? 0),
+            "area_asc"   => q.OrderBy(x => x.AreaSqm ?? 0),
+            _            => q.OrderByDescending(x => x.IsFeatured).ThenByDescending(x => x.CreatedAt),
+        };
+
+        var entities = await orderedQ
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .ToListAsync(ct);

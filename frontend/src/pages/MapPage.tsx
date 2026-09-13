@@ -18,6 +18,13 @@ const FILTER_OPTS = {
     { v: 'Land',      l: 'أرض' },
     { v: 'Shop',      l: 'محل' },
   ],
+  finishingStatus: [
+    { v: 'Core-Shell',    l: 'عظم' },
+    { v: 'Semi-Finished', l: 'نصف تشطيب' },
+    { v: 'Finished',      l: 'تشطيب كامل' },
+    { v: 'Lux',           l: 'لوكس' },
+    { v: 'Super-Lux',     l: 'سوبر لوكس' },
+  ],
 }
 
 const FINISHING_LABELS: Record<string, string> = {
@@ -82,7 +89,14 @@ export default function MapPage() {
   const clearAll = () => setFilters({})
   const hasFilters = Object.values(filters).some(Boolean)
 
-  const activeProperties = data ? data.properties.filter(p => p.status !== 'Reserved') : []
+  const activeProperties = data ? data.properties.filter(p => {
+    if (p.status === 'Reserved') return false
+    if (filters.status && p.status !== filters.status) return false
+    if (filters.listingType && p.listingType !== filters.listingType) return false
+    if (filters.propertyType && p.propertyType !== filters.propertyType) return false
+    if (filters.finishingStatus && p.finishingStatus !== filters.finishingStatus) return false
+    return true
+  }) : []
   const counts = {
     Available: activeProperties.filter(p => p.status === 'Available').length,
     Sold:      activeProperties.filter(p => p.status === 'Sold').length,
@@ -134,7 +148,7 @@ export default function MapPage() {
             {(Object.entries(FILTER_OPTS) as [keyof typeof FILTER_OPTS, {v:string,l:string}[]][]).map(([key, opts]) => (
               <div key={key}>
                 <div style={{ fontSize: '.7rem', fontWeight: 600, color: '#8a7a60', marginBottom: 4 }}>
-                  {({ status:'الحالة', listingType:'نوع الإعلان', propertyType:'النوع' } as Record<string,string>)[key]}
+                  {({ status:'الحالة', listingType:'نوع الإعلان', propertyType:'النوع', finishingStatus:'نوع التشطيب' } as Record<string,string>)[key]}
                 </div>
                 <div style={{ display:'flex', flexWrap:'wrap', gap:4 }}>
                   <button

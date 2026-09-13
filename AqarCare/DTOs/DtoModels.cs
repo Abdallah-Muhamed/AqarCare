@@ -206,13 +206,21 @@ public record AddPropertyMediaRequest(
 
 public record PropertyQuery(
     string? City = null,
+    string? District = null,
     string? PropertyType = null,
     string? ListingType = null,
+    string? FinishingStatus = null,
     decimal? MinPrice = null,
     decimal? MaxPrice = null,
     decimal? MinArea = null,
     decimal? MaxArea = null,
     int? Bedrooms = null,
+    int? Bathrooms = null,
+    bool? ElevatorAvailable = null,
+    bool? InstallmentAvailable = null,
+    bool? IsUnderConstruction = null,
+    string? Search = null,
+    string? SortBy = null,
     bool? IsFeatured = null,
     int Page = 1,
     int PageSize = 12);

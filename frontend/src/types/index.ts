@@ -38,6 +38,7 @@ export interface PropertyListItem {
   status: string
   isFeatured: boolean
   isUnderConstruction?: boolean
+  installmentAvailable?: boolean
   primaryImageUrl: string | null
   waterMeterAvailable: boolean
   electricityMeterAvailable: boolean
@@ -74,13 +75,24 @@ export interface PagedResult<T> {
 
 export interface PropertyQuery {
   city?: string
+  district?: string
   propertyType?: string
   listingType?: string
+  finishingStatus?: string
   minPrice?: number
   maxPrice?: number
   minArea?: number
   maxArea?: number
   bedrooms?: number
+  bathrooms?: number
+  elevatorAvailable?: boolean
+  installmentAvailable?: boolean
+  waterMeterAvailable?: boolean
+  electricityMeterAvailable?: boolean
+  gasMeterAvailable?: boolean
+  isUnderConstruction?: boolean
+  search?: string
+  sortBy?: string
   isFeatured?: boolean
   page?: number
   pageSize?: number
@@ -195,6 +207,7 @@ export interface MapFilters {
   listingType?: string
   propertyType?: string
   status?: string
+  finishingStatus?: string
   minPrice?: number
   maxPrice?: number
 }

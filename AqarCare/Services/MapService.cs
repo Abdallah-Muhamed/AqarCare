@@ -200,6 +200,7 @@ public class MapService
     {
         if (!string.IsNullOrWhiteSpace(filters.PropertyType)) query = query.Where(x => x.PropertyUnit.PropertyType == filters.PropertyType);
         if (!string.IsNullOrWhiteSpace(filters.ListingType)) query = query.Where(x => x.PropertyUnit.ListingType == filters.ListingType);
+        if (!string.IsNullOrWhiteSpace(filters.FinishingStatus)) query = query.Where(x => x.PropertyUnit.FinishingStatus == filters.FinishingStatus);
         if (filters.MinPrice.HasValue) query = query.Where(x => x.PropertyUnit.Price >= filters.MinPrice.Value);
         if (filters.MaxPrice.HasValue) query = query.Where(x => x.PropertyUnit.Price <= filters.MaxPrice.Value);
         if (filters.MinArea.HasValue) query = query.Where(x => x.PropertyUnit.AreaSqm >= filters.MinArea.Value);

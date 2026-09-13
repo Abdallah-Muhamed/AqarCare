@@ -351,6 +351,7 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
         if (p.status === 'Reserved') return false
         if (filters.status && p.status !== filters.status) return false
         if (filters.listingType && p.listingType !== filters.listingType) return false
+        if (filters.finishingStatus && p.finishingStatus !== filters.finishingStatus) return false
         if (filters.propertyType) {
           if (filters.propertyType === 'House' && (p.propertyType === 'House' || p.propertyType === 'Villa')) {
             // match

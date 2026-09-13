@@ -12,6 +12,13 @@ const STATUSES = [
   { val: 'Available', label: 'متاح' },
   { val: 'Sold',      label: 'مباع' },
 ]
+const FINISHING_TYPES = [
+  { val: 'Core-Shell',    label: 'عظم' },
+  { val: 'Semi-Finished', label: 'نصف تشطيب' },
+  { val: 'Finished',      label: 'تشطيب كامل' },
+  { val: 'Lux',           label: 'لوكس' },
+  { val: 'Super-Lux',     label: 'سوبر لوكس' },
+]
 
 interface Props {
   filters: MapFilters
@@ -68,6 +75,16 @@ export default function MapFiltersPanel({ filters, onChange, open, onToggle }: P
               onChange={e => set('status', e.target.value)}>
               <option value="">الكل</option>
               {STATUSES.map(s => <option key={s.val} value={s.val}>{s.label}</option>)}
+            </select>
+          </div>
+
+          {/* Finishing */}
+          <div className="map-filters__group">
+            <label className="map-filters__label">نوع التشطيب</label>
+            <select className="map-filters__select" value={filters.finishingStatus ?? ''}
+              onChange={e => set('finishingStatus', e.target.value)}>
+              <option value="">كل أنواع التشطيب</option>
+              {FINISHING_TYPES.map(f => <option key={f.val} value={f.val}>{f.label}</option>)}
             </select>
           </div>
 
