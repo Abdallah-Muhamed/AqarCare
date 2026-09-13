@@ -85,8 +85,30 @@ export default function PropertyCard({ property: p }: Props) {
               🏢 {p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}
             </div>
           ) : null}
-          <div className="prop-card__spec"><BedDouble size={15} />{p.bedrooms ?? '—'} غرف</div>
-          <div className="prop-card__spec"><Bath size={15} />{p.bathrooms ?? '—'} حمام</div>
+          <div className="prop-card__spec">
+            <BedDouble size={15} />
+            {(() => {
+              const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
+              const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
+                Math.min(...floorBeds) === Math.max(...floorBeds)
+                  ? Math.min(...floorBeds)
+                  : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+              ) : null);
+              return `${bedVal ?? '—'} غرف`;
+            })()}
+          </div>
+          <div className="prop-card__spec">
+            <Bath size={15} />
+            {(() => {
+              const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
+              const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
+                Math.min(...floorBaths) === Math.max(...floorBaths)
+                  ? Math.min(...floorBaths)
+                  : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+              ) : null);
+              return `${bathVal ?? '—'} حمام`;
+            })()}
+          </div>
           <div className="prop-card__spec">
             <Maximize2 size={15} />
             {(() => {

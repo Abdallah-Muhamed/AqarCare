@@ -223,9 +223,11 @@ export default function AdminPanelPage() {
   // ── floor helpers ─────────────────────────────────────────────────────────────
 
   const addFloor = () => {
-    const defaultArea = (floors.length > 0 && floors[floors.length - 1].areaSqm)
-      ? floors[floors.length - 1].areaSqm
-      : (formData.areaSqm ? parseFloat(formData.areaSqm) : null);
+    const lastFloor = floors.length > 0 ? floors[floors.length - 1] : null;
+    const defaultArea = lastFloor?.areaSqm ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null);
+    const defaultBedrooms = lastFloor?.bedrooms ?? (formData.bedrooms ? parseInt(formData.bedrooms) : null);
+    const defaultBathrooms = lastFloor?.bathrooms ?? (formData.bathrooms ? parseInt(formData.bathrooms) : null);
+
     setFloors(prev => [
       ...prev,
       {
@@ -235,6 +237,8 @@ export default function AdminPanelPage() {
         pricePerMeter: null,
         installmentPrice: null,
         areaSqm: defaultArea,
+        bedrooms: defaultBedrooms,
+        bathrooms: defaultBathrooms,
         isAvailable: true,
         sortOrder: prev.length,
       }
@@ -311,8 +315,10 @@ export default function AdminPanelPage() {
             ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null),
           floorNumber: (floors.length === 1 && floors[0].floorNumber != null ? floors[0].floorNumber : null)
             ?? (formData.floorNumber ? parseInt(formData.floorNumber) : null),
-          bedrooms: formData.bedrooms ? parseInt(formData.bedrooms) : null,
-          bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
+          bedrooms: (floors.find(f => f.bedrooms != null)?.bedrooms)
+            ?? (formData.bedrooms ? parseInt(formData.bedrooms) : null),
+          bathrooms: (floors.find(f => f.bathrooms != null)?.bathrooms)
+            ?? (formData.bathrooms ? parseInt(formData.bathrooms) : null),
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
           isUnderConstruction: formData.isUnderConstruction,
@@ -324,6 +330,8 @@ export default function AdminPanelPage() {
             pricePerMeter: f.pricePerMeter,
             installmentPrice: f.installmentPrice,
             areaSqm: f.areaSqm,
+            bedrooms: f.bedrooms,
+            bathrooms: f.bathrooms,
             isAvailable: f.isAvailable,
             sortOrder: i,
           })),
@@ -649,37 +657,17 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
-                {/* Section: Specifications */}
+                {/* Section: Actual Sale Price */}
                 <div className="form-section">
-                  <h3 className="form-section__title">📐 المواصفات</h3>
+                  <h3 className="form-section__title">🏷️ سعر البيع الفعلي (إن تم البيع)</h3>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>سعر البيع الفعلي (إن تم البيع)</label>
+                      <label>سعر البيع الفعلي (جنيه)</label>
                       <input
                         type="number"
                         value={formData.soldPrice}
                         onChange={(e) => setFormData({ ...formData, soldPrice: e.target.value })}
                         placeholder="اتركه فارغاً إن لم يُبَع"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>غرف النوم</label>
-                      <input
-                        type="number"
-                        value={formData.bedrooms}
-                        onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-                        min="0"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>الحمامات</label>
-                      <input
-                        type="number"
-                        value={formData.bathrooms}
-                        onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
-                        min="0"
                       />
                     </div>
                   </div>
@@ -691,7 +679,7 @@ export default function AdminPanelPage() {
                     <div>
                       <h3 className="form-section__title">🏢 الأدوار والأسعار وسعر المتر</h3>
                       <p className="form-section__sub">
-                        حدد الدور وسعر الكاش أو سعر المتر ويتم حسابهما تلقائياً، مع إمكانية إضافة سعر التقسيط لكل دور
+                        حدد الدور والمساحة والغرف والحمامات وسعر الكاش أو سعر المتر ويتم حسابهما تلقائياً، مع إمكانية إضافة سعر التقسيط لكل دور
                       </p>
                     </div>
                     <button
@@ -714,10 +702,12 @@ export default function AdminPanelPage() {
                         <thead>
                           <tr>
                             <th>الدور / الاسم</th>
+                            <th>المساحة (م²)</th>
+                            <th>غرف النوم</th>
+                            <th>الحمامات</th>
                             <th>سعر المتر (جنيه)</th>
                             <th>سعر الكاش (جنيه)</th>
                             <th>سعر التقسيط (جنيه)</th>
-                            <th>المساحة (م²)</th>
                             <th>متاح؟</th>
                             <th>حذف</th>
                           </tr>
@@ -735,6 +725,38 @@ export default function AdminPanelPage() {
                                     floorNumber: parseInt(e.target.value.replace(/\D/g, '')) || (index + 1)
                                   })}
                                   className="floor-input"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={floor.areaSqm ?? ''}
+                                  placeholder={formData.areaSqm || '0'}
+                                  onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
+                                  className="floor-input"
+                                  style={{ width: '80px' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={floor.bedrooms ?? ''}
+                                  placeholder="0"
+                                  min="0"
+                                  onChange={(e) => updateFloor(index, { bedrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                  className="floor-input"
+                                  style={{ width: '65px' }}
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={floor.bathrooms ?? ''}
+                                  placeholder="0"
+                                  min="0"
+                                  onChange={(e) => updateFloor(index, { bathrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                  className="floor-input"
+                                  style={{ width: '65px' }}
                                 />
                               </td>
                               <td>
@@ -763,15 +785,6 @@ export default function AdminPanelPage() {
                                   value={floor.installmentPrice ?? ''}
                                   placeholder="0"
                                   onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
-                                  className="floor-input"
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  value={floor.areaSqm ?? ''}
-                                  placeholder={formData.areaSqm || '0'}
-                                  onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
                                   className="floor-input"
                                 />
                               </td>

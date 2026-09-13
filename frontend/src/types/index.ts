@@ -14,6 +14,8 @@ export interface PropertyFloor {
   pricePerMeter?: number | null
   installmentPrice?: number | null
   areaSqm?: number | null
+  bedrooms?: number | null
+  bathrooms?: number | null
   isAvailable: boolean
   sortOrder: number
 }

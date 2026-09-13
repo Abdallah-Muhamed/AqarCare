@@ -126,8 +126,40 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="detail-specs">
-                <div className="detail-spec"><BedDouble size={18} /><div><strong>{prop.bedrooms ?? '—'}</strong><small>غرف نوم</small></div></div>
-                <div className="detail-spec"><Bath size={18} /><div><strong>{prop.bathrooms ?? '—'}</strong><small>حمامات</small></div></div>
+                <div className="detail-spec">
+                  <BedDouble size={18} />
+                  <div>
+                    <strong>
+                      {(() => {
+                        const floorBeds = (prop.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
+                        const bedVal = prop.bedrooms ?? (floorBeds.length > 0 ? (
+                          Math.min(...floorBeds) === Math.max(...floorBeds)
+                            ? Math.min(...floorBeds)
+                            : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+                        ) : null);
+                        return bedVal ?? '—';
+                      })()}
+                    </strong>
+                    <small>غرف نوم</small>
+                  </div>
+                </div>
+                <div className="detail-spec">
+                  <Bath size={18} />
+                  <div>
+                    <strong>
+                      {(() => {
+                        const floorBaths = (prop.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
+                        const bathVal = prop.bathrooms ?? (floorBaths.length > 0 ? (
+                          Math.min(...floorBaths) === Math.max(...floorBaths)
+                            ? Math.min(...floorBaths)
+                            : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+                        ) : null);
+                        return bathVal ?? '—';
+                      })()}
+                    </strong>
+                    <small>حمامات</small>
+                  </div>
+                </div>
                 <div className="detail-spec">
                   <Maximize2 size={18} />
                   <div>
@@ -229,6 +261,16 @@ export default function PropertyDetailPage() {
                                   {item.areaSqm != null && (
                                     <div className="floor-spec-card__sub">
                                       📐 المساحة: {item.areaSqm} م²
+                                    </div>
+                                  )}
+                                  {item.bedrooms != null && (
+                                    <div className="floor-spec-card__sub">
+                                      🛏️ غرف النوم: {item.bedrooms} غرف
+                                    </div>
+                                  )}
+                                  {item.bathrooms != null && (
+                                    <div className="floor-spec-card__sub">
+                                      🚿 الحمامات: {item.bathrooms} حمام
                                     </div>
                                   )}
                                 </div>

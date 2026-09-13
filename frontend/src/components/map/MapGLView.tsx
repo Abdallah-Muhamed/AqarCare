@@ -118,8 +118,21 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
         : `${Math.min(...floorAreas)} - ${Math.max(...floorAreas)}`
     ) : null)
     if (areaVal != null) specs.push(`<div class="mapgl-popup__spec">📐 <span>${areaVal} م²</span></div>`)
-    if (p.bedrooms != null) specs.push(`<div class="mapgl-popup__spec">🛏️ <span>${p.bedrooms} غرف</span></div>`)
-    if (p.bathrooms != null) specs.push(`<div class="mapgl-popup__spec">🚿 <span>${p.bathrooms} حمام</span></div>`)
+    const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0)
+    const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
+      Math.min(...floorBeds) === Math.max(...floorBeds)
+        ? Math.min(...floorBeds)
+        : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+    ) : null)
+    if (bedVal != null) specs.push(`<div class="mapgl-popup__spec">🛏️ <span>${bedVal} غرف</span></div>`)
+
+    const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0)
+    const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
+      Math.min(...floorBaths) === Math.max(...floorBaths)
+        ? Math.min(...floorBaths)
+        : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+    ) : null)
+    if (bathVal != null) specs.push(`<div class="mapgl-popup__spec">🚿 <span>${bathVal} حمام</span></div>`)
     if (p.floorNumber != null) {
       specs.push(`<div class="mapgl-popup__spec">🏢 <span>${p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}</span></div>`)
     } else if (p.floors && p.floors.length > 0) {
