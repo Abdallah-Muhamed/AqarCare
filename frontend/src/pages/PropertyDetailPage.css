@@ -68,6 +68,26 @@
   display: flex; align-items: center; gap: 6px;
   color: var(--clr-card-muted); font-size: 0.9rem;
 }
+.detail-map-link-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: #f3efe7;
+  border: 1px solid #d8cfbd;
+  color: #2d4a3e;
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 99px;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.detail-map-link-badge:hover {
+  background: #2d4a3e;
+  color: #fff !important;
+  border-color: #2d4a3e;
+  transform: translateY(-1px);
+}
 .detail-id {
   display: flex; align-items: center; gap: 6px;
   color: var(--clr-gold); font-size: 0.9rem;

@@ -84,9 +84,17 @@ export default function PropertyDetailPage() {
             <div className="detail-card">
               <h1 className="detail-title">{prop.title || 'غير محدد'}</h1>
               <div className="detail-meta">
-                <div className="detail-location">
-                  <MapPin size={15} />
-                  {prop.address || [prop.district, prop.city].filter(Boolean).join('، ') || 'غير محدد'}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', flexWrap: 'wrap', gap: '8px' }}>
+                  <div className="detail-location">
+                    <MapPin size={15} />
+                    {prop.address || [prop.district, prop.city].filter(Boolean).join('، ') || 'غير محدد'}
+                  </div>
+                  <Link
+                    to={`/map?propertyId=${prop.id}`}
+                    className="detail-map-link-badge"
+                  >
+                    🗺️ عرض على الخريطة
+                  </Link>
                 </div>
                 {prop.district && (
                   <div className="detail-district">
@@ -257,6 +265,9 @@ export default function PropertyDetailPage() {
               <a href="https://wa.me/201055937687" target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)', background: '#25d366', color: '#fff' }}>
                 <MessageCircle size={16} /> تواصل معنا
               </a>
+              <Link to={`/map?propertyId=${prop.id}`} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
+                🗺️ عرض الوحدة على الخريطة
+              </Link>
               <Link to="/properties" className="btn btn-ghost" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
                 <ArrowRight size={15} />
                 العودة للعقارات
@@ -287,11 +298,11 @@ export default function PropertyDetailPage() {
             <MessageCircle size={16} /> تواصل
           </a>
           <Link
-            to="/finishing-packages"
+            to={`/map?propertyId=${prop.id}`}
             className="btn btn-outline"
             style={{ minHeight: 42, padding: '0 0.9rem', fontSize: '0.82rem' }}
           >
-            الباقات
+            🗺️ الخريطة
           </Link>
         </div>
       </div>

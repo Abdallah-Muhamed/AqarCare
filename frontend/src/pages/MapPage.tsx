@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 import { List, SlidersHorizontal, X } from 'lucide-react'
 import { api } from '../api'
 import type { CityMap, MapFilters, MapProperty } from '../types'
@@ -50,6 +50,7 @@ const STATUS_LABELS: Record<string, string> = {
 }
 
 export default function MapPage() {
+  const [searchParams]                         = useSearchParams()
   const [data,             setData]             = useState<CityMap | null>(null)
   const [loading,          setLoading]          = useState(true)
   const [error,            setError]            = useState<string | null>(null)
@@ -57,12 +58,24 @@ export default function MapPage() {
   const [filterOpen,       setFilterOpen]       = useState(false)
   const [selectedProperty, setSelectedProperty] = useState<MapProperty | null>(null)
 
+  const targetPropertyId = searchParams.get('propertyId') || searchParams.get('id')
+
   useEffect(() => {
     api.getMap(CITY_SLUG)
       .then(setData)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false))
   }, [])
+
+  // Auto-select property if propertyId is provided in URL
+  useEffect(() => {
+    if (data && targetPropertyId) {
+      const found = data.properties.find(p => p.id === Number(targetPropertyId))
+      if (found) {
+        setSelectedProperty(found)
+      }
+    }
+  }, [data, targetPropertyId])
 
   const set = (key: keyof MapFilters, val: string) =>
     setFilters(f => ({ ...f, [key]: val || undefined }))

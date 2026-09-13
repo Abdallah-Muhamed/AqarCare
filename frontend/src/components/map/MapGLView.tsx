@@ -96,13 +96,6 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     onSelectRef.current = onSelectProperty
   }, [onSelectProperty])
 
-  // Sync external property deselection
-  useEffect(() => {
-    if (!selectedProperty) {
-      popupRef.current?.remove()
-    }
-  }, [selectedProperty])
-
   // ── Popup HTML (Full Property Details Card) ───────────────────────
   const buildPopupHTML = useCallback((p: MapProperty): string => {
     const title   = p.title?.trim() || 'وحدة عقارية'
@@ -164,6 +157,57 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
       </div>
     `
   }, [])
+
+  // Sync property selection (e.g. via URL /map?propertyId=12 or external click)
+  useEffect(() => {
+    if (!selectedProperty) {
+      popupRef.current?.remove()
+      return
+    }
+
+    const map = mapRef.current
+    if (!map || selectedProperty.x == null || selectedProperty.y == null || isNaN(selectedProperty.x) || isNaN(selectedProperty.y)) return
+
+    const [lon, lat] = propToLonLat(selectedProperty.x, selectedProperty.y)
+    const isMobile = window.innerWidth <= 768
+
+    const flyAction = () => {
+      map.flyTo({
+        center: [lon, lat],
+        offset: isMobile ? [0, -70] : [0, 0],
+        zoom: 17,
+        pitch: 35,
+        bearing: -10,
+        duration: 800,
+      })
+
+      if (!isMobile) {
+        popupRef.current?.remove()
+        const popup = new Popup({
+          offset: [0, -42],
+          className: 'mapgl-popup',
+          closeButton: true,
+          closeOnClick: true,
+          maxWidth: '290px',
+        })
+          .setLngLat([lon, lat])
+          .setHTML(buildPopupHTML(selectedProperty))
+          .addTo(map)
+
+        popup.on('close', () => {
+          onSelectRef.current?.(null)
+        })
+
+        popupRef.current = popup
+      }
+    }
+
+    if (map.loaded()) {
+      flyAction()
+    } else {
+      map.once('load', flyAction)
+    }
+  }, [selectedProperty, buildPopupHTML])
 
   // ── Init map ────────────────────────────────────────────────────
   useEffect(() => {
