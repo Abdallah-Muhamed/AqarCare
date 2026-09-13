@@ -35,6 +35,7 @@ public class PropertyFloorConfiguration : IEntityTypeConfiguration<PropertyFloor
         builder.HasKey(x => x.Id);
         builder.Property(x => x.FloorName).HasMaxLength(100);
         builder.Property(x => x.Price).HasPrecision(18, 2);
+        builder.Property(x => x.PricePerMeter).HasPrecision(18, 2);
         builder.Property(x => x.InstallmentPrice).HasPrecision(18, 2);
         builder.Property(x => x.AreaSqm).HasPrecision(18, 2);
         builder.HasIndex(x => x.PropertyUnitId);

@@ -8,6 +8,7 @@ public class PropertyFloor
     public int? FloorNumber { get; set; }
     public string? FloorName { get; set; }
     public decimal? Price { get; set; }
+    public decimal? PricePerMeter { get; set; }
     public decimal? InstallmentPrice { get; set; }
     public decimal? AreaSqm { get; set; }
     public bool IsAvailable { get; set; } = true;

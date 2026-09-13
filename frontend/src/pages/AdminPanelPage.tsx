@@ -222,14 +222,16 @@ export default function AdminPanelPage() {
   // ── floor helpers ─────────────────────────────────────────────────────────────
 
   const addFloor = () => {
+    const defaultArea = formData.areaSqm ? parseFloat(formData.areaSqm) : null;
     setFloors(prev => [
       ...prev,
       {
         floorNumber: prev.length + 1,
         floorName: `الدور ${prev.length + 1}`,
         price: null,
+        pricePerMeter: null,
         installmentPrice: null,
-        areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
+        areaSqm: defaultArea,
         isAvailable: true,
         sortOrder: prev.length,
       }
@@ -237,12 +239,50 @@ export default function AdminPanelPage() {
   };
 
   const updateFloor = (index: number, patch: Partial<PropertyFloor>) => {
-    setFloors(prev => prev.map((f, i) => i === index ? { ...f, ...patch } : f));
+    setFloors(prev => prev.map((f, i) => {
+      if (i !== index) return f;
+      const updated = { ...f, ...patch };
+
+      // Effective area for this floor (fallback to general area)
+      const effectiveArea = (updated.areaSqm && updated.areaSqm > 0)
+        ? updated.areaSqm
+        : (formData.areaSqm ? parseFloat(formData.areaSqm) : 0);
+
+      // If price was updated
+      if ('price' in patch) {
+        if (updated.price && effectiveArea > 0) {
+          updated.pricePerMeter = Math.round(updated.price / effectiveArea);
+        } else if (!updated.price) {
+          updated.pricePerMeter = null;
+        }
+      }
+      // If pricePerMeter was updated
+      else if ('pricePerMeter' in patch) {
+        if (updated.pricePerMeter && effectiveArea > 0) {
+          updated.price = Math.round(updated.pricePerMeter * effectiveArea);
+        } else if (!updated.pricePerMeter) {
+          updated.price = null;
+        }
+      }
+      // If areaSqm was updated
+      else if ('areaSqm' in patch) {
+        if (updated.areaSqm && updated.areaSqm > 0) {
+          if (updated.pricePerMeter && updated.pricePerMeter > 0) {
+            updated.price = Math.round(updated.pricePerMeter * updated.areaSqm);
+          } else if (updated.price && updated.price > 0) {
+            updated.pricePerMeter = Math.round(updated.price / updated.areaSqm);
+          }
+        }
+      }
+
+      return updated;
+    }));
   };
 
   const removeFloor = (index: number) => {
     setFloors(prev => prev.filter((_, i) => i !== index));
   };
+
 
   // ── form handlers ─────────────────────────────────────────────────────────────
 
@@ -276,6 +316,7 @@ export default function AdminPanelPage() {
             floorNumber: f.floorNumber,
             floorName: f.floorName,
             price: f.price,
+            pricePerMeter: f.pricePerMeter,
             installmentPrice: f.installmentPrice,
             areaSqm: f.areaSqm,
             isAvailable: f.isAvailable,
@@ -318,6 +359,16 @@ export default function AdminPanelPage() {
     setShowForm(true);
     setEditingProperty(null);
     resetForm();
+    setFloors([{
+      floorNumber: 1,
+      floorName: 'الدور 1',
+      price: null,
+      pricePerMeter: null,
+      installmentPrice: null,
+      areaSqm: null,
+      isAvailable: true,
+      sortOrder: 0,
+    }]);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -593,32 +644,41 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
-                {/* Section: Pricing */}
+                {/* Section: Specifications & Area */}
                 <div className="form-section">
-                  <h3 className="form-section__title">💰 التسعير والمساحة</h3>
+                  <h3 className="form-section__title">📐 المساحة والمواصفات</h3>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>السعر (كاش - جنيه)</label>
+                      <label>المساحة (م²)</label>
                       <input
                         type="number"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        value={formData.areaSqm}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setFormData({ ...formData, areaSqm: val });
+                          // Auto update floor area if floor has no custom area
+                          if (val && parseFloat(val) > 0) {
+                            const newArea = parseFloat(val);
+                            setFloors(prev => prev.map(f => {
+                              if (!f.areaSqm) {
+                                const updated = { ...f, areaSqm: newArea };
+                                if (updated.pricePerMeter && updated.pricePerMeter > 0) {
+                                  updated.price = Math.round(updated.pricePerMeter * newArea);
+                                } else if (updated.price && updated.price > 0) {
+                                  updated.pricePerMeter = Math.round(updated.price / newArea);
+                                }
+                                return updated;
+                              }
+                              return f;
+                            }));
+                          }
+                        }}
                         placeholder="0"
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>السعر في حالة التقسيط (جنيه)</label>
-                      <input
-                        type="number"
-                        value={formData.installmentPrice}
-                        onChange={(e) => setFormData({ ...formData, installmentPrice: e.target.value })}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>سعر البيع الفعلي</label>
+                      <label>سعر البيع الفعلي (إن تم البيع)</label>
                       <input
                         type="number"
                         value={formData.soldPrice}
@@ -628,17 +688,7 @@ export default function AdminPanelPage() {
                     </div>
 
                     <div className="form-group">
-                      <label>المساحة (م²)</label>
-                      <input
-                        type="number"
-                        value={formData.areaSqm}
-                        onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
-                        placeholder="0"
-                      />
-                    </div>
-
-                    <div className="form-group">
-                      <label>رقم الدور</label>
+                      <label>رقم الدور (العام)</label>
                       <input
                         type="number"
                         value={formData.floorNumber}
@@ -673,9 +723,9 @@ export default function AdminPanelPage() {
                 <div className="form-section">
                   <div className="form-section__header-row">
                     <div>
-                      <h3 className="form-section__title">🏢 الأدوار المتاحة والأسعار</h3>
+                      <h3 className="form-section__title">🏢 الأدوار والأسعار وسعر المتر</h3>
                       <p className="form-section__sub">
-                        يمكنك إضافة عدة أدوار إذا كان العقار يضم أدواراً مختلفة بأسعار كاش وتقسيط متنوعة
+                        حدد الدور وسعر الكاش أو سعر المتر ويتم حسابهما تلقائياً، مع إمكانية إضافة سعر التقسيط لكل دور
                       </p>
                     </div>
                     <button
@@ -690,7 +740,7 @@ export default function AdminPanelPage() {
                   {floors.length === 0 ? (
                     <div className="no-floors-box">
                       <span>🏢</span>
-                      <p>لم يتم تحديد أدوار متعددة. اضغط على "إضافة دور" لتسعير كل دور على حدة في حال كان العقار يضم أكثر من دور متاح.</p>
+                      <p>لم يتم إضافة أدوار بعد. اضغط على "إضافة دور" لتحديد الدور وسعره أو سعر المتر.</p>
                     </div>
                   ) : (
                     <div className="floors-table-container">
@@ -698,6 +748,7 @@ export default function AdminPanelPage() {
                         <thead>
                           <tr>
                             <th>الدور / الاسم</th>
+                            <th>سعر المتر (جنيه)</th>
                             <th>سعر الكاش (جنيه)</th>
                             <th>سعر التقسيط (جنيه)</th>
                             <th>المساحة (م²)</th>
@@ -723,10 +774,21 @@ export default function AdminPanelPage() {
                               <td>
                                 <input
                                   type="number"
+                                  value={floor.pricePerMeter ?? ''}
+                                  placeholder="0"
+                                  onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
+                                  className="floor-input"
+                                  title="يتم حساب سعر الكاش تلقائياً بناءً على سعر المتر والمساحة"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
                                   value={floor.price ?? ''}
                                   placeholder="0"
                                   onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
                                   className="floor-input"
+                                  title="يتم حساب سعر المتر تلقائياً بناءً على سعر الكاش والمساحة"
                                 />
                               </td>
                               <td>
@@ -742,7 +804,7 @@ export default function AdminPanelPage() {
                                 <input
                                   type="number"
                                   value={floor.areaSqm ?? ''}
-                                  placeholder="0"
+                                  placeholder={formData.areaSqm || '0'}
                                   onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
                                   className="floor-input"
                                 />

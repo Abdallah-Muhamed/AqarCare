@@ -72,18 +72,33 @@ export default function PropertyCard({ property: p }: Props) {
         {/* Price */}
         <div className="prop-card__price">
           {(() => {
-            const floorPrices = p.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
-            if (floorPrices.length > 0) {
-              const minPrice = Math.min(...floorPrices);
+            const availableFloors = p.floors && p.floors.length > 0
+              ? p.floors.filter(f => f.isAvailable && (f.price != null || f.pricePerMeter != null))
+              : [];
+
+            if (availableFloors.length > 0) {
               return (
-                <div>
-                  <div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)' }}>يبدأ من </span>
-                    {minPrice.toLocaleString('ar-EG')} <span>جنيه</span>
-                  </div>
-                  <small style={{ display: 'block', fontSize: '0.7rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
-                    🏢 {p.floors!.length} أدوار بأسعار مختلفة
-                  </small>
+                <div className="prop-card__floors-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                  {availableFloors.map((fl, idx) => {
+                    const floorLabel = fl.floorName || (fl.floorNumber ? `الدور ${fl.floorNumber}` : `الدور ${idx + 1}`);
+                    return (
+                      <div key={idx} style={{ fontSize: '0.82rem', lineHeight: '1.4', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', borderBottom: idx < availableFloors.length - 1 ? '1px dashed rgba(183,121,61,0.2)' : 'none', paddingBottom: '2px' }}>
+                        <span style={{ fontWeight: 700, color: 'var(--clr-text)', minWidth: '60px' }}>{floorLabel}:</span>
+                        <div style={{ textAlign: 'left' }}>
+                          {fl.price != null && (
+                            <span style={{ fontWeight: 900, color: '#182821' }}>
+                              {fl.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.7rem' }}>جنيه</span>
+                            </span>
+                          )}
+                          {fl.pricePerMeter != null && (
+                            <span style={{ fontSize: '0.68rem', color: 'var(--clr-gold)', display: 'block', fontWeight: 600 }}>
+                              ({fl.pricePerMeter.toLocaleString('ar-EG')} ج/م²)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               );
             }
