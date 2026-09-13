@@ -9,6 +9,14 @@ interface Props { property: PropertyListItem }
 
 const listingLabel: Record<string, string> = { Sale: 'للبيع', Rent: 'للإيجار' }
 const typeLabel: Record<string, string>    = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
+const finishingLabel: Record<string, string> = {
+  'Core-Shell':    'عظم',
+  'Semi-Finished': 'نصف تشطيب',
+  'Finished':      'تشطيب كامل',
+  'Lux':           'لوكس',
+  'Super-Lux':     'سوبر لوكس',
+  'High-Lux':      'هاي لوكس',
+}
 const statusBadge: Record<string, { label: string; cls: string }> = {
   Available:  { label: 'متاح', cls: 'badge-green' },
   Reserved:   { label: 'محجوز', cls: 'badge-gold' },
@@ -20,6 +28,32 @@ export default function PropertyCard({ property: p }: Props) {
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
   const [imgError, setImgError] = useState(false)
   const placeholderImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
+
+  // Full detailed location
+  const detailedLoc = p.detailedAddress || p.address
+  const generalLoc = [p.district, p.city].filter(Boolean).join('، ')
+  const fullLocation = detailedLoc
+    ? (generalLoc && !detailedLoc.includes(p.district || '') ? `${detailedLoc} — ${generalLoc}` : detailedLoc)
+    : (generalLoc || 'غير محدد')
+
+  // Price per meter calculation
+  const floorPpms = (p.floors || [])
+    .map(f => {
+      if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter
+      if (f.price != null && f.areaSqm != null && f.areaSqm > 0) return Math.round(f.price / f.areaSqm)
+      return null
+    })
+    .filter((ppm): ppm is number => ppm != null && ppm > 0)
+
+  const unitPpm = (p.price != null && p.areaSqm != null && p.areaSqm > 0)
+    ? Math.round(p.price / p.areaSqm)
+    : null
+
+  const minPpm = floorPpms.length > 0 ? Math.min(...floorPpms) : unitPpm
+  const maxPpm = floorPpms.length > 0 ? Math.max(...floorPpms) : unitPpm
+  const ppmText = minPpm != null
+    ? (minPpm === maxPpm ? `${minPpm.toLocaleString('ar-EG')} ج/م²` : `يبدأ من ${minPpm.toLocaleString('ar-EG')} ج/م²`)
+    : null
   
   return (
     <Link to={`/properties/${p.id}`} className="prop-card card">
@@ -67,11 +101,18 @@ export default function PropertyCard({ property: p }: Props) {
 
       {/* Body */}
       <div className="prop-card__body">
-        {p.propertyType && <p className="prop-card__type">{typeLabel[p.propertyType] ?? p.propertyType}</p>}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
+          {p.propertyType && <span className="prop-card__type">{typeLabel[p.propertyType] ?? p.propertyType}</span>}
+          {p.finishingStatus && (
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2d4a3e', background: 'rgba(45,74,62,0.08)', border: '1px solid rgba(45,74,62,0.18)', padding: '1px 8px', borderRadius: '99px' }}>
+              🎨 {finishingLabel[p.finishingStatus] ?? p.finishingStatus}
+            </span>
+          )}
+        </div>
         <h3 className="prop-card__title">{p.title || 'غير محدد'}</h3>
-        <div className="prop-card__location">
-          <MapPin size={13} />
-          <span>{[p.district, p.city].filter(Boolean).join('، ') || 'غير محدد'}</span>
+        <div className="prop-card__location" title={fullLocation}>
+          <MapPin size={14} style={{ flexShrink: 0, marginTop: '2px' }} />
+          <span>{fullLocation}</span>
         </div>
 
         {/* Specs */}
@@ -121,6 +162,16 @@ export default function PropertyCard({ property: p }: Props) {
               return `${areaVal ?? '—'} م²`;
             })()}
           </div>
+          {p.finishingStatus && (
+            <div className="prop-card__spec" title="نوع التشطيب">
+              🎨 {finishingLabel[p.finishingStatus] ?? p.finishingStatus}
+            </div>
+          )}
+          {ppmText && (
+            <div className="prop-card__spec" title="سعر المتر" style={{ color: 'var(--clr-gold)', fontWeight: 700 }}>
+              📏 {ppmText}
+            </div>
+          )}
         </div>
 
         {/* Price */}
@@ -177,6 +228,12 @@ export default function PropertyCard({ property: p }: Props) {
                       )}
                     </div>
                   )}
+                  {ppmText && (
+                    <div style={{ fontSize: '0.8rem', color: 'var(--clr-gold)', fontWeight: 700, marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      <span>📏 سعر المتر:</span>
+                      <span>{ppmText}</span>
+                    </div>
+                  )}
                 </div>
               );
             }
@@ -195,6 +252,11 @@ export default function PropertyCard({ property: p }: Props) {
                   <small style={{ display: 'block', fontSize: '0.78rem', color: '#2563eb', fontWeight: 700, marginTop: '2px' }}>
                     💳 سعر التقسيط : {p.installmentPrice.toLocaleString('ar-EG')} جنيه
                   </small>
+                )}
+                {ppmText && (
+                  <div style={{ fontSize: '0.8rem', color: 'var(--clr-gold)', fontWeight: 700, marginTop: '3px' }}>
+                    📏 سعر المتر: {ppmText}
+                  </div>
                 )}
               </div>
             );
