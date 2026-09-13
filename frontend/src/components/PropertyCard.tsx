@@ -24,13 +24,24 @@ export default function PropertyCard({ property: p }: Props) {
     <Link to={`/properties/${p.id}`} className="prop-card card">
       {/* Image */}
       <div className="prop-card__img-wrap">
-        <img 
-          src={imgError || !p.primaryImageUrl ? placeholderImage : p.primaryImageUrl} 
-          alt={p.title ?? ''} 
-          className="prop-card__img" 
-          loading="lazy" 
-          onError={() => setImgError(true)}
-        />
+        {isVideo && !imgError ? (
+          <video
+            src={p.primaryImageUrl!}
+            className="prop-card__img"
+            muted
+            playsInline
+            preload="metadata"
+            onError={() => setImgError(true)}
+          />
+        ) : (
+          <img 
+            src={imgError || !p.primaryImageUrl ? placeholderImage : p.primaryImageUrl} 
+            alt={p.title ?? ''} 
+            className="prop-card__img" 
+            loading="lazy" 
+            onError={() => setImgError(true)}
+          />
+        )}
         {isVideo && (
           <div className="prop-card__video-indicator">
             <Play size={24} fill="white" />

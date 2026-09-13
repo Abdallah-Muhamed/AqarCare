@@ -984,6 +984,15 @@ export default function AdminPanelPage() {
                       <span className="checkbox-card__icon">⭐</span>
                       <span>عقار مميز</span>
                     </label>
+                    <label className="checkbox-card">
+                      <input
+                        type="checkbox"
+                        checked={formData.isPublished}
+                        onChange={(e) => setFormData({ ...formData, isPublished: e.target.checked })}
+                      />
+                      <span className="checkbox-card__icon">🌐</span>
+                      <span>منشور في الموقع</span>
+                    </label>
                   </div>
                 </div>
 
@@ -1043,10 +1052,20 @@ export default function AdminPanelPage() {
                   {filteredProperties.map((property) => (
                     <div key={property.id} className="admin-property-card">
                       <div className="property-image">
-                        <img 
-                          src={property.primaryImageUrl || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'} 
-                          alt={property.title ?? ''} 
-                        />
+                        {property.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) ? (
+                          <video 
+                            src={property.primaryImageUrl} 
+                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                            muted 
+                            playsInline 
+                            preload="metadata" 
+                          />
+                        ) : (
+                          <img 
+                            src={property.primaryImageUrl || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'} 
+                            alt={property.title ?? ''} 
+                          />
+                        )}
                         <div className="property-image__badges">
                           {property.listingType && (
                             <span className={`admin-badge admin-badge--${property.listingType.toLowerCase()}`}>
@@ -1105,6 +1124,9 @@ export default function AdminPanelPage() {
                             {property.status === 'Available' ? 'متاح' :
                              property.status === 'Sold' ? 'مباع' :
                              property.status === 'Rented' ? 'مؤجر' : property.status}
+                          </span>
+                          <span className={`admin-badge ${property.isPublished ? 'admin-badge--available' : 'admin-badge--sold'}`} style={{ fontSize: '0.72rem' }}>
+                            {property.isPublished ? '🌐 منشور' : '🔒 مسودة'}
                           </span>
                           {property.floors && property.floors.length > 0 && (
                             <span className="admin-badge admin-badge--floors">

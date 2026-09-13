@@ -42,6 +42,7 @@ export interface PropertyListItem {
   gasMeterAvailable: boolean
   elevatorAvailable: boolean
   floors?: PropertyFloor[]
+  isPublished?: boolean
 }
 
 export interface PropertyDetail extends PropertyListItem {

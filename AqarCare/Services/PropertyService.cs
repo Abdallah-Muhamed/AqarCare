@@ -417,7 +417,8 @@ public class PropertyService
             x.IsUnderConstruction,
             x.Floors?.OrderBy(f => f.SortOrder)
                 .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
-                .ToList());
+                .ToList(),
+            x.IsPublished);
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(

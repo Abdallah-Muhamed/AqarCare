@@ -65,7 +65,8 @@ public record PropertyListItemDto(
     bool HasGas,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
-    IReadOnlyList<PropertyFloorDto>? Floors = null);
+    IReadOnlyList<PropertyFloorDto>? Floors = null,
+    bool IsPublished = true);
 
 public record PropertyDetailDto(
     int Id,
