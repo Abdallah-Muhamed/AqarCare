@@ -141,6 +141,7 @@ export default function MapPage() {
 
         {/* Legend */}
         <div className="mappage__legend">
+          <div style={{ fontSize: '.68rem', fontWeight: 800, color: '#3d3424', marginBottom: 4 }}>الحالة:</div>
           {(['Available', 'Sold'] as const).map(s => (
             <div key={s} className="mappage__legend-item">
               <span className={`mappage__legend-dot mappage__legend-dot--${s}`} />
@@ -148,6 +149,14 @@ export default function MapPage() {
               <span style={{ color:'#b8a87a', fontSize:'.65rem' }}>({counts[s]})</span>
             </div>
           ))}
+          <div style={{ borderTop: '1px solid #e2dac8', margin: '4px 0', paddingTop: 4 }}>
+            <div style={{ fontSize: '.68rem', fontWeight: 800, color: '#3d3424', marginBottom: 3 }}>التشطيب:</div>
+            <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '9px', fontWeight: 800, background: '#78350f', color: '#fef3c7', padding: '1px 5px', borderRadius: 4 }}>عظم</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, background: '#0369a1', color: '#e0f2fe', padding: '1px 5px', borderRadius: 4 }}>نص</span>
+              <span style={{ fontSize: '9px', fontWeight: 800, background: '#15803d', color: '#f0fdf4', padding: '1px 5px', borderRadius: 4 }}>تشطيب</span>
+            </div>
+          </div>
         </div>
 
         {/* Loading */}

@@ -196,12 +196,44 @@ export default function MapGLView({ data, filters }: Props) {
         return true
       })
 
+      const getTypeIcon = (t?: string | null) => {
+        switch (t) {
+          case 'Apartment': return '🏢'
+          case 'House':
+          case 'Villa': return '🏡'
+          case 'Shop':
+          case 'Commercial': return '🏪'
+          case 'Land': return '🗺️'
+          default: return '📍'
+        }
+      }
+
+      const getFinishingInfo = (f?: string | null) => {
+        switch (f) {
+          case 'Core-Shell': return { text: 'عظم', cls: 'core' }
+          case 'Semi-Finished': return { text: 'نص', cls: 'semi' }
+          case 'Finished':
+          case 'Lux':
+          case 'Super-Lux':
+          case 'High-Lux': return { text: 'تشطيب', cls: 'done' }
+          default: return null
+        }
+      }
+
       filtered.forEach(prop => {
         const [lon, lat] = propToLonLat(prop.x, prop.y)
+        const typeIcon = getTypeIcon(prop.propertyType)
+        const finishing = getFinishingInfo(prop.finishingStatus)
 
         const el = document.createElement('div')
         el.className = `mapgl-pin mapgl-pin--${prop.status}`
-        el.innerHTML = `<div class="mapgl-pin__head"></div><div class="mapgl-pin__stem"></div>`
+        el.innerHTML = `
+          <div class="mapgl-pin__head">
+            <span class="mapgl-pin__icon">${typeIcon}</span>
+            ${finishing ? `<span class="mapgl-pin__badge mapgl-pin__badge--${finishing.cls}">${finishing.text}</span>` : ''}
+          </div>
+          <div class="mapgl-pin__stem"></div>
+        `
 
         const marker = new Marker({ element: el, anchor: 'bottom' })
           .setLngLat([lon, lat])
