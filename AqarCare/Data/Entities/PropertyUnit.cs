@@ -6,6 +6,7 @@ public class PropertyUnit
     public string? Title { get; set; }
     public string? Description { get; set; }
     public decimal? Price { get; set; }
+    public decimal? InstallmentPrice { get; set; } // Price in case of installment
     public decimal? SoldPrice { get; set; } // Actual sale price when sold
     public decimal? AreaSqm { get; set; }
     public int? Bedrooms { get; set; }
@@ -30,12 +31,13 @@ public class PropertyUnit
     public bool HasWater { get; set; }
     public bool HasSewerage { get; set; }
     public bool HasGas { get; set; }
-    public string? City { get; set; }
+    public string? City { get; set; } = "المحلة الكبرى";
     public string? District { get; set; }
     public string? Address { get; set; }
     public string? DetailedAddress { get; set; }
     public string Status { get; set; } = "Available"; // Available, Sold, Unavailable, Reserved, Rented
     public bool IsFeatured { get; set; }
+    public bool IsUnderConstruction { get; set; } // Under Construction flag
     public bool IsPublished { get; set; }
 
     // Utility meters — whether each meter is available (not the meter number)
@@ -47,5 +49,6 @@ public class PropertyUnit
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
 
     public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
+    public ICollection<PropertyFloor> Floors { get; set; } = new List<PropertyFloor>();
     public PropertyMapLocation? MapLocation { get; set; }
 }

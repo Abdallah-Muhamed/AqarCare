@@ -17,11 +17,31 @@ public class PropertyUnitConfiguration : IEntityTypeConfiguration<PropertyUnit>
         builder.Property(x => x.Address).HasMaxLength(300);
         builder.Property(x => x.Status).HasMaxLength(20).IsRequired();
         builder.Property(x => x.Price).HasPrecision(18, 2);
+        builder.Property(x => x.InstallmentPrice).HasPrecision(18, 2);
         builder.Property(x => x.SoldPrice).HasPrecision(18, 2);
         builder.Property(x => x.AreaSqm).HasPrecision(18, 2);
+        builder.Property(x => x.IsUnderConstruction).HasDefaultValue(false);
         builder.HasIndex(x => x.IsPublished);
         builder.HasIndex(x => x.City);
         builder.HasIndex(x => x.PropertyType);
+        builder.HasIndex(x => x.IsUnderConstruction);
+    }
+}
+
+public class PropertyFloorConfiguration : IEntityTypeConfiguration<PropertyFloor>
+{
+    public void Configure(EntityTypeBuilder<PropertyFloor> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.FloorName).HasMaxLength(100);
+        builder.Property(x => x.Price).HasPrecision(18, 2);
+        builder.Property(x => x.InstallmentPrice).HasPrecision(18, 2);
+        builder.Property(x => x.AreaSqm).HasPrecision(18, 2);
+        builder.HasIndex(x => x.PropertyUnitId);
+        builder.HasOne(x => x.PropertyUnit)
+            .WithMany(x => x.Floors)
+            .HasForeignKey(x => x.PropertyUnitId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }
 

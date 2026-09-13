@@ -221,6 +221,67 @@
   .detail-mobile-cta__amount { font-size: 1.1rem; font-weight: 900; color: var(--clr-text); }
   .detail-mobile-cta__amount span { font-size: 0.72rem; color: var(--clr-gold); font-weight: 600; margin-inline-start: 3px; }
   .detail-mobile-cta__btns { display: flex; gap: var(--space-sm); }
+  .detail-mobile-cta__btns .btn { padding: 0 0.85rem; font-size: 0.82rem; }
   /* Add bottom padding to page content so it doesn't hide behind the bar */
   .detail-page { padding-bottom: 80px; }
+}
+
+/* Floors section on Property Detail */
+.detail-floors-card {
+  margin-top: var(--space-xl);
+  padding: var(--space-lg);
+  background: var(--clr-bg3);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-md);
+}
+
+.detail-floors-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--clr-card-text);
+  margin-bottom: var(--space-md);
+}
+
+.detail-floors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: var(--space-md);
+}
+
+.floor-spec-card {
+  background: var(--clr-card-bg);
+  border: 1px solid var(--clr-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  transition: var(--transition);
+}
+
+.floor-spec-card:hover {
+  border-color: var(--clr-gold);
+  transform: translateY(-2px);
+}
+
+.floor-spec-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+}
+
+.floor-spec-card__price {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: var(--clr-gold);
+}
+
+.floor-spec-card__sub {
+  font-size: 0.8rem;
+  color: var(--clr-text-muted);
 }

@@ -59,7 +59,9 @@ public class MapService
                 x.PropertyUnit.ElectricityMeterAvailable,
                 x.PropertyUnit.GasMeterAvailable,
                 x.PropertyUnit.ElevatorAvailable,
-                x.PropertyUnit.InstallmentAvailable))
+                x.PropertyUnit.InstallmentAvailable,
+                x.PropertyUnit.InstallmentPrice,
+                x.PropertyUnit.IsUnderConstruction))
             .ToListAsync(ct);
 
         return new CityMapDto(

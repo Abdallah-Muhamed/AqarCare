@@ -40,6 +40,11 @@ export default function PropertyCard({ property: p }: Props) {
         {p.isFeatured && (
           <div className="prop-card__featured"><Star size={12} fill="currentColor" />مميز</div>
         )}
+        {p.isUnderConstruction && (
+          <div className="prop-card__featured" style={{ right: p.isFeatured ? '74px' : '12px', background: '#fffbeb', color: '#b45309' }}>
+            🏗️ تحت الإنشاء
+          </div>
+        )}
         {p.listingType && (
           <div className={`prop-card__listing badge ${p.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
             {listingLabel[p.listingType] ?? p.listingType}
@@ -66,9 +71,38 @@ export default function PropertyCard({ property: p }: Props) {
 
         {/* Price */}
         <div className="prop-card__price">
-          {p.price != null
-            ? <>{p.price.toLocaleString('ar-EG')} <span>جنيه</span></>
-            : <span>السعر غير محدد</span>}
+          {(() => {
+            const floorPrices = p.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
+            if (floorPrices.length > 0) {
+              const minPrice = Math.min(...floorPrices);
+              return (
+                <div>
+                  <div>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--clr-text-muted)' }}>يبدأ من </span>
+                    {minPrice.toLocaleString('ar-EG')} <span>جنيه</span>
+                  </div>
+                  <small style={{ display: 'block', fontSize: '0.7rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
+                    🏢 {p.floors!.length} أدوار بأسعار مختلفة
+                  </small>
+                </div>
+              );
+            }
+
+            return (
+              <div>
+                {p.price != null ? (
+                  <>{p.price.toLocaleString('ar-EG')} <span>جنيه</span></>
+                ) : (
+                  <span>السعر غير محدد</span>
+                )}
+                {p.installmentPrice != null && (
+                  <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
+                    💳 تقسيط: {p.installmentPrice.toLocaleString('ar-EG')} ج
+                  </small>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </div>
     </Link>

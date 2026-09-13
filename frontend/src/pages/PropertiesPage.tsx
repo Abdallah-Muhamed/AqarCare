@@ -7,7 +7,7 @@ import PropertyCard from '../components/PropertyCard'
 import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
 
-const CITIES        = ['القاهرة', 'الجيزة', 'الإسكندرية', 'الشروق', 'مدينة نصر', 'التجمع الخامس', 'أكتوبر']
+const CITIES        = ['المحلة الكبرى', 'القاهرة', 'الجيزة', 'الإسكندرية', 'الشروق', 'مدينة نصر', 'التجمع الخامس', 'أكتوبر']
 const PROP_TYPES    = ['Apartment', 'House', 'Land', 'Shop']
 const PROP_LABELS: Record<string, string> = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
 const LISTING_TYPES = [{ val: 'Sale', label: 'للبيع' }, { val: 'Rent', label: 'للإيجار' }]

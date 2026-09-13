@@ -106,6 +106,7 @@ export default function PropertyDetailPage() {
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
                   <span className={`badge ${st.cls}`}>{st.label}</span>
+                  {prop.isUnderConstruction && <span className="badge badge-amber">🏗️ تحت الإنشاء</span>}
                   {prop.listingType && (
                     <span className={`badge ${prop.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
                       {listingLabel[prop.listingType] ?? prop.listingType}
@@ -136,7 +137,47 @@ export default function PropertyDetailPage() {
                 <div className="detail-spec"><Zap size={18} /><div><strong>{prop.electricityMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد كهرباء</small></div></div>
                 <div className="detail-spec"><Flame size={18} /><div><strong>{prop.gasMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد غاز</small></div></div>
                 <div className="detail-spec"><CheckCircle2 size={18} /><div><strong>{prop.installmentAvailable ? 'متاح' : 'غير متاح'}</strong><small>تقسيط</small></div></div>
+                {prop.installmentPrice != null && (
+                  <div className="detail-spec"><span>💳</span><div><strong>{prop.installmentPrice.toLocaleString('ar-EG')} ج</strong><small>سعر التقسيط</small></div></div>
+                )}
               </div>
+
+              {/* Multiple Floors Section */}
+              {prop.floors && prop.floors.length > 0 && (
+                <div className="detail-floors-card">
+                  <div className="detail-floors-title">
+                    <Building2 size={20} />
+                    <span>الأدوار المتاحة والأسعار ({prop.floors.length} أدوار)</span>
+                  </div>
+                  <div className="detail-floors-grid">
+                    {prop.floors.map((floor, idx) => (
+                      <div key={idx} className="floor-spec-card">
+                        <div className="floor-spec-card__header">
+                          <span>{floor.floorName || `الدور ${floor.floorNumber ?? idx + 1}`}</span>
+                          <span className={`badge ${floor.isAvailable ? 'badge-green' : 'badge'}`} style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem' }}>
+                            {floor.isAvailable ? 'متاح' : 'مباع'}
+                          </span>
+                        </div>
+                        <div className="floor-spec-card__price">
+                          {floor.price != null
+                            ? <>{floor.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه كاش</span></>
+                            : 'السعر عند الطلب'}
+                        </div>
+                        {floor.installmentPrice != null && (
+                          <div className="floor-spec-card__sub" style={{ color: 'var(--clr-gold)', fontWeight: 700 }}>
+                            💳 تقسيط: {floor.installmentPrice.toLocaleString('ar-EG')} جنيه
+                          </div>
+                        )}
+                        {floor.areaSqm != null && (
+                          <div className="floor-spec-card__sub">
+                            📐 المساحة: {floor.areaSqm} م²
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {prop.description && (
                 <div className="detail-description">
@@ -162,12 +203,25 @@ export default function PropertyDetailPage() {
           <div className="detail-sidebar">
             <div className="price-card">
               <div className="price-card__glow" />
-              <p className="price-card__label">سعر الوحدة</p>
-              <div className="price-card__amount">
-                {prop.price != null
-                  ? <>{prop.price.toLocaleString('ar-EG')}<span>جنيه</span></>
-                  : <span>غير محدد</span>}
-              </div>
+              {(() => {
+                const floorPrices = prop.floors?.filter(f => f.isAvailable && f.price != null).map(f => f.price as number) ?? [];
+                const displayPrice = floorPrices.length > 0 ? Math.min(...floorPrices) : prop.price;
+                return (
+                  <>
+                    <p className="price-card__label">{floorPrices.length > 0 ? 'يبدأ من' : 'سعر الوحدة'}</p>
+                    <div className="price-card__amount">
+                      {displayPrice != null
+                        ? <>{displayPrice.toLocaleString('ar-EG')}<span>جنيه</span></>
+                        : <span>غير محدد</span>}
+                    </div>
+                    {prop.installmentPrice != null && (
+                      <div style={{ marginTop: '0.5rem', padding: '0.45rem 0.75rem', background: 'rgba(183,121,61,0.12)', border: '1px solid rgba(183,121,61,0.25)', borderRadius: '10px', fontSize: '0.85rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
+                        💳 تقسيط: {prop.installmentPrice.toLocaleString('ar-EG')} جنيه
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {prop.price != null && prop.areaSqm != null && prop.areaSqm > 0 && (
                 <div className="price-card__per-m">
                   {(prop.price / prop.areaSqm).toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه / م²

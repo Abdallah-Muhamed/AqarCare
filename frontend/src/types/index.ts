@@ -6,10 +6,22 @@ export interface PropertyMedia {
   sortOrder: number
 }
 
+export interface PropertyFloor {
+  id?: number
+  floorNumber?: number | null
+  floorName?: string | null
+  price?: number | null
+  installmentPrice?: number | null
+  areaSqm?: number | null
+  isAvailable: boolean
+  sortOrder: number
+}
+
 export interface PropertyListItem {
   id: number
   title: string | null
   price: number | null
+  installmentPrice?: number | null
   areaSqm: number | null
   bedrooms: number | null
   bathrooms: number | null
@@ -22,11 +34,13 @@ export interface PropertyListItem {
   detailedAddress: string | null
   status: string
   isFeatured: boolean
+  isUnderConstruction?: boolean
   primaryImageUrl: string | null
   waterMeterAvailable: boolean
   electricityMeterAvailable: boolean
   gasMeterAvailable: boolean
   elevatorAvailable: boolean
+  floors?: PropertyFloor[]
 }
 
 export interface PropertyDetail extends PropertyListItem {
@@ -35,11 +49,14 @@ export interface PropertyDetail extends PropertyListItem {
   soldPrice?: number | null
   finishingPackageId?: number | null
   installmentAvailable: boolean
+  installmentPrice?: number | null
   floorNumber?: number | null
+  isUnderConstruction?: boolean
   isPublished: boolean
   createdAt: string
   updatedAt: string
   media: PropertyMedia[]
+  floors?: PropertyFloor[]
 }
 
 export interface PagedResult<T> {
@@ -154,6 +171,8 @@ export interface MapProperty {
   gasMeterAvailable?: boolean
   elevatorAvailable?: boolean
   installmentAvailable?: boolean
+  installmentPrice?: number | null
+  isUnderConstruction?: boolean
 }
 
 export interface CityMap {

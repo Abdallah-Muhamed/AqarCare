@@ -2,12 +2,14 @@ import { useState, useEffect } from 'react';
 import './AdminPanelPage.css';
 import { API_BASE_URL } from '../constants/api';
 import MapPickerModal from '../components/admin/MapPickerModal';
+import type { PropertyFloor } from '../types';
 
 interface Property {
   id: number;
   title: string | null;
   description: string | null;
   price: number | null;
+  installmentPrice?: number | null;
   soldPrice?: number | null;
   areaSqm: number | null;
   bedrooms: number | null;
@@ -23,6 +25,7 @@ interface Property {
   address: string | null;
   status: string;
   isFeatured: boolean;
+  isUnderConstruction?: boolean;
   isPublished: boolean;
   waterMeterAvailable?: boolean;
   electricityMeterAvailable?: boolean;
@@ -30,6 +33,7 @@ interface Property {
   elevatorAvailable?: boolean;
   // The admin list endpoint returns a single primary image URL, not a media array.
   primaryImageUrl?: string | null;
+  floors?: PropertyFloor[];
 }
 
 interface FinishingPackage {
@@ -76,6 +80,7 @@ export default function AdminPanelPage() {
     title: '',
     description: '',
     price: '',
+    installmentPrice: '',
     soldPrice: '',
     areaSqm: '',
     floorNumber: '',
@@ -86,17 +91,20 @@ export default function AdminPanelPage() {
     finishingStatus: 'Core-Shell',
     finishingPackageId: '',
     installmentAvailable: false,
-    city: '',
+    city: 'المحلة الكبرى',
     district: '',
     address: '',
     status: 'Available',
     isFeatured: false,
+    isUnderConstruction: false,
     isPublished: true,
     waterMeterAvailable: false,
     electricityMeterAvailable: false,
     gasMeterAvailable: false,
     elevatorAvailable: false,
   });
+
+  const [floors, setFloors] = useState<PropertyFloor[]>([]);
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -211,6 +219,31 @@ export default function AdminPanelPage() {
     }
   };
 
+  // ── floor helpers ─────────────────────────────────────────────────────────────
+
+  const addFloor = () => {
+    setFloors(prev => [
+      ...prev,
+      {
+        floorNumber: prev.length + 1,
+        floorName: `الدور ${prev.length + 1}`,
+        price: null,
+        installmentPrice: null,
+        areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
+        isAvailable: true,
+        sortOrder: prev.length,
+      }
+    ]);
+  };
+
+  const updateFloor = (index: number, patch: Partial<PropertyFloor>) => {
+    setFloors(prev => prev.map((f, i) => i === index ? { ...f, ...patch } : f));
+  };
+
+  const removeFloor = (index: number) => {
+    setFloors(prev => prev.filter((_, i) => i !== index));
+  };
+
   // ── form handlers ─────────────────────────────────────────────────────────────
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -229,6 +262,7 @@ export default function AdminPanelPage() {
         body: JSON.stringify({
           ...formData,
           price: formData.price ? parseFloat(formData.price) : null,
+          installmentPrice: formData.installmentPrice ? parseFloat(formData.installmentPrice) : null,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
           areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
           floorNumber: formData.floorNumber ? parseInt(formData.floorNumber) : null,
@@ -236,6 +270,17 @@ export default function AdminPanelPage() {
           bathrooms: formData.bathrooms ? parseInt(formData.bathrooms) : null,
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
+          isUnderConstruction: formData.isUnderConstruction,
+          floors: floors.map((f, i) => ({
+            id: f.id,
+            floorNumber: f.floorNumber,
+            floorName: f.floorName,
+            price: f.price,
+            installmentPrice: f.installmentPrice,
+            areaSqm: f.areaSqm,
+            isAvailable: f.isAvailable,
+            sortOrder: i,
+          })),
         }),
       });
 
@@ -282,6 +327,7 @@ export default function AdminPanelPage() {
       title: property.title ?? '',
       description: property.description ?? '',
       price: property.price?.toString() ?? '',
+      installmentPrice: property.installmentPrice?.toString() ?? '',
       soldPrice: property.soldPrice?.toString() ?? '',
       areaSqm: property.areaSqm?.toString() ?? '',
       floorNumber: property.floorNumber?.toString() ?? '',
@@ -292,17 +338,31 @@ export default function AdminPanelPage() {
       finishingStatus: property.finishingStatus ?? 'Core-Shell',
       finishingPackageId: property.finishingPackageId?.toString() || '',
       installmentAvailable: property.installmentAvailable,
-      city: property.city ?? '',
+      city: property.city ?? 'المحلة الكبرى',
       district: property.district ?? '',
       address: property.address ?? '',
       status: property.status ?? 'Available',
       isFeatured: property.isFeatured,
+      isUnderConstruction: property.isUnderConstruction ?? false,
       isPublished: property.isPublished,
       waterMeterAvailable: property.waterMeterAvailable ?? false,
       electricityMeterAvailable: property.electricityMeterAvailable ?? false,
       gasMeterAvailable: property.gasMeterAvailable ?? false,
       elevatorAvailable: property.elevatorAvailable ?? false,
     });
+
+    if (property.floors && property.floors.length > 0) {
+      setFloors(property.floors);
+    } else {
+      fetch(`${API_BASE_URL}/api/properties/${property.id}`)
+        .then(r => r.json())
+        .then(d => {
+          if (d.floors && d.floors.length > 0) setFloors(d.floors);
+          else setFloors([]);
+        })
+        .catch(() => setFloors([]));
+    }
+
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -312,6 +372,7 @@ export default function AdminPanelPage() {
       title: '',
       description: '',
       price: '',
+      installmentPrice: '',
       soldPrice: '',
       areaSqm: '',
       floorNumber: '',
@@ -322,17 +383,19 @@ export default function AdminPanelPage() {
       finishingStatus: 'Core-Shell',
       finishingPackageId: '',
       installmentAvailable: false,
-      city: '',
+      city: 'المحلة الكبرى',
       district: '',
       address: '',
       status: 'Available',
       isFeatured: false,
+      isUnderConstruction: false,
       isPublished: true,
       waterMeterAvailable: false,
       electricityMeterAvailable: false,
       gasMeterAvailable: false,
       elevatorAvailable: false,
     });
+    setFloors([]);
   };
 
   const handleLogout = () => {
@@ -525,7 +588,6 @@ export default function AdminPanelPage() {
                         <option value="Available">متاح</option>
                         <option value="Sold">مباع</option>
                         <option value="Rented">مؤجر</option>
-                        <option value="Reserved">محجوز</option>
                       </select>
                     </div>
                   </div>
@@ -536,11 +598,21 @@ export default function AdminPanelPage() {
                   <h3 className="form-section__title">💰 التسعير والمساحة</h3>
                   <div className="form-grid">
                     <div className="form-group">
-                      <label>السعر (جنيه)</label>
+                      <label>السعر (كاش - جنيه)</label>
                       <input
                         type="number"
                         value={formData.price}
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        placeholder="0"
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label>السعر في حالة التقسيط (جنيه)</label>
+                      <input
+                        type="number"
+                        value={formData.installmentPrice}
+                        onChange={(e) => setFormData({ ...formData, installmentPrice: e.target.value })}
                         placeholder="0"
                       />
                     </div>
@@ -597,6 +669,110 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
+                {/* Section: Floors & Pricing */}
+                <div className="form-section">
+                  <div className="form-section__header-row">
+                    <div>
+                      <h3 className="form-section__title">🏢 الأدوار المتاحة والأسعار</h3>
+                      <p className="form-section__sub">
+                        يمكنك إضافة عدة أدوار إذا كان العقار يضم أدواراً مختلفة بأسعار كاش وتقسيط متنوعة
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-add-floor"
+                      onClick={addFloor}
+                    >
+                      <span>＋</span> إضافة دور
+                    </button>
+                  </div>
+
+                  {floors.length === 0 ? (
+                    <div className="no-floors-box">
+                      <span>🏢</span>
+                      <p>لم يتم تحديد أدوار متعددة. اضغط على "إضافة دور" لتسعير كل دور على حدة في حال كان العقار يضم أكثر من دور متاح.</p>
+                    </div>
+                  ) : (
+                    <div className="floors-table-container">
+                      <table className="floors-table">
+                        <thead>
+                          <tr>
+                            <th>الدور / الاسم</th>
+                            <th>سعر الكاش (جنيه)</th>
+                            <th>سعر التقسيط (جنيه)</th>
+                            <th>المساحة (م²)</th>
+                            <th>متاح؟</th>
+                            <th>حذف</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {floors.map((floor, index) => (
+                            <tr key={index}>
+                              <td>
+                                <input
+                                  type="text"
+                                  value={floor.floorName ?? ''}
+                                  placeholder={`الدور ${index + 1}`}
+                                  onChange={(e) => updateFloor(index, {
+                                    floorName: e.target.value,
+                                    floorNumber: parseInt(e.target.value.replace(/\D/g, '')) || (index + 1)
+                                  })}
+                                  className="floor-input"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={floor.price ?? ''}
+                                  placeholder="0"
+                                  onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
+                                  className="floor-input"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={floor.installmentPrice ?? ''}
+                                  placeholder="0"
+                                  onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                  className="floor-input"
+                                />
+                              </td>
+                              <td>
+                                <input
+                                  type="number"
+                                  value={floor.areaSqm ?? ''}
+                                  placeholder="0"
+                                  onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
+                                  className="floor-input"
+                                />
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={floor.isAvailable}
+                                  onChange={(e) => updateFloor(index, { isAvailable: e.target.checked })}
+                                  style={{ width: 18, height: 18, accentColor: 'var(--clr-gold)' }}
+                                />
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => removeFloor(index)}
+                                  className="btn-delete-floor"
+                                  title="حذف الدور"
+                                >
+                                  ✕
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
                 {/* Section: Location */}
                 <div className="form-section">
                   <h3 className="form-section__title">📍 الموقع</h3>
@@ -607,7 +783,7 @@ export default function AdminPanelPage() {
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="مثال: القاهرة"
+                        placeholder="مثال: المحلة الكبرى"
                       />
                     </div>
 
@@ -731,6 +907,15 @@ export default function AdminPanelPage() {
                     <label className="checkbox-card">
                       <input
                         type="checkbox"
+                        checked={formData.isUnderConstruction}
+                        onChange={(e) => setFormData({ ...formData, isUnderConstruction: e.target.checked })}
+                      />
+                      <span className="checkbox-card__icon">🏗️</span>
+                      <span>تحت الإنشاء</span>
+                    </label>
+                    <label className="checkbox-card">
+                      <input
+                        type="checkbox"
                         checked={formData.isFeatured}
                         onChange={(e) => setFormData({ ...formData, isFeatured: e.target.checked })}
                       />
@@ -807,6 +992,9 @@ export default function AdminPanelPage() {
                             </span>
                           )}
                           {property.isFeatured && <span className="admin-badge admin-badge--featured">⭐ مميز</span>}
+                          {property.isUnderConstruction && (
+                            <span className="admin-badge admin-badge--underconstruction">🏗️ تحت الإنشاء</span>
+                          )}
                         </div>
                       </div>
                       <div className="property-info">
@@ -815,6 +1003,11 @@ export default function AdminPanelPage() {
                           {property.price != null
                             ? `${property.price.toLocaleString('ar-EG')} جنيه`
                             : 'السعر غير محدد'}
+                          {property.installmentPrice != null && (
+                            <span style={{ fontSize: '0.82rem', color: 'var(--clr-gold)', display: 'block', marginTop: '0.15rem' }}>
+                              💳 تقسيط: {property.installmentPrice.toLocaleString('ar-EG')} جنيه
+                            </span>
+                          )}
                         </p>
                         <p className="location">
                           📍 {[property.city, property.district].filter(Boolean).join('، ') || 'غير محدد'}
@@ -849,8 +1042,13 @@ export default function AdminPanelPage() {
                           <span className={`admin-badge admin-badge--status-${property.status.toLowerCase()}`}>
                             {property.status === 'Available' ? 'متاح' :
                              property.status === 'Sold' ? 'مباع' :
-                             property.status === 'Rented' ? 'مؤجر' : 'محجوز'}
+                             property.status === 'Rented' ? 'مؤجر' : property.status}
                           </span>
+                          {property.floors && property.floors.length > 0 && (
+                            <span className="admin-badge admin-badge--floors">
+                              🏢 {property.floors.length} أدوار
+                            </span>
+                          )}
                         </div>
 
                         <div className="property-actions">

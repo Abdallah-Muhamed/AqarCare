@@ -22,6 +22,7 @@ public class PropertyService
         IQueryable<PropertyUnit> q = _db.PropertyUnits
             .AsNoTracking()
             .Include(x => x.Media)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
             .Where(x => x.IsPublished);
 
         if (!string.IsNullOrWhiteSpace(query.City))
@@ -61,6 +62,7 @@ public class PropertyService
             .AsNoTracking()
             .Include(x => x.Media.OrderBy(m => m.SortOrder))
             .Include(x => x.FinishingPackage)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
             .FirstOrDefaultAsync(x => x.Id == id && x.IsPublished, ct);
 
         return entity is null ? null : ToDetail(entity);
@@ -71,7 +73,10 @@ public class PropertyService
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize is < 1 or > 100 ? 12 : query.PageSize;
 
-        IQueryable<PropertyUnit> q = _db.PropertyUnits.AsNoTracking().Include(x => x.Media);
+        IQueryable<PropertyUnit> q = _db.PropertyUnits
+            .AsNoTracking()
+            .Include(x => x.Media)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder));
 
         if (!string.IsNullOrWhiteSpace(query.City))
             q = q.Where(x => x.City == query.City);
@@ -110,6 +115,7 @@ public class PropertyService
             .AsNoTracking()
             .Include(x => x.Media.OrderBy(m => m.SortOrder))
             .Include(x => x.FinishingPackage)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
             .FirstOrDefaultAsync(x => x.Id == id, ct);
 
         return entity is null ? null : ToDetail(entity);
@@ -122,6 +128,7 @@ public class PropertyService
             Title = request.Title,
             Description = request.Description,
             Price = request.Price,
+            InstallmentPrice = request.InstallmentPrice,
             AreaSqm = request.AreaSqm,
             Bedrooms = request.Bedrooms,
             Bathrooms = request.Bathrooms,
@@ -131,12 +138,13 @@ public class PropertyService
             FinishingPackageId = request.FinishingPackageId,
             InstallmentAvailable = request.InstallmentAvailable,
             FloorNumber = request.FloorNumber,
-            City = request.City,
+            City = string.IsNullOrWhiteSpace(request.City) ? "المحلة الكبرى" : request.City,
             District = request.District,
             Address = request.Address,
             DetailedAddress = request.DetailedAddress,
             Status = string.IsNullOrWhiteSpace(request.Status) ? "Available" : request.Status,
             IsFeatured = request.IsFeatured,
+            IsUnderConstruction = request.IsUnderConstruction,
             IsPublished = request.IsPublished,
             WaterMeterAvailable = request.WaterMeterAvailable,
             ElectricityMeterAvailable = request.ElectricityMeterAvailable,
@@ -155,6 +163,24 @@ public class PropertyService
             UpdatedAt = DateTime.UtcNow
         };
 
+        if (request.Floors != null && request.Floors.Count > 0)
+        {
+            var sort = 0;
+            foreach (var f in request.Floors)
+            {
+                entity.Floors.Add(new PropertyFloor
+                {
+                    FloorNumber = f.FloorNumber,
+                    FloorName = f.FloorName,
+                    Price = f.Price,
+                    InstallmentPrice = f.InstallmentPrice,
+                    AreaSqm = f.AreaSqm,
+                    IsAvailable = f.IsAvailable,
+                    SortOrder = f.SortOrder != 0 ? f.SortOrder : sort++
+                });
+            }
+        }
+
         _db.PropertyUnits.Add(entity);
         await _db.SaveChangesAsync(ct);
 
@@ -163,6 +189,7 @@ public class PropertyService
             .AsNoTracking()
             .Include(x => x.Media.OrderBy(m => m.SortOrder))
             .Include(x => x.FinishingPackage)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
             .FirstAsync(x => x.Id == entity.Id, ct);
         return ToDetail(created);
     }
@@ -170,6 +197,7 @@ public class PropertyService
     public async Task<PropertyDetailDto?> UpdateAsync(int id, UpdatePropertyRequest request, CancellationToken ct = default)
     {
         var entity = await _db.PropertyUnits
+            .Include(x => x.Floors)
             .FirstOrDefaultAsync(x => x.Id == id, ct);
 
         if (entity is null) return null;
@@ -177,6 +205,7 @@ public class PropertyService
         entity.Title = request.Title;
         entity.Description = request.Description;
         entity.Price = request.Price;
+        entity.InstallmentPrice = request.InstallmentPrice;
         entity.SoldPrice = request.SoldPrice;
         entity.AreaSqm = request.AreaSqm;
         entity.Bedrooms = request.Bedrooms;
@@ -187,12 +216,13 @@ public class PropertyService
         entity.FinishingPackageId = request.FinishingPackageId;
         entity.InstallmentAvailable = request.InstallmentAvailable;
         entity.FloorNumber = request.FloorNumber;
-        entity.City = request.City;
+        entity.City = string.IsNullOrWhiteSpace(request.City) ? "المحلة الكبرى" : request.City;
         entity.District = request.District;
         entity.Address = request.Address;
         entity.DetailedAddress = request.DetailedAddress;
         entity.Status = string.IsNullOrWhiteSpace(request.Status) ? "Available" : request.Status;
         entity.IsFeatured = request.IsFeatured;
+        entity.IsUnderConstruction = request.IsUnderConstruction;
         entity.IsPublished = request.IsPublished;
         entity.WaterMeterAvailable = request.WaterMeterAvailable;
         entity.ElectricityMeterAvailable = request.ElectricityMeterAvailable;
@@ -209,6 +239,53 @@ public class PropertyService
         entity.HasGas = request.HasGas;
         entity.UpdatedAt = DateTime.UtcNow;
 
+        if (request.Floors != null)
+        {
+            var inputFloorIds = request.Floors
+                .Where(f => f.Id.HasValue && f.Id.Value > 0)
+                .Select(f => f.Id!.Value)
+                .ToHashSet();
+
+            var toRemove = entity.Floors.Where(f => !inputFloorIds.Contains(f.Id)).ToList();
+            foreach (var r in toRemove)
+            {
+                _db.PropertyFloors.Remove(r);
+            }
+
+            var sort = 0;
+            foreach (var inputFloor in request.Floors)
+            {
+                if (inputFloor.Id.HasValue && inputFloor.Id.Value > 0)
+                {
+                    var existingFloor = entity.Floors.FirstOrDefault(f => f.Id == inputFloor.Id.Value);
+                    if (existingFloor != null)
+                    {
+                        existingFloor.FloorNumber = inputFloor.FloorNumber;
+                        existingFloor.FloorName = inputFloor.FloorName;
+                        existingFloor.Price = inputFloor.Price;
+                        existingFloor.InstallmentPrice = inputFloor.InstallmentPrice;
+                        existingFloor.AreaSqm = inputFloor.AreaSqm;
+                        existingFloor.IsAvailable = inputFloor.IsAvailable;
+                        existingFloor.SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++;
+                    }
+                }
+                else
+                {
+                    entity.Floors.Add(new PropertyFloor
+                    {
+                        PropertyUnitId = entity.Id,
+                        FloorNumber = inputFloor.FloorNumber,
+                        FloorName = inputFloor.FloorName,
+                        Price = inputFloor.Price,
+                        InstallmentPrice = inputFloor.InstallmentPrice,
+                        AreaSqm = inputFloor.AreaSqm,
+                        IsAvailable = inputFloor.IsAvailable,
+                        SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++
+                    });
+                }
+            }
+        }
+
         await _db.SaveChangesAsync(ct);
 
         // Reload with all navigations so the response is complete
@@ -216,6 +293,7 @@ public class PropertyService
             .AsNoTracking()
             .Include(x => x.Media.OrderBy(m => m.SortOrder))
             .Include(x => x.FinishingPackage)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
             .FirstAsync(x => x.Id == id, ct);
         return ToDetail(updated);
     }
@@ -293,7 +371,12 @@ public class PropertyService
             x.HasElectricity,
             x.HasWater,
             x.HasSewerage,
-            x.HasGas);
+            x.HasGas,
+            x.InstallmentPrice,
+            x.IsUnderConstruction,
+            x.Floors?.OrderBy(f => f.SortOrder)
+                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .ToList());
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(
@@ -337,5 +420,11 @@ public class PropertyService
             x.Media
                 .OrderBy(m => m.SortOrder)
                 .Select(m => new PropertyMediaDto(m.Id, m.MediaType, m.Url, m.SortOrder))
-                .ToList());
+                .ToList(),
+            x.InstallmentPrice,
+            x.IsUnderConstruction,
+            x.Floors?
+                .OrderBy(f => f.SortOrder)
+                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .ToList() ?? new List<PropertyFloorDto>());
 }

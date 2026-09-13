@@ -6,6 +6,26 @@ public record PagedResult<T>(IReadOnlyList<T> Items, int TotalCount, int Page, i
 
 public record PropertyMediaDto(int Id, string MediaType, string Url, int SortOrder);
 
+public record PropertyFloorDto(
+    int Id,
+    int? FloorNumber,
+    string? FloorName,
+    decimal? Price,
+    decimal? InstallmentPrice,
+    decimal? AreaSqm,
+    bool IsAvailable,
+    int SortOrder);
+
+public record PropertyFloorInput(
+    int? Id,
+    int? FloorNumber,
+    string? FloorName,
+    decimal? Price,
+    decimal? InstallmentPrice,
+    decimal? AreaSqm,
+    bool IsAvailable = true,
+    int SortOrder = 0);
+
 public record PropertyListItemDto(
     int Id,
     string? Title,
@@ -40,7 +60,10 @@ public record PropertyListItemDto(
     bool HasElectricity,
     bool HasWater,
     bool HasSewerage,
-    bool HasGas);
+    bool HasGas,
+    decimal? InstallmentPrice = null,
+    bool IsUnderConstruction = false,
+    IReadOnlyList<PropertyFloorDto>? Floors = null);
 
 public record PropertyDetailDto(
     int Id,
@@ -82,7 +105,10 @@ public record PropertyDetailDto(
     bool HasWater,
     bool HasSewerage,
     bool HasGas,
-    IReadOnlyList<PropertyMediaDto> Media);
+    IReadOnlyList<PropertyMediaDto> Media,
+    decimal? InstallmentPrice = null,
+    bool IsUnderConstruction = false,
+    IReadOnlyList<PropertyFloorDto>? Floors = null);
 
 public record CreatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -119,7 +145,10 @@ public record CreatePropertyRequest(
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
     bool GasMeterAvailable = false,
-    bool ElevatorAvailable = false);
+    bool ElevatorAvailable = false,
+    decimal? InstallmentPrice = null,
+    bool IsUnderConstruction = false,
+    IReadOnlyList<PropertyFloorInput>? Floors = null);
 
 public record UpdatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -157,7 +186,10 @@ public record UpdatePropertyRequest(
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
     bool GasMeterAvailable = false,
-    bool ElevatorAvailable = false);
+    bool ElevatorAvailable = false,
+    decimal? InstallmentPrice = null,
+    bool IsUnderConstruction = false,
+    IReadOnlyList<PropertyFloorInput>? Floors = null);
 
 public record AddPropertyMediaRequest(
     string MediaType,
@@ -217,7 +249,9 @@ public record MapPropertyDto(
     bool ElectricityMeterAvailable = false,
     bool GasMeterAvailable = false,
     bool ElevatorAvailable = false,
-    bool InstallmentAvailable = false);
+    bool InstallmentAvailable = false,
+    decimal? InstallmentPrice = null,
+    bool IsUnderConstruction = false);
 
 public record CityMapDto(
     int Id,
