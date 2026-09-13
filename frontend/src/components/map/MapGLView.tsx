@@ -5,6 +5,7 @@ import {
   ScaleControl,
   Marker,
   Popup,
+  LngLatBounds,
 } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import type { CityMap, MapProperty, MapFilters } from '../../types'
@@ -84,6 +85,7 @@ export default function MapGLView({ data, filters }: Props) {
   const mapRef       = useRef<Map | null>(null)
   const markersRef   = useRef<Marker[]>([])
   const popupRef     = useRef<Popup | null>(null)
+  const isInitialFit = useRef(true)
 
   // ── Popup HTML (Full Property Details Card) ───────────────────────
   const buildPopupHTML = useCallback((p: MapProperty): string => {
@@ -147,22 +149,34 @@ export default function MapGLView({ data, filters }: Props) {
     const container = containerRef.current
     if (!container || mapRef.current) return
 
+    const hasProps = data.properties && data.properties.length > 0
+    const initialCenter: [number, number] = hasProps
+      ? propToLonLat(data.properties[0].x, data.properties[0].y)
+      : [31.1487, 30.9449]
+
     const map = new Map({
       container,
       style:   MAP_STYLE,
-      center:  [31.1487, 30.9449],
-      zoom:    15.5,
-      pitch:   50,
-      bearing: -15,
+      center:  initialCenter,
+      zoom:    hasProps ? 16.5 : 15.5,
+      pitch:   hasProps ? 35 : 50,
+      bearing: hasProps ? -10 : -15,
       maxPitch: 70,
     })
 
     map.addControl(new NavigationControl({ showCompass: true }), 'bottom-left')
     map.addControl(new ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left')
 
+    const handleResize = () => map.resize()
+    window.addEventListener('resize', handleResize)
+    map.on('load', handleResize)
+    const resizeTimer = setTimeout(handleResize, 300)
+
     mapRef.current = map
 
     return () => {
+      window.removeEventListener('resize', handleResize)
+      clearTimeout(resizeTimer)
       markersRef.current.forEach(m => m.remove())
       popupRef.current?.remove()
       map.remove()
@@ -239,10 +253,11 @@ export default function MapGLView({ data, filters }: Props) {
           .setLngLat([lon, lat])
           .addTo(map)
 
-        el.addEventListener('click', () => {
+        el.addEventListener('click', (e) => {
+          e.stopPropagation()
           popupRef.current?.remove()
           const popup = new Popup({
-            offset: [0, -40],
+            offset: [0, -42],
             className: 'mapgl-popup',
             closeButton: true,
             closeOnClick: false,
@@ -256,12 +271,35 @@ export default function MapGLView({ data, filters }: Props) {
 
         markersRef.current.push(marker)
       })
+
+      // Auto fit / fly to visible properties
+      if (filtered.length === 1) {
+        const [lon, lat] = propToLonLat(filtered[0].x, filtered[0].y)
+        map.flyTo({
+          center: [lon, lat],
+          zoom: 16.5,
+          pitch: 35,
+          bearing: -10,
+          duration: isInitialFit.current ? 0 : 800,
+        })
+        isInitialFit.current = false
+      } else if (filtered.length > 1) {
+        const bounds = new LngLatBounds()
+        filtered.forEach(p => {
+          bounds.extend(propToLonLat(p.x, p.y))
+        })
+        map.fitBounds(bounds, {
+          padding: { top: 90, bottom: 80, left: 60, right: 60 },
+          maxZoom: 17,
+          duration: isInitialFit.current ? 0 : 800,
+        })
+        isInitialFit.current = false
+      }
     }
 
-    // Map might not be loaded yet
-    if (map.loaded()) {
-      addMarkers()
-    } else {
+    // Add markers immediately without waiting for tiles
+    addMarkers()
+    if (!map.loaded()) {
       map.once('load', addMarkers)
     }
   }, [data, filters, buildPopupHTML])
