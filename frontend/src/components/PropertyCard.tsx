@@ -84,46 +84,73 @@ export default function PropertyCard({ property: p }: Props) {
         <div className="prop-card__price">
           {(() => {
             const availableFloors = p.floors && p.floors.length > 0
-              ? p.floors.filter(f => f.isAvailable && (f.price != null || f.pricePerMeter != null))
+              ? p.floors.filter(f => f.isAvailable)
               : [];
 
-            if (availableFloors.length > 0) {
+            const cashPrices = availableFloors
+              .map(f => f.price)
+              .filter((pr): pr is number => pr != null && pr > 0);
+
+            const installmentPrices = availableFloors
+              .map(f => f.installmentPrice)
+              .filter((pr): pr is number => pr != null && pr > 0);
+
+            // If floors with prices exist
+            if (cashPrices.length > 0 || installmentPrices.length > 0) {
+              const minCash = cashPrices.length > 0 ? Math.min(...cashPrices) : null;
+              const maxCash = cashPrices.length > 0 ? Math.max(...cashPrices) : null;
+              const minInst = installmentPrices.length > 0 ? Math.min(...installmentPrices) : null;
+              const maxInst = installmentPrices.length > 0 ? Math.max(...installmentPrices) : null;
+
+              const formatRange = (min: number | null, max: number | null) => {
+                if (min == null || max == null) return null;
+                if (min === max) return `${min.toLocaleString('ar-EG')} جنيه`;
+                return `${min.toLocaleString('ar-EG')} - ${max.toLocaleString('ar-EG')} جنيه`;
+              };
+
               return (
-                <div className="prop-card__floors-list" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                  {availableFloors.map((fl, idx) => {
-                    const floorLabel = fl.floorName || (fl.floorNumber ? `الدور ${fl.floorNumber}` : `الدور ${idx + 1}`);
-                    return (
-                      <div key={idx} style={{ fontSize: '0.82rem', lineHeight: '1.4', display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', borderBottom: idx < availableFloors.length - 1 ? '1px dashed rgba(183,121,61,0.2)' : 'none', paddingBottom: '2px' }}>
-                        <span style={{ fontWeight: 700, color: 'var(--clr-text)', minWidth: '60px' }}>{floorLabel}:</span>
-                        <div style={{ textAlign: 'left' }}>
-                          {fl.price != null && (
-                            <span style={{ fontWeight: 900, color: '#182821' }}>
-                              {fl.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.7rem' }}>جنيه</span>
-                            </span>
-                          )}
-                          {fl.pricePerMeter != null && (
-                            <span style={{ fontSize: '0.68rem', color: 'var(--clr-gold)', display: 'block', fontWeight: 600 }}>
-                              ({fl.pricePerMeter.toLocaleString('ar-EG')} ج/م²)
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', width: '100%' }}>
+                  {minCash != null && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                      <span style={{ fontSize: '0.92rem', fontWeight: 800, color: '#182821' }}>
+                        سعر الكاش : {formatRange(minCash, maxCash)}
+                      </span>
+                      {cashPrices.length > 1 && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--clr-gold)', fontWeight: 700, background: 'rgba(183,121,61,0.1)', padding: '1px 6px', borderRadius: '4px' }}>
+                          حسب الدور
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {minInst != null && (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '4px' }}>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#2563eb' }}>
+                        💳 سعر التقسيط : {formatRange(minInst, maxInst)}
+                      </span>
+                      {installmentPrices.length > 1 && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--clr-gold)', fontWeight: 700, background: 'rgba(183,121,61,0.1)', padding: '1px 6px', borderRadius: '4px' }}>
+                          حسب الدور
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             }
 
+            // Fallback for single unit without floors
             return (
               <div>
                 {p.price != null ? (
-                  <>{p.price.toLocaleString('ar-EG')} <span>جنيه</span></>
+                  <div>
+                    سعر الكاش : {p.price.toLocaleString('ar-EG')} <span>جنيه</span>
+                  </div>
                 ) : (
                   <span>السعر غير محدد</span>
                 )}
                 {p.installmentPrice != null && (
-                  <small style={{ display: 'block', fontSize: '0.72rem', color: 'var(--clr-gold)', fontWeight: 700 }}>
-                    💳 تقسيط: {p.installmentPrice.toLocaleString('ar-EG')} ج
+                  <small style={{ display: 'block', fontSize: '0.78rem', color: '#2563eb', fontWeight: 700, marginTop: '2px' }}>
+                    💳 سعر التقسيط : {p.installmentPrice.toLocaleString('ar-EG')} جنيه
                   </small>
                 )}
               </div>
