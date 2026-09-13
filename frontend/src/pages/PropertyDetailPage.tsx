@@ -254,7 +254,7 @@ export default function PropertyDetailPage() {
                               </div>
                               {group.items.length > 1 && (
                                 <span className="floor-group-box__badge">
-                                  {group.items.length} شقق / نماذج متاحة بالدور
+                                  {group.items.length} شقق متاحة بالدور
                                 </span>
                               )}
                             </div>
