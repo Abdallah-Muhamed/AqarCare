@@ -191,7 +191,7 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     const run = () => {
       map.easeTo({
         center: [lon, lat],
-        offset: isMobile ? [0, -70] : [0, 120],
+        offset: isMobile ? [0, -70] : [0, 130],
         zoom: 17,
         pitch: 35,
         bearing: -10,

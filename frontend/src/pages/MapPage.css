@@ -31,6 +31,13 @@
   transition: all .25s ease;
 }
 
+/* When a property card is open (desktop & mobile): hide top bar so it doesn't overlap the card */
+.mappage--card-open .mappage__bar {
+  opacity: 0 !important;
+  pointer-events: none !important;
+  transform: translateY(-40px) translateX(-50%) !important;
+}
+
 .mappage__bar-title {
   font-size: .85rem;
   font-weight: 800;
@@ -77,6 +84,10 @@
 }
 
 /* ── Property popup (MapLibre popup override) ─────────────────── */
+.mapgl-popup {
+  z-index: 25 !important;
+}
+
 .mapgl-popup .maplibregl-popup-content {
   font-family: 'Cairo', sans-serif;
   background: rgba(255, 254, 251, 0.98);
@@ -91,25 +102,25 @@
   direction: rtl;
 }
 .mapgl-popup .maplibregl-popup-close-button {
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   color: #fff;
-  background: rgba(0, 0, 0, 0.5);
-  width: 24px;
-  height: 24px;
+  background: rgba(0, 0, 0, 0.65);
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   right: auto;
-  left: 6px;
-  top: 6px;
+  left: 8px;
+  top: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
   border: none;
   cursor: pointer;
-  z-index: 10;
+  z-index: 20;
   transition: background 0.15s;
 }
 .mapgl-popup .maplibregl-popup-close-button:hover {
-  background: rgba(0, 0, 0, 0.8);
+  background: rgba(0, 0, 0, 0.85);
 }
 .mapgl-popup .maplibregl-popup-tip { display: none; }
 
@@ -638,13 +649,7 @@
     background: #1e352b;
   }
 
-  /* When card is open on mobile: hide top bar, legend, and map controls */
-  .mappage--card-open .mappage__bar {
-    opacity: 0 !important;
-    pointer-events: none !important;
-    transform: translateY(-40px) translateX(-50%) !important;
-  }
-
+  /* When card is open on mobile: hide legend and map controls */
   .mappage--card-open .mappage__legend {
     opacity: 0 !important;
     pointer-events: none !important;
