@@ -91,7 +91,9 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
   const markersRef   = useRef<Marker[]>([])
   const popupRef     = useRef<Popup | null>(null)
   const isInitialFit = useRef(true)
-  const onSelectRef  = useRef(onSelectProperty)
+  const isProgrammaticClose = useRef(false)
+  const activePropIdRef     = useRef<number | null>(null)
+  const onSelectRef         = useRef(onSelectProperty)
   useEffect(() => {
     onSelectRef.current = onSelectProperty
   }, [onSelectProperty])
@@ -158,31 +160,32 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     `
   }, [])
 
-  // Sync property selection (e.g. via URL /map?propertyId=12 or external click)
-  useEffect(() => {
-    if (!selectedProperty) {
-      popupRef.current?.remove()
-      return
-    }
-
+  // ── Show property (moves camera + opens desktop popup smoothly) ──
+  const showProperty = useCallback((p: MapProperty) => {
     const map = mapRef.current
-    if (!map || selectedProperty.x == null || selectedProperty.y == null || isNaN(selectedProperty.x) || isNaN(selectedProperty.y)) return
+    if (!map || p.x == null || p.y == null || isNaN(p.x) || isNaN(p.y)) return
 
-    const [lon, lat] = propToLonLat(selectedProperty.x, selectedProperty.y)
+    activePropIdRef.current = p.id
+    const [lon, lat] = propToLonLat(p.x, p.y)
     const isMobile = window.innerWidth <= 768
 
-    const flyAction = () => {
-      map.flyTo({
+    const run = () => {
+      map.easeTo({
         center: [lon, lat],
         offset: isMobile ? [0, -70] : [0, 120],
         zoom: 17,
         pitch: 35,
         bearing: -10,
-        duration: 800,
+        duration: 350,
       })
 
+      // Programmatically remove any existing popup without triggering onSelect(null)
+      isProgrammaticClose.current = true
+      popupRef.current?.remove()
+      popupRef.current = null
+      isProgrammaticClose.current = false
+
       if (!isMobile) {
-        popupRef.current?.remove()
         const popup = new Popup({
           offset: [0, -42],
           className: 'mapgl-popup',
@@ -191,11 +194,14 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
           maxWidth: '290px',
         })
           .setLngLat([lon, lat])
-          .setHTML(buildPopupHTML(selectedProperty))
+          .setHTML(buildPopupHTML(p))
           .addTo(map)
 
         popup.on('close', () => {
-          onSelectRef.current?.(null)
+          if (!isProgrammaticClose.current) {
+            activePropIdRef.current = null
+            onSelectRef.current?.(null)
+          }
         })
 
         popupRef.current = popup
@@ -203,11 +209,32 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     }
 
     if (map.loaded()) {
-      flyAction()
+      run()
     } else {
-      map.once('load', flyAction)
+      map.once('load', run)
     }
-  }, [selectedProperty, buildPopupHTML])
+  }, [buildPopupHTML])
+
+  // Sync property selection (e.g. via URL /map?propertyId=12 or external click)
+  useEffect(() => {
+    if (!selectedProperty) {
+      if (activePropIdRef.current !== null) {
+        activePropIdRef.current = null
+        isProgrammaticClose.current = true
+        popupRef.current?.remove()
+        popupRef.current = null
+        isProgrammaticClose.current = false
+      }
+      return
+    }
+
+    // If this property is already actively displayed, avoid duplicate camera/popup triggers
+    if (activePropIdRef.current === selectedProperty.id) {
+      return
+    }
+
+    showProperty(selectedProperty)
+  }, [selectedProperty, showProperty])
 
   // ── Init map ────────────────────────────────────────────────────
   useEffect(() => {
@@ -234,7 +261,11 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     map.addControl(new ScaleControl({ maxWidth: 100, unit: 'metric' }), 'bottom-left')
 
     map.on('click', () => {
+      activePropIdRef.current = null
+      isProgrammaticClose.current = true
       popupRef.current?.remove()
+      popupRef.current = null
+      isProgrammaticClose.current = false
       onSelectRef.current?.(null)
     })
 
@@ -253,7 +284,10 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
       clearTimeout(t2)
       clearTimeout(t3)
       markersRef.current.forEach(m => m.remove())
+      isProgrammaticClose.current = true
       popupRef.current?.remove()
+      popupRef.current = null
+      isProgrammaticClose.current = false
       map.remove()
       mapRef.current = null
     }
@@ -267,7 +301,12 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     const addMarkers = () => {
       markersRef.current.forEach(m => m.remove())
       markersRef.current = []
-      popupRef.current?.remove()
+      if (!selectedProperty) {
+        isProgrammaticClose.current = true
+        popupRef.current?.remove()
+        popupRef.current = null
+        isProgrammaticClose.current = false
+      }
 
       const filtered = (data.properties || []).filter(p => {
         if (p.x == null || p.y == null || isNaN(p.x) || isNaN(p.y)) return false
@@ -331,43 +370,8 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
 
         el.addEventListener('click', (e) => {
           e.stopPropagation()
+          showProperty(prop)
           onSelectRef.current?.(prop)
-
-          const isMobile = window.innerWidth <= 768
-          if (isMobile) {
-            popupRef.current?.remove()
-            map.easeTo({
-              center: [lon, lat],
-              offset: [0, -70],
-              duration: 350,
-            })
-            return
-          }
-
-          // On desktop: ease to position the marker so the popup is completely visible
-          map.easeTo({
-            center: [lon, lat],
-            offset: [0, 120],
-            duration: 350,
-          })
-
-          popupRef.current?.remove()
-          const popup = new Popup({
-            offset: [0, -42],
-            className: 'mapgl-popup',
-            closeButton: true,
-            closeOnClick: true,
-            maxWidth: '290px',
-          })
-            .setLngLat([lon, lat])
-            .setHTML(buildPopupHTML(prop))
-            .addTo(map)
-
-          popup.on('close', () => {
-            onSelectRef.current?.(null)
-          })
-
-          popupRef.current = popup
         })
 
         markersRef.current.push(marker)
