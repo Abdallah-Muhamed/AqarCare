@@ -31,12 +31,12 @@ export default function HomePage() {
           <img src="/logo-navbar.png" alt="عقار كير" className="hero__brand-logo" />
           <div className="badge badge-gold hero__badge">
             <Star size={12} fill="currentColor" />
-            منصة عقارية موثوقة في منشية البكري
+            منصة عقارية موثوقة ومتكاملة
           </div>
           <h1 className="hero__title">
             اعثر على
             <span className="hero__title-accent"> عقارك المثالي</span>
-            <br />في منشية البكري
+            <br />بكل سهولة وأمان
           </h1>
           <p className="hero__subtitle">
             تصفّح وحداتنا السكنية والتجارية المتاحة للبيع والإيجار، واستكشفها على الخريطة التفاعلية بشكل بصري احترافي.
@@ -55,8 +55,8 @@ export default function HomePage() {
           {/* Stats */}
           <div className="hero__stats">
             <div className="hero__stat">
-              <span className="hero__stat-val">منشية</span>
-              <span className="hero__stat-lbl">البكري</span>
+              <span className="hero__stat-val">أفضل</span>
+              <span className="hero__stat-lbl">المواقع</span>
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">

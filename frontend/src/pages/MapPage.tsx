@@ -50,7 +50,7 @@ export default function MapPage() {
       {/* ── Floating top bar ──────────────────────────────────── */}
       <div className="mappage__bar">
         <span className="mappage__bar-title">
-          🗺 <span>منشية البكري</span>
+          🗺 <span>الخريطة التفاعلية</span>
           {data && (
             <span style={{ fontSize: '.72rem', fontWeight: 600, color: '#b77a3d', marginInlineStart: 4 }}>
               {activeProperties.length} وحدة
