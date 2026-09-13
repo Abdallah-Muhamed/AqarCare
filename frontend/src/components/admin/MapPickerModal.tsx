@@ -58,7 +58,7 @@ const MAP_STYLE = {
   sources: {
     'osm-streets': {
       type: 'raster' as const,
-      tiles: ['/osm-tiles/{z}/{x}/{y}.png'],
+      tiles: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
       tileSize: 256,
       maxzoom: 19,
       attribution: '© OpenStreetMap contributors',

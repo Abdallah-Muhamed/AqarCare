@@ -36,21 +36,18 @@ const TYPE_AR:    Record<string, string> = {
 const LISTING_AR: Record<string, string> = { Sale:'للبيع', Rent:'للإيجار' }
 const STATUS_AR:  Record<string, string> = { Available:'متاح', Sold:'مباع' }
 
-// ── High-reliability CartoDB Voyager raster tiles (CORS-enabled, never 403 blocked) ──
+// ── Free OpenStreetMap raster tiles (No API key required, No watermarks) ──
 const MAP_STYLE = {
   version: 8 as const,
   sources: {
-    'carto': {
+    'osm': {
       type: 'raster' as const,
       tiles: [
-        'https://a.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://b.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://c.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
-        'https://d.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}.png',
+        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
       ],
       tileSize: 256,
-      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a> © <a href="https://carto.com/attributions" target="_blank">CARTO</a>',
-      maxzoom: 20,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap contributors</a>',
+      maxzoom: 19,
     },
   },
   layers: [
@@ -60,9 +57,9 @@ const MAP_STYLE = {
       paint:  { 'background-color': '#f2eee9' },
     },
     {
-      id:      'carto-tiles',
+      id:      'osm-tiles',
       type:    'raster' as const,
-      source:  'carto',
+      source:  'osm',
       minzoom: 0,
       maxzoom: 20,
     },
