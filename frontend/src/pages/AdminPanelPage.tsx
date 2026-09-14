@@ -248,6 +248,30 @@ export default function AdminPanelPage() {
     ]);
   };
 
+  const duplicateLastFloor = () => {
+    if (floors.length === 0) {
+      addFloor();
+      return;
+    }
+    const last = floors[floors.length - 1];
+    setFloors(prev => [
+      ...prev,
+      {
+        floorNumber: prev.length + 1,
+        floorName: `الدور ${prev.length + 1}`,
+        price: last.price,
+        pricePerMeter: last.pricePerMeter,
+        installmentPrice: last.installmentPrice,
+        soldPrice: null,
+        areaSqm: last.areaSqm,
+        bedrooms: last.bedrooms,
+        bathrooms: last.bathrooms,
+        isAvailable: true,
+        sortOrder: prev.length,
+      }
+    ]);
+  };
+
   const updateFloor = (index: number, patch: Partial<PropertyFloor>) => {
     setFloors(prev => prev.map((f, i) => {
       if (i !== index) return f;
@@ -481,12 +505,32 @@ export default function AdminPanelPage() {
 
   // ── stats ─────────────────────────────────────────────────────────────────────
 
+  const totalFloorUnits = properties.reduce((acc, p) => acc + (p.floors?.length || 1), 0);
+  const totalSoldUnits = properties.reduce((acc, p) => {
+    if (p.floors && p.floors.length > 0) {
+      return acc + p.floors.filter(f => !f.isAvailable).length;
+    }
+    return acc + (p.status === 'Sold' ? 1 : 0);
+  }, 0);
+
+  const totalSoldRevenue = properties.reduce((acc, p) => {
+    let rev = p.soldPrice || 0;
+    if (p.floors && p.floors.length > 0) {
+      const floorsRev = p.floors.reduce((sum, f) => sum + (f.soldPrice || 0), 0);
+      if (floorsRev > 0) rev = floorsRev;
+    }
+    return acc + rev;
+  }, 0);
+
   const stats = {
     total: properties.length,
     available: properties.filter(p => p.status === 'Available').length,
     sold: properties.filter(p => p.status === 'Sold').length,
     rented: properties.filter(p => p.status === 'Rented').length,
     featured: properties.filter(p => p.isFeatured).length,
+    totalUnits: totalFloorUnits,
+    totalSoldUnits: totalSoldUnits,
+    revenue: totalSoldRevenue,
   };
 
   const filteredProperties = properties.filter(p => {
@@ -547,28 +591,32 @@ export default function AdminPanelPage() {
           <div className="admin-stats">
             <div className="stat-card stat-card--total">
               <div className="stat-card__icon">🏢</div>
-              <div className="stat-card__val">{stats.total}</div>
-              <div className="stat-card__lbl">إجمالي العقارات</div>
+              <div className="stat-card__val">{stats.total} عقار</div>
+              <div className="stat-card__lbl">{stats.totalUnits} شقة / وحدة ({stats.totalSoldUnits} مباع)</div>
             </div>
             <div className="stat-card stat-card--available">
               <div className="stat-card__icon">✅</div>
               <div className="stat-card__val">{stats.available}</div>
-              <div className="stat-card__lbl">متاحة</div>
+              <div className="stat-card__lbl">عقارات متاحة</div>
             </div>
             <div className="stat-card stat-card--sold">
               <div className="stat-card__icon">🔑</div>
               <div className="stat-card__val">{stats.sold}</div>
-              <div className="stat-card__lbl">مُباعة</div>
+              <div className="stat-card__lbl">عقارات مُباعة بالكامل</div>
             </div>
-            <div className="stat-card stat-card--rented">
-              <div className="stat-card__icon">🏷️</div>
-              <div className="stat-card__val">{stats.rented}</div>
-              <div className="stat-card__lbl">مُؤجرة</div>
-            </div>
+            {stats.revenue > 0 && (
+              <div className="stat-card" style={{ borderColor: '#10b981', background: 'rgba(16,185,129,0.05)' }}>
+                <div className="stat-card__icon">💰</div>
+                <div className="stat-card__val" style={{ color: '#047857' }}>
+                  {stats.revenue.toLocaleString('ar-EG')} ج
+                </div>
+                <div className="stat-card__lbl">إجمالي المبيعات المسجلة</div>
+              </div>
+            )}
             <div className="stat-card stat-card--featured">
               <div className="stat-card__icon">⭐</div>
               <div className="stat-card__val">{stats.featured}</div>
-              <div className="stat-card__lbl">مميزة</div>
+              <div className="stat-card__lbl">عقارات مميزة</div>
             </div>
           </div>
         )}
@@ -703,13 +751,26 @@ export default function AdminPanelPage() {
                         حدد الدور والمساحة والغرف والحمامات وسعر الكاش أو سعر المتر ويتم حسابهما تلقائياً، مع إمكانية إضافة سعر التقسيط لكل دور، وتمييز أي دور أو شقة كـ (متاح 🟢) أو (مباع 🔴) بضغطة زر.
                       </p>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-add-floor"
-                      onClick={addFloor}
-                    >
-                      <span>＋</span> إضافة دور
-                    </button>
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="btn-add-floor"
+                        onClick={addFloor}
+                      >
+                        <span>＋</span> إضافة دور
+                      </button>
+                      {floors.length > 0 && (
+                        <button
+                          type="button"
+                          className="btn-add-floor"
+                          onClick={duplicateLastFloor}
+                          style={{ background: '#2563eb', borderColor: '#1d4ed8' }}
+                          title="إضافة دور جديد بنفس مواصفات وأسعار الدور السابق لتوفير الوقت"
+                        >
+                          <span>📋</span> تكرار بيانات الدور السابق
+                        </button>
+                      )}
+                    </div>
                   </div>
 
                   {floors.length === 0 ? (

@@ -2,17 +2,83 @@
 <html lang="ar" dir="rtl">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="apple-touch-icon" href="/logo.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="عقار كير - منصة عقارية متكاملة لتسويق الوحدات السكنية وباقات التشطيب الفاخرة في مصر" />
-    <title>AqarCare</title>
+    <title>عقار كير | شقق وعقارات للبيع والإيجار بالمحلة الكبرى ومنشية البكري</title>
+    <meta name="description" content="منصة عقار كير - بوابتك العقارية الأولى للبحث عن شقق ووحدات سكنية وتجارية للبيع والإيجار بالمحلة الكبرى ومنشية البكري بأفضل الأسعار كاش وتقسيط مع خريطة تفاعلية." />
+    <meta name="keywords" content="عقار كير, عقارات المحلة الكبرى, شقق للبيع بالمحلة, منشية البكري, شقق للبيع منشية البكري, عقارات الغربية, شقق تقسيط المحلة, بيوت ومحلات المحلة الكبرى, AqarCare" />
+    <meta name="author" content="عقار كير - AqarCare" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <link rel="canonical" href="https://aqar-care.vercel.app/" />
+
+    <!-- Geo Tags -->
+    <meta name="geo.region" content="EG-GH" />
+    <meta name="geo.placename" content="المحلة الكبرى" />
+
+    <!-- Open Graph / Facebook / WhatsApp -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="عقار كير" />
+    <meta property="og:locale" content="ar_EG" />
+    <meta property="og:url" content="https://aqar-care.vercel.app/" />
+    <meta property="og:title" content="عقار كير | شقق وعقارات للبيع والإيجار بالمحلة الكبرى ومنشية البكري" />
+    <meta property="og:description" content="تصفح أفضل الشقق والوحدات السكنية والتجارية المتاحة للبيع والتقسيط بالمحلة الكبرى ومنشية البكري مع خريطة تفاعلية متطورة." />
+    <meta property="og:image" content="https://aqar-care.vercel.app/logo.png" />
+    <meta property="og:image:alt" content="عقار كير - منصة عقارية متكاملة" />
+
+    <!-- Twitter Cards -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="عقار كير | شقق وعقارات للبيع والإيجار بالمحلة الكبرى ومنشية البكري" />
+    <meta name="twitter:description" content="منصة عقار كير - بوابتك العقارية الأولى للبحث عن شقق ووحدات سكنية وتجارية للبيع والإيجار بالمحلة الكبرى ومنشية البكري." />
+    <meta name="twitter:image" content="https://aqar-care.vercel.app/logo.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800;900&family=Tajawal:wght@300;400;500;700;800&display=swap" rel="stylesheet" />
+
+    <!-- Structured Data (JSON-LD) for Google -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "RealEstateAgent",
+          "@id": "https://aqar-care.vercel.app/#organization",
+          "name": "عقار كير - AqarCare",
+          "url": "https://aqar-care.vercel.app/",
+          "logo": "https://aqar-care.vercel.app/logo.png",
+          "image": "https://aqar-care.vercel.app/logo.png",
+          "description": "منصة عقارية متكاملة لتسويق الوحدات السكنية والتجارية بالمحلة الكبرى ومنشية البكري",
+          "telephone": "+201055937687",
+          "address": {
+            "@type": "PostalAddress",
+            "addressLocality": "المحلة الكبرى",
+            "addressRegion": "محافظة الغربية",
+            "addressCountry": "EG"
+          },
+          "areaServed": [
+            "المحلة الكبرى",
+            "منشية البكري",
+            "محافظة الغربية"
+          ]
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://aqar-care.vercel.app/#website",
+          "url": "https://aqar-care.vercel.app/",
+          "name": "عقار كير",
+          "publisher": {
+            "@id": "https://aqar-care.vercel.app/#organization"
+          },
+          "inLanguage": "ar"
+        }
+      ]
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
-
   </body>
 </html>

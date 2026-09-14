@@ -4,6 +4,7 @@ import { List, SlidersHorizontal, X } from 'lucide-react'
 import { api } from '../api'
 import type { CityMap, MapFilters, MapProperty } from '../types'
 import { formatFloorsText } from '../utils/formatters'
+import { setPageSeo } from '../utils/seo'
 import MapGLView from '../components/map/MapGLView'
 import './MapPage.css'
 
@@ -68,6 +69,12 @@ export default function MapPage() {
   const targetPropertyId = searchParams.get('propertyId') || searchParams.get('id')
 
   useEffect(() => {
+    setPageSeo({
+      title: 'خريطة عقارات منشية البكري التفاعلية | عقار كير',
+      description: 'استكشف الوحدات السكنية والتجارية جغرافياً على خريطة منشية البكري والمحلة الكبرى التفاعلية مع تفاصيل الأسعار وحالة الحجز والبيع.',
+      url: 'https://aqar-care.vercel.app/map'
+    })
+
     api.getMap(CITY_SLUG)
       .then(setData)
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))

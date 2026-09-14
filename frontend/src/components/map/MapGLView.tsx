@@ -208,13 +208,14 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     const isMobile = window.innerWidth <= 768
 
     const run = () => {
-      map.easeTo({
+      map.flyTo({
         center: [lon, lat],
         offset: isMobile ? [0, -70] : [0, 130],
-        zoom: 17,
+        zoom: 17.5,
         pitch: 35,
         bearing: -10,
-        duration: 350,
+        duration: 1000,
+        essential: true,
       })
 
       // Programmatically remove any existing popup without triggering onSelect(null)

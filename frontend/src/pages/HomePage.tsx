@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem } from '../types'
+import { setPageSeo } from '../utils/seo'
 // PackageListItem, PackageCard, api.getPackages — kept for future use, currently hidden
 import PropertyCard from '../components/PropertyCard'
 import './HomePage.css'
@@ -12,6 +13,12 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    setPageSeo({
+      title: 'عقار كير | شقق وعقارات للبيع والإيجار بالمحلة الكبرى ومنشية البكري',
+      description: 'منصة عقار كير - تصفح وحداتنا السكنية والتجارية المتاحة للبيع والتقسيط في المحلة الكبرى ومنشية البكري مع خريطة تفاعلية متطورة.',
+      url: 'https://aqar-care.vercel.app/'
+    })
+
     api.getProperties({ isFeatured: true, pageSize: 3 })
       .then(r => setFeaturedProps(r.items))
       .catch(console.error)

@@ -4,6 +4,7 @@ import { ArrowRight, ArrowUpDown, BedDouble, Bath, Building2, Droplets, Flame, M
 import { api } from '../api'
 import type { PropertyDetail } from '../types'
 import { groupFloors } from '../utils/formatters'
+import { setPageSeo } from '../utils/seo'
 import ImageGallery from '../components/ImageGallery'
 import './PropertyDetailPage.css'
 
@@ -39,13 +40,23 @@ export default function PropertyDetailPage() {
   }, [id])
 
   useEffect(() => {
-    if (prop?.title) {
-      document.title = `${prop.title} | عقار كير`
+    if (prop) {
+      const loc = [prop.district, prop.city].filter(Boolean).join('، ')
+      const desc = prop.description || `${prop.title || 'وحدة عقارية'} في ${loc} مع خيارات كاش وتقسيط على عقار كير.`
+      const img = prop.media?.[0]?.url || 'https://aqar-care.vercel.app/logo.png'
+      setPageSeo({
+        title: `${prop.title || 'عقار'} | عقار كير`,
+        description: desc,
+        image: img,
+        url: window.location.href,
+      })
     }
     return () => {
-      document.title = 'عقار كير — منصة عقارية متكاملة'
+      setPageSeo({
+        title: 'عقار كير | شقق وعقارات للبيع والإيجار بالمحلة الكبرى ومنشية البكري',
+      })
     }
-  }, [prop?.title])
+  }, [prop])
 
   if (loading) return (
     <div className="detail-page">

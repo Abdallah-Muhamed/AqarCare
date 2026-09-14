@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
+import { setPageSeo } from '../utils/seo'
 import PropertyCard from '../components/PropertyCard'
 import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
@@ -35,6 +36,14 @@ export default function PropertiesPage() {
   const [page, setPage]         = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [query, setQuery]       = useState<PropertyQuery>({ sortBy: 'newest' })
+
+  useEffect(() => {
+    setPageSeo({
+      title: 'عقارات للبيع والإيجار بالمحلة الكبرى ومنشية البكري | عقار كير',
+      description: 'تصفح أحدث الشقق والأراضي والبيوت والمحلات المتاحة للبيع كاش وتقسيط في المحلة الكبرى ومنشية البكري مع أسعار دقيقة وتفاصيل كاملة.',
+      url: 'https://aqar-care.vercel.app/properties',
+    })
+  }, [])
 
   // Fetch properties from backend
   const fetchProperties = useCallback(() => {
@@ -236,6 +245,17 @@ export default function PropertiesPage() {
               تصفية وبحث
               {hasFilters && <span className="filter-badge-count">{activeFilterCount}</span>}
             </button>
+            {hasFilters && (
+              <button
+                className="btn btn-ghost"
+                onClick={clearFilters}
+                style={{ fontSize: '0.82rem', color: '#dc2626', gap: '4px', border: '1px solid #fecaca', background: '#fef2f2' }}
+                title="إلغاء كافة شروط التصفية"
+              >
+                <RotateCcw size={13} />
+                مسح الفلاتر
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -314,6 +334,49 @@ export default function PropertiesPage() {
               <select className="filter-select" value={query.sortBy ?? 'newest'} onChange={e => set('sortBy', e.target.value)}>
                 {SORT_OPTS.map(s => <option key={s.val} value={s.val}>{s.label}</option>)}
               </select>
+            </div>
+          </div>
+
+          {/* Quick Budget Chips */}
+          <div style={{ marginTop: '0.85rem', marginBottom: '0.5rem', padding: '0.65rem 0.85rem', background: 'rgba(183,121,61,0.06)', borderRadius: '10px', border: '1px solid rgba(183,121,61,0.18)' }}>
+            <div style={{ fontSize: '0.78rem', fontWeight: 800, color: 'var(--clr-text)', marginBottom: '6px' }}>
+              💰 الميزانية السريعة:
+            </div>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {[
+                { label: 'الكل', min: undefined, max: undefined },
+                { label: 'أقل من 1.5 مليون', min: undefined, max: 1500000 },
+                { label: '1.5 إلى 2.5 مليون', min: 1500000, max: 2500000 },
+                { label: '2.5 إلى 3.5 مليون', min: 2500000, max: 3500000 },
+                { label: 'أكثر من 3.5 مليون', min: 3500000, max: undefined },
+              ].map((tier, idx) => {
+                const isActive = query.minPrice === tier.min && query.maxPrice === tier.max
+                return (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      setQuery(q => ({ ...q, minPrice: tier.min, maxPrice: tier.max }))
+                      setPage(1)
+                    }}
+                    style={{
+                      padding: '4px 11px',
+                      borderRadius: '99px',
+                      fontSize: '0.78rem',
+                      fontWeight: 700,
+                      border: '1px solid',
+                      borderColor: isActive ? 'var(--clr-gold)' : '#d1d5db',
+                      background: isActive ? 'var(--clr-gold)' : '#ffffff',
+                      color: isActive ? '#ffffff' : '#374151',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: isActive ? '0 2px 6px rgba(183,121,61,0.3)' : 'none',
+                    }}
+                  >
+                    {tier.label}
+                  </button>
+                )
+              })}
             </div>
           </div>
 
