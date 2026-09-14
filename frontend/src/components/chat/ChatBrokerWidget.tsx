@@ -1,4 +1,4 @@
-﻿import React, { useState, useRef, useEffect } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { MessageSquare, Sparkles, Send, X, RotateCcw, Building2, ExternalLink, MapPin, Phone, Maximize2, Minimize2 } from 'lucide-react'
 import { api } from '../../api'
@@ -19,6 +19,15 @@ const QUICK_STARTERS = [
 ]
 
 const WHATSAPP_NUMBER = '201055937687'
+
+const finishingLabel: Record<string, string> = {
+  'Core-Shell': 'عظم',
+  'Semi-Finished': 'نصف تشطيب',
+  'Finished': 'تشطيب كامل',
+  'Lux': 'لوكس',
+  'Super-Lux': 'سوبر لوكس',
+  'High-Lux': 'هاي لوكس',
+}
 
 export const ChatBrokerWidget: React.FC = () => {
   const location = useLocation()
@@ -258,7 +267,7 @@ export const ChatBrokerWidget: React.FC = () => {
                                   <MapPin size={12} />
                                   <span>{prop.district || prop.city || 'المحلة الكبرى'}</span>
                                   {prop.finishingStatus && (
-                                    <span className="broker-prop-card__spec">{prop.finishingStatus}</span>
+                                    <span className="broker-prop-card__spec">{finishingLabel[prop.finishingStatus] ?? prop.finishingStatus}</span>
                                   )}
                                 </div>
                                 <div className="broker-prop-card__price-row">

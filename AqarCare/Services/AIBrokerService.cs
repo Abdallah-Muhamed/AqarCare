@@ -71,8 +71,12 @@ public class AIBrokerService
                 ? $"متاح تقسيط (سعر/مقدم: {(p.InstallmentPrice.HasValue ? p.InstallmentPrice.Value.ToString("N0") + " ج" : "حسب الاتفاق")})"
                 : "كاش فقط";
 
+            var finishingArabic = FormatFinishingArabic(p.FinishingStatus);
+            var typeArabic = FormatPropertyTypeArabic(p.PropertyType);
+            var listingArabic = FormatListingTypeArabic(p.ListingType);
+
             inventoryBuilder.AppendLine(
-                $"- [عقار #{p.Id}]: العنوان: \"{p.Title}\" | النوع: {p.PropertyType} ({p.ListingType}) | الحي/المنطقة: {p.District}، {p.City} | العنوان بالتفصيل: {p.Address} {p.DetailedAddress} | المساحة: {p.AreaSqm}م² | السعر: {priceStr} | نظام الدفع: {installmentStr} | التشطيب: {p.FinishingStatus} | الغرف: {p.Bedrooms} | الحمامات: {p.Bathrooms} | المصعد: {(p.ElevatorAvailable ? "يوجد أسانسير" : "بدون")} | العدادات: {(p.ElectricityMeterAvailable ? "كهرباء " : "")}{(p.WaterMeterAvailable ? "مياه " : "")}{(p.GasMeterAvailable ? "غاز" : "")} | الأدوار المتاحة: [{floorsSummary}] | نبذة: {p.Description}"
+                $"- [عقار #{p.Id}]: العنوان: \"{p.Title}\" | النوع: {typeArabic} ({listingArabic}) | الحي/المنطقة: {p.District}، {p.City} | العنوان بالتفصيل: {p.Address} {p.DetailedAddress} | المساحة: {p.AreaSqm}م² | السعر: {priceStr} | نظام الدفع: {installmentStr} | التشطيب: {finishingArabic} | الغرف: {p.Bedrooms} | الحمامات: {p.Bathrooms} | المصعد: {(p.ElevatorAvailable ? "يوجد أسانسير" : "بدون")} | العدادات: {(p.ElectricityMeterAvailable ? "كهرباء " : "")}{(p.WaterMeterAvailable ? "مياه " : "")}{(p.GasMeterAvailable ? "غاز" : "")} | الأدوار المتاحة: [{floorsSummary}] | نبذة: {p.Description}"
             );
         }
 
@@ -86,8 +90,9 @@ public class AIBrokerService
    - إذا لم يكن طلبه متوفراً بحذافيره، لا تسأله أسئلة جافة ولا تقل 'غير متاح'، بل بادر فوراً واقترح عليه البديل الأقرب والأفضل المتاح لديك في القائمة مع إبراز سبب اختياره (مثلاً: 'عندي ليك فرصة لقطة قريبة جداً من طلبك وبسعر ممتاز...').
 2. اسأله عن رأيه بعد عرض الوحدات وليس قبلها:
    - بعد أن تعرض عليه الشقق/الوحدات المناسبة وتبرز قيمتها، اختم رسالتك بسؤاله مباشرة عن رأيه فيها، ثم ادعه لمعاينة على الطبيعة (مثلاً: 'إيه رأي حضرتك في الخيارات دي؟ شايف أيهم الأنسب لطلبك؟ تحب نحدد ميعاد ننزل نعاين على الطبيعة؟').
-3. اللهجة والأسلوب:
+3. اللهجة والأسلوب والمصطلحات:
    - تحدث بلهجة مصرية راقية، ودودة، ومحترفة (استخدم تعبيرات مثل: 'أهلاً بحضرتك يا فندم'، 'يا باشا'، 'تحت أمرك'، 'عندي ليك فرصة ممتازة ماتتفوتش').
+   - ممنوع منعاً باتاً استخدام مصطلحات إنجليزية مثل 'Core-Shell' أو 'Semi-Finished' إطلاقاً! استخدم المصطلحات العقارية المصرية الطبيعية المفهومة للعميل: (على الطوب الأحمر / عظم / نصف تشطيب / لوكس).
    - ردك يجب أن يكون مركزاً وجذاباً (في حدود 80 إلى 130 كلمة كحد أقصى وبدون إسهاب مفرط) لكي تكتمل رسالتك دون انقطاع.
 4. الاعتماد الحصري على المخزون:
    - اعتمد حصرياً على العقارات المذكورة أدناه في قائمة العقارات المتاحة، ولا تخترع عقارات أو أسعار وهمية من عندك!
@@ -302,4 +307,32 @@ public class AIBrokerService
 
         return string.Empty;
     }
+
+    private static string FormatFinishingArabic(string? status) => status switch
+    {
+        "Core-Shell" => "عظم (على الطوب)",
+        "Semi-Finished" => "نصف تشطيب",
+        "Finished" => "تشطيب كامل",
+        "Lux" => "لوكس",
+        "Super-Lux" => "سوبر لوكس",
+        "High-Lux" => "هاي لوكس",
+        _ => status ?? "غير محدد"
+    };
+
+    private static string FormatPropertyTypeArabic(string? type) => type switch
+    {
+        "Apartment" => "شقة",
+        "House" or "Villa" => "بيت",
+        "Land" => "أرض",
+        "Shop" => "محل",
+        _ => type ?? "عقار"
+    };
+
+    private static string FormatListingTypeArabic(string? type) => type switch
+    {
+        "Sale" => "للبيع",
+        "Rent" => "للإيجار",
+        _ => type ?? ""
+    };
 }
+
