@@ -1,6 +1,6 @@
 ﻿import React, { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { MessageSquare, Sparkles, Send, X, RotateCcw, Building2, ExternalLink, MapPin, Phone } from 'lucide-react'
+import { MessageSquare, Sparkles, Send, X, RotateCcw, Building2, ExternalLink, MapPin, Phone, Maximize2, Minimize2 } from 'lucide-react'
 import { api } from '../../api'
 import type { ChatMessage, PropertyListItem } from '../../types'
 import './ChatBrokerWidget.css'
@@ -25,6 +25,7 @@ export const ChatBrokerWidget: React.FC = () => {
   const navigate = useNavigate()
 
   const [isOpen, setIsOpen] = useState(false)
+  const [isFullScreen, setIsFullScreen] = useState(false)
   const [messages, setMessages] = useState<ChatMessage[]>(() => {
     try {
       const saved = sessionStorage.getItem('aqarcare_chat_messages')
@@ -57,7 +58,7 @@ export const ChatBrokerWidget: React.FC = () => {
         inputRef.current?.focus()
       }, 100)
     }
-  }, [isOpen, messages, loading])
+  }, [isOpen, messages, loading, isFullScreen])
 
   // Hide on Admin pages
   if (location.pathname.startsWith('/admin')) {
@@ -122,8 +123,8 @@ export const ChatBrokerWidget: React.FC = () => {
 
   const handleViewProperty = (id: number) => {
     navigate(`/properties/${id}`)
-    // On mobile, close widget so user sees the page
-    if (window.innerWidth <= 640) {
+    // On mobile or fullscreen, close widget so user sees the page
+    if (window.innerWidth <= 640 || isFullScreen) {
       setIsOpen(false)
     }
   }
@@ -157,7 +158,11 @@ export const ChatBrokerWidget: React.FC = () => {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="broker-chat-window" role="dialog" aria-modal="true">
+        <div
+          className={`broker-chat-window ${isFullScreen ? 'broker-chat-window--fullscreen' : ''}`}
+          role="dialog"
+          aria-modal="true"
+        >
           {/* Header */}
           <div className="broker-chat-header">
             <div className="broker-chat-header__info">
@@ -174,6 +179,14 @@ export const ChatBrokerWidget: React.FC = () => {
               </div>
             </div>
             <div className="broker-chat-header__actions">
+              <button
+                className="broker-chat-header__btn"
+                onClick={() => setIsFullScreen(prev => !prev)}
+                title={isFullScreen ? 'تصغير النافذة' : 'تكبير ملء الشاشة'}
+                aria-label={isFullScreen ? 'تصغير النافذة' : 'تكبير ملء الشاشة'}
+              >
+                {isFullScreen ? <Minimize2 size={16} /> : <Maximize2 size={16} />}
+              </button>
               <button
                 className="broker-chat-header__btn"
                 onClick={handleResetChat}
@@ -195,109 +208,111 @@ export const ChatBrokerWidget: React.FC = () => {
 
           {/* Messages Body */}
           <div className="broker-chat-messages">
-            {messages.map(msg => (
-              <div
-                key={msg.id}
-                className={`broker-msg broker-msg--${msg.role}`}
-              >
-                {msg.role === 'assistant' && (
+            <div className="broker-chat-messages__inner">
+              {messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`broker-msg broker-msg--${msg.role}`}
+                >
+                  {msg.role === 'assistant' && (
+                    <div className="broker-msg__avatar">
+                      <Sparkles size={15} />
+                    </div>
+                  )}
+                  <div className="broker-msg__body">
+                    <div className="broker-msg__bubble">{msg.content}</div>
+
+                    {/* Recommended Properties Cards */}
+                    {msg.recommendedProperties && msg.recommendedProperties.length > 0 && (
+                      <div className="broker-recommendations">
+                        {msg.recommendedProperties.map(prop => (
+                          <div key={prop.id} className="broker-prop-card">
+                            <div className="broker-prop-card__header">
+                              <div className="broker-prop-card__img-wrap">
+                                {prop.primaryImageUrl ? (
+                                  <img
+                                    src={prop.primaryImageUrl}
+                                    alt={prop.title || 'عقار'}
+                                    className="broker-prop-card__img"
+                                    loading="lazy"
+                                  />
+                                ) : (
+                                  <div
+                                    style={{
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      height: '100%',
+                                      color: '#8c958d',
+                                    }}
+                                  >
+                                    <Building2 size={24} />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="broker-prop-card__meta">
+                                <h4 className="broker-prop-card__title" title={prop.title || ''}>
+                                  {prop.title || `عقار #${prop.id}`}
+                                </h4>
+                                <div className="broker-prop-card__location">
+                                  <MapPin size={12} />
+                                  <span>{prop.district || prop.city || 'المحلة الكبرى'}</span>
+                                  {prop.finishingStatus && (
+                                    <span className="broker-prop-card__spec">{prop.finishingStatus}</span>
+                                  )}
+                                </div>
+                                <div className="broker-prop-card__price-row">
+                                  <span className="broker-prop-card__price">
+                                    {prop.price ? `${prop.price.toLocaleString('ar-EG')} ج.م` : 'تواصل للسعر'}
+                                  </span>
+                                  {prop.areaSqm && (
+                                    <span className="broker-prop-card__spec">{prop.areaSqm}م²</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="broker-prop-card__actions">
+                              <button
+                                className="broker-prop-card__btn broker-prop-card__btn--view"
+                                onClick={() => handleViewProperty(prop.id)}
+                              >
+                                <ExternalLink size={13} />
+                                عرض العقار
+                              </button>
+                              <a
+                                href={getWhatsAppUrl(prop)}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="broker-prop-card__btn broker-prop-card__btn--whatsapp"
+                              >
+                                <Phone size={13} />
+                                حجز معاينة
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+
+              {loading && (
+                <div className="broker-msg broker-msg--assistant">
                   <div className="broker-msg__avatar">
                     <Sparkles size={15} />
                   </div>
-                )}
-                <div className="broker-msg__body">
-                  <div className="broker-msg__bubble">{msg.content}</div>
-
-                  {/* Recommended Properties Cards */}
-                  {msg.recommendedProperties && msg.recommendedProperties.length > 0 && (
-                    <div className="broker-recommendations">
-                      {msg.recommendedProperties.map(prop => (
-                        <div key={prop.id} className="broker-prop-card">
-                          <div className="broker-prop-card__header">
-                            <div className="broker-prop-card__img-wrap">
-                              {prop.primaryImageUrl ? (
-                                <img
-                                  src={prop.primaryImageUrl}
-                                  alt={prop.title || 'عقار'}
-                                  className="broker-prop-card__img"
-                                  loading="lazy"
-                                />
-                              ) : (
-                                <div
-                                  style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    height: '100%',
-                                    color: '#8c958d',
-                                  }}
-                                >
-                                  <Building2 size={24} />
-                                </div>
-                              )}
-                            </div>
-                            <div className="broker-prop-card__meta">
-                              <h4 className="broker-prop-card__title" title={prop.title || ''}>
-                                {prop.title || `عقار #${prop.id}`}
-                              </h4>
-                              <div className="broker-prop-card__location">
-                                <MapPin size={12} />
-                                <span>{prop.district || prop.city || 'المحلة الكبرى'}</span>
-                                {prop.finishingStatus && (
-                                  <span className="broker-prop-card__spec">{prop.finishingStatus}</span>
-                                )}
-                              </div>
-                              <div className="broker-prop-card__price-row">
-                                <span className="broker-prop-card__price">
-                                  {prop.price ? `${prop.price.toLocaleString('ar-EG')} ج.م` : 'تواصل للسعر'}
-                                </span>
-                                {prop.areaSqm && (
-                                  <span className="broker-prop-card__spec">{prop.areaSqm}م²</span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div className="broker-prop-card__actions">
-                            <button
-                              className="broker-prop-card__btn broker-prop-card__btn--view"
-                              onClick={() => handleViewProperty(prop.id)}
-                            >
-                              <ExternalLink size={13} />
-                              عرض العقار
-                            </button>
-                            <a
-                              href={getWhatsAppUrl(prop)}
-                              target="_blank"
-                              rel="noreferrer"
-                              className="broker-prop-card__btn broker-prop-card__btn--whatsapp"
-                            >
-                              <Phone size={13} />
-                              حجز معاينة
-                            </a>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div className="broker-typing">
+                    <span className="broker-typing__dot" />
+                    <span className="broker-typing__dot" />
+                    <span className="broker-typing__dot" />
+                  </div>
                 </div>
-              </div>
-            ))}
+              )}
 
-            {loading && (
-              <div className="broker-msg broker-msg--assistant">
-                <div className="broker-msg__avatar">
-                  <Sparkles size={15} />
-                </div>
-                <div className="broker-typing">
-                  <span className="broker-typing__dot" />
-                  <span className="broker-typing__dot" />
-                  <span className="broker-typing__dot" />
-                </div>
-              </div>
-            )}
-
-            <div ref={messagesEndRef} />
+              <div ref={messagesEndRef} />
+            </div>
           </div>
 
           {/* Quick Starters (shown if only welcome message) */}
@@ -326,23 +341,25 @@ export const ChatBrokerWidget: React.FC = () => {
               handleSendMessage()
             }}
           >
-            <input
-              ref={inputRef}
-              type="text"
-              className="broker-chat-input"
-              placeholder="اكتب طلبك أو استفسارك هنا..."
-              value={input}
-              onChange={e => setInput(e.target.value)}
-              disabled={loading}
-            />
-            <button
-              type="submit"
-              className="broker-chat-send-btn"
-              disabled={!input.trim() || loading}
-              aria-label="إرسال"
-            >
-              <Send size={18} style={{ transform: 'rotate(180deg)' }} />
-            </button>
+            <div className="broker-chat-input-form__inner">
+              <input
+                ref={inputRef}
+                type="text"
+                className="broker-chat-input"
+                placeholder="اكتب طلبك أو استفسارك هنا..."
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                disabled={loading}
+              />
+              <button
+                type="submit"
+                className="broker-chat-send-btn"
+                disabled={!input.trim() || loading}
+                aria-label="إرسال"
+              >
+                <Send size={18} style={{ transform: 'rotate(180deg)' }} />
+              </button>
+            </div>
           </form>
         </div>
       )}
