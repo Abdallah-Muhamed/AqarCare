@@ -25,6 +25,7 @@ interface Property {
   city: string | null;
   district: string | null;
   address: string | null;
+  detailedAddress?: string | null;
   status: string;
   isFeatured: boolean;
   isUnderConstruction?: boolean;
@@ -57,7 +58,6 @@ interface FinishingPackage {
 const FINISHING_OPTIONS = [
   { value: 'Core-Shell',   label: 'عظم' },
   { value: 'Semi-Finished',label: 'نص تشطيب' },
-  { value: 'Finished',     label: 'تشطيب' },
   { value: 'Lux',          label: 'لوكس' },
   { value: 'Super-Lux',    label: 'سوبر لوكس' },
   { value: 'High-Lux',     label: 'هاي لوكس' },
@@ -96,6 +96,7 @@ export default function AdminPanelPage() {
     city: 'المحلة الكبرى',
     district: '',
     address: '',
+    detailedAddress: '',
     status: 'Available',
     isFeatured: false,
     isUnderConstruction: false,
@@ -332,6 +333,7 @@ export default function AdminPanelPage() {
             price: f.price,
             pricePerMeter: f.pricePerMeter,
             installmentPrice: f.installmentPrice,
+            soldPrice: f.soldPrice,
             areaSqm: f.areaSqm,
             bedrooms: f.bedrooms,
             bathrooms: f.bathrooms,
@@ -381,6 +383,7 @@ export default function AdminPanelPage() {
       price: null,
       pricePerMeter: null,
       installmentPrice: null,
+      soldPrice: null,
       areaSqm: null,
       isAvailable: true,
       sortOrder: 0,
@@ -408,6 +411,7 @@ export default function AdminPanelPage() {
       city: property.city ?? 'المحلة الكبرى',
       district: property.district ?? '',
       address: property.address ?? '',
+      detailedAddress: property.detailedAddress ?? '',
       status: property.status ?? 'Available',
       isFeatured: property.isFeatured,
       isUnderConstruction: property.isUnderConstruction ?? false,
@@ -454,6 +458,7 @@ export default function AdminPanelPage() {
       city: 'المحلة الكبرى',
       district: '',
       address: '',
+      detailedAddress: '',
       status: 'Available',
       isFeatured: false,
       isUnderConstruction: false,
@@ -724,7 +729,8 @@ export default function AdminPanelPage() {
                             <th>سعر المتر (جنيه)</th>
                             <th>سعر الكاش (جنيه)</th>
                             <th>سعر التقسيط (جنيه)</th>
-                            <th style={{ minWidth: '125px', textAlign: 'center' }}>الحالة (متاح / مباع)</th>
+                            <th style={{ minWidth: '115px', textAlign: 'center' }}>الحالة</th>
+                            <th style={{ minWidth: '120px', textAlign: 'center' }}>سعر البيع الفعلي</th>
                             <th style={{ textAlign: 'center' }}>حذف</th>
                           </tr>
                         </thead>
@@ -807,12 +813,30 @@ export default function AdminPanelPage() {
                               <td style={{ textAlign: 'center' }}>
                                 <button
                                   type="button"
-                                  onClick={() => updateFloor(index, { isAvailable: !floor.isAvailable })}
+                                  onClick={() => updateFloor(index, {
+                                    isAvailable: !floor.isAvailable,
+                                    soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
+                                  })}
                                   className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
                                   title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
                                 >
                                   {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
                                 </button>
+                              </td>
+                              <td style={{ textAlign: 'center' }}>
+                                {!floor.isAvailable ? (
+                                  <input
+                                    type="number"
+                                    value={floor.soldPrice ?? ''}
+                                    placeholder="سعر البيع"
+                                    onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                    className="floor-input"
+                                    style={{ width: '100px', borderColor: '#ef4444', background: '#fef2f2', fontWeight: 700 }}
+                                    title="أدخل سعر البيع الفعلي الذي تم الاتفاق عليه لهذا الدور"
+                                  />
+                                ) : (
+                                  <span style={{ color: 'var(--clr-text-muted)', fontSize: '0.8rem' }}>—</span>
+                                )}
                               </td>
                               <td style={{ textAlign: 'center' }}>
                                 <button
@@ -852,18 +876,31 @@ export default function AdminPanelPage() {
                         type="text"
                         value={formData.district}
                         onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                        placeholder="مثال: مدينة نصر"
+                        placeholder="مثال: منشية البكري"
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label>العنوان التفصيلي</label>
+                      <label>العنوان / الشارع</label>
                       <input
                         type="text"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="مثال: شارع عباس العقاد، بجوار..."
+                        placeholder="مثال: شارع البحر، المحلة الكبرى"
                       />
+                    </div>
+
+                    <div className="form-group full-width">
+                      <label>العنوان التفصيلي / المعالم</label>
+                      <input
+                        type="text"
+                        value={formData.detailedAddress}
+                        onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
+                        placeholder="مثال: برج الصفوة، أمام مسجد البكري، الدور 3"
+                      />
+                      <small style={{ color: 'var(--clr-text-muted)', fontSize: '0.78rem' }}>
+                        يظهر هذا العنوان كاملاً على كارت العقار وصفحة التفاصيل لتوجيه العملاء بدقة.
+                      </small>
                     </div>
                   </div>
                 </div>

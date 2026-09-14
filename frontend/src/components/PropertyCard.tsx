@@ -167,11 +167,6 @@ export default function PropertyCard({ property: p }: Props) {
               🎨 {finishingLabel[p.finishingStatus] ?? p.finishingStatus}
             </div>
           )}
-          {ppmText && (
-            <div className="prop-card__spec" title="سعر المتر" style={{ color: 'var(--clr-gold)', fontWeight: 700 }}>
-              📏 {ppmText}
-            </div>
-          )}
         </div>
 
         {/* Price */}

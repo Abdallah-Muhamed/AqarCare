@@ -13,6 +13,7 @@ public record PropertyFloorDto(
     decimal? Price,
     decimal? PricePerMeter,
     decimal? InstallmentPrice,
+    decimal? SoldPrice,
     decimal? AreaSqm,
     bool IsAvailable,
     int SortOrder);
@@ -24,7 +25,8 @@ public record PropertyFloorInput(
     decimal? Price,
     decimal? PricePerMeter,
     decimal? InstallmentPrice,
-    decimal? AreaSqm,
+    decimal? SoldPrice = null,
+    decimal? AreaSqm = null,
     bool IsAvailable = true,
     int SortOrder = 0);
 

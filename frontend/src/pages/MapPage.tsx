@@ -21,9 +21,9 @@ const FILTER_OPTS = {
   finishingStatus: [
     { v: 'Core-Shell',    l: 'عظم' },
     { v: 'Semi-Finished', l: 'نصف تشطيب' },
-    { v: 'Finished',      l: 'تشطيب كامل' },
     { v: 'Lux',           l: 'لوكس' },
     { v: 'Super-Lux',     l: 'سوبر لوكس' },
+    { v: 'High-Lux',      l: 'هاي لوكس' },
   ],
 }
 

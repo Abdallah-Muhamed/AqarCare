@@ -15,7 +15,6 @@ const LISTING_TYPES = [{ val: 'Sale', label: 'للبيع' }, { val: 'Rent', labe
 const FINISHING_OPTS = [
   { val: 'Core-Shell',    label: 'بدون تشطيب (عظم)' },
   { val: 'Semi-Finished', label: 'نصف تشطيب' },
-  { val: 'Finished',      label: 'تشطيب كامل' },
   { val: 'Lux',           label: 'لوكس' },
   { val: 'Super-Lux',     label: 'سوبر لوكس' },
   { val: 'High-Lux',      label: 'هاي لوكس' },

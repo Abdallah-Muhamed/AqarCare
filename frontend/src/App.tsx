@@ -8,6 +8,7 @@ import PackagesPage from './pages/PackagesPage'
 import PackageDetailPage from './pages/PackageDetailPage'
 import AdminPanelPage from './pages/AdminPanelPage'
 import MapPage from './pages/MapPage'
+import NotFoundPage from './pages/NotFoundPage'
 
 export default function App() {
   const { pathname } = useLocation()
@@ -26,6 +27,7 @@ export default function App() {
           <Route path="/finishing-packages/:slug" element={<PackageDetailPage />} />
           <Route path="/admin" element={<AdminPanelPage />} />
           <Route path="/map" element={<MapPage />} />
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
       {!isAdmin && !isMap && <Footer />}

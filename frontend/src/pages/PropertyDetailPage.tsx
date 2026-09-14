@@ -38,6 +38,15 @@ export default function PropertyDetailPage() {
       .finally(() => setLoading(false))
   }, [id])
 
+  useEffect(() => {
+    if (prop?.title) {
+      document.title = `${prop.title} | عقار كير`
+    }
+    return () => {
+      document.title = 'عقار كير — منصة عقارية متكاملة'
+    }
+  }, [prop?.title])
+
   if (loading) return (
     <div className="detail-page">
       <div className="container section">
@@ -428,9 +437,19 @@ export default function PropertyDetailPage() {
                 <div className="price-card__feature"><CheckCircle2 size={15} />متابعة مستمرة</div>
               </div>
 
-              <a href="https://wa.me/201055937687" target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)', background: '#25d366', color: '#fff' }}>
-                <MessageCircle size={16} /> تواصل معنا
-              </a>
+              {(() => {
+                const locationText = [prop.district, prop.city].filter(Boolean).join('، ') || 'المحلة الكبرى'
+                const waText = encodeURIComponent(
+                  `السلام عليكم، أود الاستفسار بخصوص العقار رقم #${prop.id}: "${prop.title || 'وحدة عقارية'}" (${locationText}).`
+                )
+                const waUrl = `https://wa.me/201055937687?text=${waText}`
+
+                return (
+                  <a href={waUrl} target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)', background: '#25d366', color: '#fff' }}>
+                    <MessageCircle size={16} /> تواصل معنا عبر واتساب
+                  </a>
+                )
+              })()}
               <Link to={`/map?propertyId=${prop.id}`} className="btn btn-outline" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)' }}>
                 🗺️ عرض الوحدة على الخريطة
               </Link>
@@ -444,34 +463,55 @@ export default function PropertyDetailPage() {
       </div>
 
       {/* ── Sticky Mobile CTA Bar ─────────────────────────────────── */}
-      <div className="detail-mobile-cta">
-        <div className="detail-mobile-cta__price">
-          <span className="detail-mobile-cta__label">سعر الوحدة</span>
-          <span className="detail-mobile-cta__amount">
-            {prop.price != null
-              ? <>{prop.price.toLocaleString('ar-EG')}<span>جنيه</span></>
-              : <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)' }}>السعر عند الطلب</span>}
-          </span>
-        </div>
-        <div className="detail-mobile-cta__btns">
-          <a
-            href="https://wa.me/201055937687"
-            target="_blank"
-            rel="noreferrer"
-            className="btn"
-            style={{ background: '#25d366', color: '#fff', minHeight: 42, padding: '0 1rem' }}
-          >
-            <MessageCircle size={16} /> تواصل
-          </a>
-          <Link
-            to={`/map?propertyId=${prop.id}`}
-            className="btn btn-outline"
-            style={{ minHeight: 42, padding: '0 0.9rem', fontSize: '0.82rem' }}
-          >
-            🗺️ الخريطة
-          </Link>
-        </div>
-      </div>
+      {(() => {
+        const availableFloors = prop.floors?.filter(f => f.isAvailable) ?? []
+        const floorCashPrices = availableFloors.map(f => f.price).filter((p): p is number => p != null && p > 0)
+        const minCash = floorCashPrices.length > 0 ? Math.min(...floorCashPrices) : prop.price
+        const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price
+        const isCashRange = floorCashPrices.length > 1 && minCash !== maxCash
+
+        const locationText = [prop.district, prop.city].filter(Boolean).join('، ') || 'المحلة الكبرى'
+        const waText = encodeURIComponent(
+          `السلام عليكم، أود الاستفسار بخصوص العقار رقم #${prop.id}: "${prop.title || 'وحدة عقارية'}" (${locationText}).`
+        )
+        const waUrl = `https://wa.me/201055937687?text=${waText}`
+
+        return (
+          <div className="detail-mobile-cta">
+            <div className="detail-mobile-cta__price">
+              <span className="detail-mobile-cta__label">سعر الوحدة</span>
+              <span className="detail-mobile-cta__amount">
+                {minCash != null ? (
+                  <>
+                    {isCashRange ? `يبدأ من ${minCash.toLocaleString('ar-EG')}` : minCash.toLocaleString('ar-EG')}
+                    <span>جنيه</span>
+                  </>
+                ) : (
+                  <span style={{ fontSize: '0.9rem', color: 'var(--clr-text-muted)' }}>السعر عند الطلب</span>
+                )}
+              </span>
+            </div>
+            <div className="detail-mobile-cta__btns">
+              <a
+                href={waUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="btn"
+                style={{ background: '#25d366', color: '#fff', minHeight: 42, padding: '0 1rem' }}
+              >
+                <MessageCircle size={16} /> تواصل
+              </a>
+              <Link
+                to={`/map?propertyId=${prop.id}`}
+                className="btn btn-outline"
+                style={{ minHeight: 42, padding: '0 0.9rem', fontSize: '0.82rem' }}
+              >
+                🗺️ الخريطة
+              </Link>
+            </div>
+          </div>
+        )
+      })()}
     </div>
   )
 }

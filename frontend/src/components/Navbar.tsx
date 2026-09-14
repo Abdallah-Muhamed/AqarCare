@@ -26,6 +26,12 @@ export default function Navbar() {
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
       <div className="container navbar__inner">
+        {/* Brand */}
+        <Link to="/" className="navbar__brand">
+          <img src="/logo-navbar.png" alt="عقار كير" className="navbar__brand-logo" />
+          <span className="navbar__brand-name">عقار كير</span>
+        </Link>
+
         {/* Desktop links */}
         <nav className="navbar__links">
           {links.map(l => (

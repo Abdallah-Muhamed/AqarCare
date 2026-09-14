@@ -248,6 +248,7 @@ public class PropertyService
                     Price = floorPrice,
                     PricePerMeter = floorPpm,
                     InstallmentPrice = f.InstallmentPrice,
+                    SoldPrice = f.SoldPrice,
                     AreaSqm = f.AreaSqm,
                     IsAvailable = f.IsAvailable,
                     SortOrder = f.SortOrder != 0 ? f.SortOrder : sort++
@@ -359,6 +360,7 @@ public class PropertyService
                         existingFloor.Price = floorPrice;
                         existingFloor.PricePerMeter = floorPpm;
                         existingFloor.InstallmentPrice = inputFloor.InstallmentPrice;
+                        existingFloor.SoldPrice = inputFloor.SoldPrice;
                         existingFloor.AreaSqm = inputFloor.AreaSqm;
                         existingFloor.IsAvailable = inputFloor.IsAvailable;
                         existingFloor.SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++;
@@ -374,6 +376,7 @@ public class PropertyService
                         Price = floorPrice,
                         PricePerMeter = floorPpm,
                         InstallmentPrice = inputFloor.InstallmentPrice,
+                        SoldPrice = inputFloor.SoldPrice,
                         AreaSqm = inputFloor.AreaSqm,
                         IsAvailable = inputFloor.IsAvailable,
                         SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++
@@ -476,7 +479,7 @@ public class PropertyService
             x.InstallmentPrice,
             x.IsUnderConstruction,
             x.Floors?.OrderBy(f => f.SortOrder)
-                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
                 .ToList(),
             x.IsPublished,
             x.ApartmentsPerFloor);
@@ -528,7 +531,7 @@ public class PropertyService
             x.IsUnderConstruction,
             x.Floors?
                 .OrderBy(f => f.SortOrder)
-                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
                 .ToList() ?? new List<PropertyFloorDto>(),
             x.ApartmentsPerFloor);
 }

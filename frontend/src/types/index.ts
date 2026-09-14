@@ -13,6 +13,7 @@ export interface PropertyFloor {
   price?: number | null
   pricePerMeter?: number | null
   installmentPrice?: number | null
+  soldPrice?: number | null
   areaSqm?: number | null
   bedrooms?: number | null
   bathrooms?: number | null

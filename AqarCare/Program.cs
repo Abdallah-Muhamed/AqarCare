@@ -86,11 +86,21 @@ namespace AqarCare
 
             if (args.Contains("--sync-local-map-to-prod", StringComparer.OrdinalIgnoreCase))
             {
+                var prodConn = builder.Configuration.GetConnectionString("DefaultConnection");
+                if (string.IsNullOrEmpty(prodConn))
+                {
+                    Console.WriteLine("Connection string 'DefaultConnection' is missing.");
+                    return;
+                }
+
+                var localConn = builder.Configuration.GetConnectionString("LocalConnection")
+                    ?? "Server=(localdb)\\mssqllocaldb;Database=AqarCareDb;Trusted_Connection=True;TrustServerCertificate=True;";
+
                 var localOptions = new DbContextOptionsBuilder<AqarCareDbContext>()
-                    .UseSqlServer("Server=(localdb)\\mssqllocaldb;Database=AqarCareDb;Trusted_Connection=True;TrustServerCertificate=True;")
+                    .UseSqlServer(localConn)
                     .Options;
                 var prodOptions = new DbContextOptionsBuilder<AqarCareDbContext>()
-                    .UseSqlServer("Server=db60259.public.databaseasp.net; Database=db60259; User Id=db60259; Password=fW%7+9Lkp_4Q; Encrypt=True; TrustServerCertificate=True; MultipleActiveResultSets=True;")
+                    .UseSqlServer(prodConn)
                     .Options;
 
                 using var localDb = new AqarCareDbContext(localOptions);
