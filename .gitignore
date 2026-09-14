@@ -10,7 +10,8 @@ publish/
 *.lock.json
 
 # ASP.NET Core
-appsettings.Development.json
+appsettings*.json
+!appsettings.Template.json
 
 # Database
 *.db
