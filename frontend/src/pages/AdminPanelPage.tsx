@@ -726,22 +726,6 @@ export default function AdminPanelPage() {
                   </div>
                 </div>
 
-                {/* Section: Actual Sale Price */}
-                <div className="form-section">
-                  <h3 className="form-section__title">🏷️ سعر البيع الفعلي (إن تم البيع)</h3>
-                  <div className="form-grid">
-                    <div className="form-group">
-                      <label>سعر البيع الفعلي (جنيه)</label>
-                      <input
-                        type="number"
-                        value={formData.soldPrice}
-                        onChange={(e) => setFormData({ ...formData, soldPrice: e.target.value })}
-                        placeholder="اتركه فارغاً إن لم يُبَع"
-                      />
-                    </div>
-                  </div>
-                </div>
-
                 {/* Section: Floors & Pricing */}
                 <div className="form-section">
                   <div className="form-section__header-row">
