@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
 
@@ -10,17 +10,27 @@ namespace AqarCare.Migrations
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.AddColumn<int>(
-                name: "ApartmentsPerFloor",
-                table: "PropertyUnits",
-                type: "int",
-                nullable: true);
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'[dbo].[PropertyUnits]') 
+    AND name = 'ApartmentsPerFloor'
+)
+BEGIN
+    ALTER TABLE [PropertyUnits] ADD [ApartmentsPerFloor] int NULL;
+END
+");
 
-            migrationBuilder.AddColumn<decimal>(
-                name: "SoldPrice",
-                table: "PropertyFloors",
-                type: "decimal(18,2)",
-                nullable: true);
+            migrationBuilder.Sql(@"
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns 
+    WHERE object_id = OBJECT_ID(N'[dbo].[PropertyFloors]') 
+    AND name = 'SoldPrice'
+)
+BEGIN
+    ALTER TABLE [PropertyFloors] ADD [SoldPrice] decimal(18,2) NULL;
+END
+");
         }
 
         /// <inheritdoc />

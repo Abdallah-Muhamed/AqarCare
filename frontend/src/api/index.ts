@@ -1,4 +1,4 @@
-import type { PagedResult, PropertyListItem, PropertyDetail, PropertyQuery, PackageListItem, PackageDetail, CityMap, MapFilters } from '../types'
+import type { PagedResult, PropertyListItem, PropertyDetail, PropertyQuery, PackageListItem, PackageDetail, CityMap, MapFilters, AIBrokerResponse } from '../types'
 import { API_BASE_URL } from '../constants/api'
 
 const BASE = '/api'
@@ -15,6 +15,20 @@ async function get<T>(path: string, params?: Record<string, string | number | bo
     })
   }
   const res = await fetch(url.toString())
+  if (!res.ok) throw new Error(`HTTP ${res.status}`)
+  return res.json()
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const baseUrl = API_BASE_URL || window.location.origin
+  const url = new URL(path, baseUrl)
+  const res = await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  })
   if (!res.ok) throw new Error(`HTTP ${res.status}`)
   return res.json()
 }
@@ -39,6 +53,11 @@ export const api = {
   // ── Custom Map ─────────────────────────────────────────────────
   getMap(citySlug: string, filters?: MapFilters): Promise<CityMap> {
     return get(`${BASE}/maps/${citySlug}`, filters as Record<string, string | number | boolean | undefined>)
+  },
+
+  // ── AI Sales Broker ───────────────────────────────────────────
+  chatWithBroker(messages: { role: string; content: string }[]): Promise<AIBrokerResponse> {
+    return post<AIBrokerResponse>(`${BASE}/ai/broker`, { messages })
   },
 }
 

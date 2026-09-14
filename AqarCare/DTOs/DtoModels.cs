@@ -394,3 +394,11 @@ public record AddPackageMediaRequest(
     int SortOrder);
 
 public record MediaUploadResult(string PublicId, string Url, string MediaType);
+
+// AI Broker Chat DTOs
+public record ChatMessageDto(string Role, string Content);
+public record AIBrokerRequest(IReadOnlyList<ChatMessageDto> Messages);
+public record AIBrokerResponse(
+    string Reply,
+    IReadOnlyList<int> RecommendedPropertyIds,
+    IReadOnlyList<PropertyListItemDto> RecommendedProperties);

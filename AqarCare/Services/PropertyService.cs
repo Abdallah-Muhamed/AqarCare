@@ -441,7 +441,7 @@ public class PropertyService
         return true;
     }
 
-    private static PropertyListItemDto ToListItem(PropertyUnit x) =>
+    public static PropertyListItemDto ToListItem(PropertyUnit x) =>
         new(
             x.Id,
             x.Title,

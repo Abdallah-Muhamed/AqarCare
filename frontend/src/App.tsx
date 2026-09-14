@@ -9,6 +9,7 @@ import PackageDetailPage from './pages/PackageDetailPage'
 import AdminPanelPage from './pages/AdminPanelPage'
 import MapPage from './pages/MapPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { ChatBrokerWidget } from './components/chat/ChatBrokerWidget'
 
 export default function App() {
   const { pathname } = useLocation()
@@ -31,6 +32,7 @@ export default function App() {
         </Routes>
       </main>
       {!isAdmin && !isMap && <Footer />}
+      {!isAdmin && <ChatBrokerWidget />}
     </div>
   )
 }

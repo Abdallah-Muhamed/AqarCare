@@ -54,6 +54,10 @@ namespace AqarCare
                 client.Timeout = TimeSpan.FromSeconds(120);
             });
             builder.Services.AddScoped<FinishingPackageService>();
+            builder.Services.AddHttpClient<AIBrokerService>(client =>
+            {
+                client.Timeout = TimeSpan.FromSeconds(60);
+            });
 
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
