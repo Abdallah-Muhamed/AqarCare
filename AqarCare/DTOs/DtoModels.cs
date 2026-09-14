@@ -269,7 +269,8 @@ public record MapPropertyDto(
     bool InstallmentAvailable = false,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
-    int? ApartmentsPerFloor = null);
+    int? ApartmentsPerFloor = null,
+    IReadOnlyList<PropertyFloorDto>? Floors = null);
 
 public record CityMapDto(
     int Id,

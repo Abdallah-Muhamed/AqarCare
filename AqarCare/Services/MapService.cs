@@ -62,7 +62,18 @@ public class MapService
                 x.PropertyUnit.InstallmentAvailable,
                 x.PropertyUnit.InstallmentPrice,
                 x.PropertyUnit.IsUnderConstruction,
-                x.PropertyUnit.ApartmentsPerFloor))
+                x.PropertyUnit.ApartmentsPerFloor,
+                x.PropertyUnit.Floors.OrderBy(f => f.SortOrder).Select(f => new PropertyFloorDto(
+                    f.Id,
+                    f.FloorNumber,
+                    f.FloorName,
+                    f.Price,
+                    f.PricePerMeter,
+                    f.InstallmentPrice,
+                    f.SoldPrice,
+                    f.AreaSqm,
+                    f.IsAvailable,
+                    f.SortOrder)).ToList()))
             .ToListAsync(ct);
 
         return new CityMapDto(

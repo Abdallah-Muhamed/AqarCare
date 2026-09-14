@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { List, SlidersHorizontal, X } from 'lucide-react'
 import { api } from '../api'
 import type { CityMap, MapFilters, MapProperty } from '../types'
-import { formatFloorsText } from '../utils/formatters'
+import { formatFloorsText, getTotalAvailableUnits } from '../utils/formatters'
 import { setPageSeo } from '../utils/seo'
 import MapGLView from '../components/map/MapGLView'
 import './MapPage.css'
@@ -104,10 +104,13 @@ export default function MapPage() {
     if (filters.finishingStatus && p.finishingStatus !== filters.finishingStatus) return false
     return true
   }) : []
+
   const counts = {
-    Available: activeProperties.filter(p => p.status === 'Available').length,
-    Sold:      activeProperties.filter(p => p.status === 'Sold').length,
+    Available: getTotalAvailableUnits(activeProperties, 'Available'),
+    Sold:      getTotalAvailableUnits(activeProperties, 'Sold'),
   }
+
+  const totalUnits = getTotalAvailableUnits(activeProperties, filters.status)
 
   return (
     <div className={`mappage ${selectedProperty ? 'mappage--card-open' : ''}`}>
@@ -118,7 +121,18 @@ export default function MapPage() {
           🗺 <span>الخريطة التفاعلية</span>
           {data && (
             <span style={{ fontSize: '.72rem', fontWeight: 600, color: '#b77a3d', marginInlineStart: 4 }}>
-              {activeProperties.length} وحدة
+              {totalUnits === 0 ? (
+                filters.status === 'Sold' ? 'لا توجد شقق مباعة' : 'لا توجد شقق متاحة'
+              ) : (
+                (() => {
+                  const countStr = totalUnits.toLocaleString('ar-EG')
+                  if (filters.propertyType === 'Land') return `${countStr} أرض متاحة`
+                  if (filters.propertyType === 'Shop') return `${countStr} محل متاح`
+                  if (filters.propertyType === 'House') return `${countStr} بيت متاح`
+                  if (filters.status === 'Sold') return `${countStr} شقة مباعة`
+                  return `${countStr} شقة متاحة`
+                })()
+              )}
             </span>
           )}
         </span>

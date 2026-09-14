@@ -90,3 +90,61 @@ export function formatFloorsText(
     return g.floorTitle
   }).join(' و ')
 }
+
+/**
+ * Calculates the number of apartments/units for a given property:
+ * - If propertyType is 'House' or 'Villa', it counts as 1 complete unit ("الا لو بيت للبيع بيتحسب وحدة كاملة").
+ * - If floors are defined, counts floors matching the requested status (available vs sold).
+ * - If no floors are defined, counts as 1 unit if matching the status.
+ */
+export function getPropertyUnitsCount(
+  p: {
+    status?: string | null
+    propertyType?: string | null
+    floors?: (PropertyFloor | { isAvailable?: boolean })[] | null
+  },
+  statusFilter?: 'Available' | 'Sold' | string
+): number {
+  const isSoldFilter = statusFilter === 'Sold'
+
+  // House / Villa is counted as a single complete unit ("الا لو بيت للبيع بيتحسب وحدة كاملة")
+  if (p.propertyType === 'House' || p.propertyType === 'Villa') {
+    if (isSoldFilter) {
+      return p.status?.toLowerCase() === 'sold' ? 1 : 0
+    }
+    return p.status?.toLowerCase() === 'sold' ? 0 : 1
+  }
+
+  // If the property has floors defined, count floors matching status
+  if (p.floors && p.floors.length > 0) {
+    if (isSoldFilter) {
+      const soldFloors = p.floors.filter(f => f.isAvailable === false).length
+      return soldFloors > 0 ? soldFloors : (p.status?.toLowerCase() === 'sold' ? p.floors.length : 0)
+    }
+    return p.floors.filter(f => f.isAvailable !== false).length
+  }
+
+  // Single unit without floors breakdown
+  if (isSoldFilter) {
+    return p.status?.toLowerCase() === 'sold' ? 1 : 0
+  }
+  return p.status?.toLowerCase() === 'sold' ? 0 : 1
+}
+
+/**
+ * Calculates total available units/apartments across a list of properties.
+ */
+export function getTotalAvailableUnits(
+  properties: {
+    status?: string | null
+    propertyType?: string | null
+    floors?: (PropertyFloor | { isAvailable?: boolean })[] | null
+  }[],
+  statusFilter?: 'Available' | 'Sold' | string
+): number {
+  return properties.reduce((sum, p) => sum + getPropertyUnitsCount(p, statusFilter), 0)
+}
+
+export const getPropertyAvailableUnits = getPropertyUnitsCount
+export const getTotalUnitsCount = getTotalAvailableUnits
+

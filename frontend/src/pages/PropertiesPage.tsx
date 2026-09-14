@@ -4,6 +4,7 @@ import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw } from 'lucid
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
+import { getTotalAvailableUnits } from '../utils/formatters'
 import PropertyCard from '../components/PropertyCard'
 import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
@@ -212,6 +213,7 @@ export default function PropertiesPage() {
   }, [rawItems, query])
 
   const total = filteredItems.length
+  const totalAvailableUnits = useMemo(() => getTotalAvailableUnits(filteredItems), [filteredItems])
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const paginatedItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
@@ -223,7 +225,19 @@ export default function PropertiesPage() {
           <div>
             <h1 className="section-title">العقارات <span>المتاحة</span></h1>
             <p className="section-subtitle" style={{ marginBottom: 0 }}>
-              {loading ? 'جاري التحميل...' : `${total.toLocaleString('ar-EG')} وحدة عقارية مطابقة`}
+              {loading ? (
+                'جاري التحميل...'
+              ) : totalAvailableUnits === 0 ? (
+                'لا توجد شقق متاحة'
+              ) : (
+                (() => {
+                  const countStr = totalAvailableUnits.toLocaleString('ar-EG')
+                  if (query.propertyType === 'Land') return `${countStr} أرض متاحة`
+                  if (query.propertyType === 'Shop' || query.propertyType === 'Commercial') return `${countStr} محل متاح`
+                  if (query.propertyType === 'House' || query.propertyType === 'Villa') return `${countStr} بيت متاح`
+                  return `${countStr} شقة متاحة`
+                })()
+              )}
             </p>
           </div>
           <div style={{ display: 'flex', gap: '.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
