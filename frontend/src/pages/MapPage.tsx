@@ -75,8 +75,23 @@ export default function MapPage() {
       url: 'https://aqar-care.vercel.app/map'
     })
 
-    api.getMap(CITY_SLUG)
-      .then(setData)
+    Promise.all([
+      api.getMap(CITY_SLUG),
+      api.getProperties({ pageSize: 100 }).catch(() => null)
+    ])
+      .then(([mapData, propList]) => {
+        if (mapData && propList?.items) {
+          const propMap = new Map(propList.items.map(p => [p.id, p]))
+          mapData.properties = mapData.properties.map(mp => {
+            const matched = propMap.get(mp.id)
+            return {
+              ...mp,
+              floors: (mp.floors && mp.floors.length > 0) ? mp.floors : matched?.floors,
+            }
+          })
+        }
+        setData(mapData)
+      })
       .catch((e: unknown) => setError(e instanceof Error ? e.message : String(e)))
       .finally(() => setLoading(false))
   }, [])

@@ -106,29 +106,33 @@ export function getPropertyUnitsCount(
   statusFilter?: 'Available' | 'Sold' | string
 ): number {
   const isSoldFilter = statusFilter === 'Sold'
+  const isPropertySold = p.status?.toLowerCase() === 'sold'
+
+  // If looking for available units, but the whole property is sold:
+  if (!isSoldFilter && isPropertySold) {
+    return 0
+  }
+
+  // If looking for sold units, and the whole property is sold:
+  if (isSoldFilter && isPropertySold) {
+    return p.floors && p.floors.length > 0 ? p.floors.length : 1
+  }
 
   // House / Villa is counted as a single complete unit ("الا لو بيت للبيع بيتحسب وحدة كاملة")
   if (p.propertyType === 'House' || p.propertyType === 'Villa') {
-    if (isSoldFilter) {
-      return p.status?.toLowerCase() === 'sold' ? 1 : 0
-    }
-    return p.status?.toLowerCase() === 'sold' ? 0 : 1
+    return isSoldFilter ? 0 : 1
   }
 
   // If the property has floors defined, count floors matching status
   if (p.floors && p.floors.length > 0) {
     if (isSoldFilter) {
-      const soldFloors = p.floors.filter(f => f.isAvailable === false).length
-      return soldFloors > 0 ? soldFloors : (p.status?.toLowerCase() === 'sold' ? p.floors.length : 0)
+      return p.floors.filter(f => f.isAvailable === false).length
     }
     return p.floors.filter(f => f.isAvailable !== false).length
   }
 
   // Single unit without floors breakdown
-  if (isSoldFilter) {
-    return p.status?.toLowerCase() === 'sold' ? 1 : 0
-  }
-  return p.status?.toLowerCase() === 'sold' ? 0 : 1
+  return isSoldFilter ? 0 : 1
 }
 
 /**
