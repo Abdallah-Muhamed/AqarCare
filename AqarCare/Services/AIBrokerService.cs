@@ -116,8 +116,11 @@ public class AIBrokerService
 - ممنوع منعاً باتاً أي مصطلحات إنجليزية مثل Core-Shell! استخدم: (عظم على الطوب الأحمر / نصف تشطيب / لوكس).
 - لا تشتت العميل بعرض عقارات جديدة إذا كان يسأل عن تفاصيل عقار سبق ذكره في المحادثة.
 - ردك يجب أن يكون مركزاً وسريعاً وجذاباً (في حدود 70 إلى 130 كلمة) لكي تكتمل رسالتك بدون انقطاع.
-- في نهاية كل رسالة ترشح فيها عقاراً، ضع التاج الإلزامي:
+- عند ترشيح أي عقار للعميل في ردك:
+  1. اعرض تفاصيل الوحدات والأسعار والمميزات أولاً.
+  2. ضع التاج الإلزامي للعقارات:
 [PROPERTIES: id1, id2]
+  3. بعد التاج مباشرة، اكتب سؤال المتابعة الختامي الموجه للعميل (مثلاً: 'إيه رأي حضرتك في الخيارات دي؟ وهل ده مناسب لطلبك؟ تحب نحدد ميعاد ننزل نعاين على الطبيعة؟') لكي يظهر للعميل كرسالة تالية مباشرة بعد كروت العقارات!
 
 {inventoryBuilder}";
 
@@ -127,9 +130,9 @@ public class AIBrokerService
             new { role = "system", content = systemPrompt }
         };
 
-        // Take last 8 messages to maintain context while keeping token usage within limits
+        // Take last 14 messages to maintain rich conversation memory and context
         var recentMessages = (request.Messages ?? Array.Empty<ChatMessageDto>())
-            .TakeLast(8)
+            .TakeLast(14)
             .ToList();
 
         foreach (var msg in recentMessages)
@@ -165,8 +168,9 @@ public class AIBrokerService
             }
         }
 
-        // 6. Parse [PROPERTIES: id1, id2] tag
+        // 6. Parse [PROPERTIES: id1, id2] tag and separate followUpMessage
         var recommendedIds = new List<int>();
+        string? followUpMessage = null;
         var match = PropertiesTagRegex.Match(replyText);
         if (match.Success)
         {
@@ -180,8 +184,14 @@ public class AIBrokerService
                 }
             }
 
-            // Clean tag from display text
-            replyText = PropertiesTagRegex.Replace(replyText, string.Empty).Trim();
+            var beforeTag = replyText.Substring(0, match.Index).Trim();
+            var afterTag = replyText.Substring(match.Index + match.Length).Trim();
+
+            replyText = beforeTag;
+            if (!string.IsNullOrWhiteSpace(afterTag))
+            {
+                followUpMessage = afterTag;
+            }
         }
 
         // Fallback: if tag was omitted or truncated, detect mentioned property IDs (e.g. "عقار #11" or "#12")
@@ -197,13 +207,32 @@ public class AIBrokerService
             }
         }
 
+        // When properties are recommended, ensure a closing follow-up question is separated after the cards
+        if (recommendedIds.Any())
+        {
+            if (string.IsNullOrWhiteSpace(followUpMessage))
+            {
+                // If replyText ends with a closing question, split it into followUpMessage so it appears after the cards
+                var questionMatch = Regex.Match(replyText, @"(?:\r?\n)+(إيه رأي(?:ك| حضرتك)[\s\S]*|تحب[\s\S]*|هل (?:تحب|يناسبك)[\s\S]*|قوللي[\s\S]*|شايف[\s\S]*)$", RegexOptions.IgnoreCase);
+                if (questionMatch.Success && questionMatch.Index > 20)
+                {
+                    followUpMessage = questionMatch.Value.Trim();
+                    replyText = replyText.Substring(0, questionMatch.Index).Trim();
+                }
+                else
+                {
+                    followUpMessage = "إيه رأي حضرتك في الخيارات المعروضة دي؟ وهل ده مناسب لطلبك؟ تحب نحدد ميعاد ننزل نعاين على الطبيعة؟ 🤝";
+                }
+            }
+        }
+
         // 7. Get Recommended Property Cards
         var recommendedProperties = properties
             .Where(p => recommendedIds.Contains(p.Id))
             .Select(PropertyService.ToListItem)
             .ToList();
 
-        return new AIBrokerResponse(replyText, recommendedIds, recommendedProperties);
+        return new AIBrokerResponse(replyText, recommendedIds, recommendedProperties, followUpMessage);
     }
 
     private List<string> GetAvailableApiKeys()

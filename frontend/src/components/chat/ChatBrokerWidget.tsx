@@ -108,6 +108,17 @@ export const ChatBrokerWidget: React.FC = () => {
       }
 
       setMessages(prev => [...prev, assistantMsg])
+
+      if (response.followUpMessage) {
+        setTimeout(() => {
+          const followUpMsg: ChatMessage = {
+            id: (Date.now() + 2).toString(),
+            role: 'assistant',
+            content: response.followUpMessage!,
+          }
+          setMessages(prev => [...prev, followUpMsg])
+        }, 600)
+      }
     } catch (err) {
       console.error('Chat Broker error:', err)
       const errorMsg: ChatMessage = {

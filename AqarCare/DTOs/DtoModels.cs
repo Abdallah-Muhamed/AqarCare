@@ -401,4 +401,5 @@ public record AIBrokerRequest(IReadOnlyList<ChatMessageDto> Messages);
 public record AIBrokerResponse(
     string Reply,
     IReadOnlyList<int> RecommendedPropertyIds,
-    IReadOnlyList<PropertyListItemDto> RecommendedProperties);
+    IReadOnlyList<PropertyListItemDto> RecommendedProperties,
+    string? FollowUpMessage = null);

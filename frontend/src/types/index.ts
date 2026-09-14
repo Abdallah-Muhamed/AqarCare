@@ -229,5 +229,6 @@ export interface AIBrokerResponse {
   reply: string
   recommendedPropertyIds: number[]
   recommendedProperties: PropertyListItem[]
+  followUpMessage?: string | null
 }
 
