@@ -1,4 +1,4 @@
-using System.Net.Http.Headers;
+﻿using System.Net.Http.Headers;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -17,6 +17,7 @@ public class AIBrokerService
     private readonly ILogger<AIBrokerService> _logger;
 
     private static readonly Regex PropertiesTagRegex = new(@"\[PROPERTIES:\s*([0-9,\s]+)\]", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+    private static int _keyCounter = 0;
 
     public AIBrokerService(
         AqarCareDbContext db,
@@ -32,19 +33,15 @@ public class AIBrokerService
 
     public async Task<AIBrokerResponse> GetBrokerReplyAsync(AIBrokerRequest request, CancellationToken ct = default)
     {
-        var apiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY")?.Trim();
-        if (string.IsNullOrWhiteSpace(apiKey))
-        {
-            apiKey = _configuration["Groq:ApiKey"]?.Trim();
-        }
+        var apiKeys = GetAvailableApiKeys();
         var model = _configuration["Groq:Model"]?.Trim();
         if (string.IsNullOrWhiteSpace(model)) model = "openai/gpt-oss-120b";
         var maxTokens = _configuration.GetValue<int?>("Groq:MaxTokens") ?? 750;
         var temperature = _configuration.GetValue<double?>("Groq:Temperature") ?? 0.6;
 
-        if (string.IsNullOrWhiteSpace(apiKey) || apiKey == "YOUR_GROQ_API_KEY")
+        if (!apiKeys.Any())
         {
-            _logger.LogWarning("Groq API Key is not configured.");
+            _logger.LogWarning("No valid Groq API Keys are configured.");
             return new AIBrokerResponse(
                 "أهلاً بحضرتك يا فندم! المساعد الذكي قيد التجهيز حالياً، لكن تقدر تتواصل معانا فوراً عبر الواتساب لمعرفة كافة التفاصيل ومساعدتك في اختيار العقار المناسب.",
                 Array.Empty<int>(),
@@ -118,19 +115,18 @@ public class AIBrokerService
             groqMessages.Add(new { role, content = msg.Content });
         }
 
-        // 5. Call Groq
+        // 5. Call Groq with Multi-Key Rotation
         string replyText;
         try
         {
-            replyText = await CallGroqApiAsync(apiKey, model, groqMessages, maxTokens, temperature, ct);
+            replyText = await ExecuteGroqWithKeyRotationAsync(apiKeys, model, groqMessages, maxTokens, temperature, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calling Groq API with model {Model}", model);
-            // Fallback to smaller model or friendly broker message
+            _logger.LogError(ex, "All Groq API keys failed for primary model {Model}. Attempting fallback model...", model);
             try
             {
-                replyText = await CallGroqApiAsync(apiKey, "openai/gpt-oss-20b", groqMessages, Math.Min(maxTokens, 450), temperature, ct);
+                replyText = await ExecuteGroqWithKeyRotationAsync(apiKeys, "openai/gpt-oss-20b", groqMessages, Math.Min(maxTokens, 450), temperature, ct);
             }
             catch
             {
@@ -181,6 +177,80 @@ public class AIBrokerService
             .ToList();
 
         return new AIBrokerResponse(replyText, recommendedIds, recommendedProperties);
+    }
+
+    private List<string> GetAvailableApiKeys()
+    {
+        var keys = new List<string>();
+
+        // 1. Environment variables
+        var envKeys = Environment.GetEnvironmentVariable("GROQ_API_KEYS");
+        if (!string.IsNullOrWhiteSpace(envKeys))
+        {
+            keys.AddRange(envKeys.Split(new[] { ',', ';', '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+        }
+
+        var envKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
+        if (!string.IsNullOrWhiteSpace(envKey))
+        {
+            keys.Add(envKey.Trim());
+        }
+
+        // 2. Configuration: Groq:ApiKeys (array)
+        var configKeys = _configuration.GetSection("Groq:ApiKeys").Get<string[]>();
+        if (configKeys != null)
+        {
+            keys.AddRange(configKeys.Where(k => !string.IsNullOrWhiteSpace(k)).Select(k => k.Trim()));
+        }
+
+        // 3. Configuration: Groq:ApiKey (single)
+        var singleKey = _configuration["Groq:ApiKey"]?.Trim();
+        if (!string.IsNullOrWhiteSpace(singleKey))
+        {
+            keys.Add(singleKey);
+        }
+
+        // Deduplicate and filter out placeholders
+        return keys
+            .Where(k => !string.IsNullOrWhiteSpace(k) && !k.StartsWith("YOUR_", StringComparison.OrdinalIgnoreCase))
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+    }
+
+    private async Task<string> ExecuteGroqWithKeyRotationAsync(
+        List<string> keys,
+        string model,
+        List<object> messages,
+        int maxTokens,
+        double temperature,
+        CancellationToken ct)
+    {
+        if (!keys.Any())
+        {
+            throw new InvalidOperationException("No valid Groq API keys available.");
+        }
+
+        var startIndex = (int)((uint)Interlocked.Increment(ref _keyCounter) % (uint)keys.Count);
+        Exception? lastException = null;
+
+        for (int i = 0; i < keys.Count; i++)
+        {
+            var currentIndex = (startIndex + i) % keys.Count;
+            var key = keys[currentIndex];
+            var keyMask = key.Length > 10 ? key[..6] + "..." + key[^4..] : "***";
+
+            try
+            {
+                return await CallGroqApiAsync(key, model, messages, maxTokens, temperature, ct);
+            }
+            catch (Exception ex)
+            {
+                lastException = ex;
+                _logger.LogWarning(ex, "Groq call with key #{Index} ({KeyMask}) failed for model {Model}. Rotating to next key in pool...", currentIndex + 1, keyMask, model);
+            }
+        }
+
+        throw lastException ?? new InvalidOperationException("All Groq API keys failed.");
     }
 
     private async Task<string> CallGroqApiAsync(
