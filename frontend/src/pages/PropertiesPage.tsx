@@ -183,6 +183,13 @@ export default function PropertiesPage() {
 
       return true
     }).sort((a, b) => {
+      // Always place sold properties at the very bottom
+      const isSoldA = a.status?.toLowerCase() === 'sold' || (a.floors && a.floors.length > 0 && a.floors.every(f => f.isAvailable === false))
+      const isSoldB = b.status?.toLowerCase() === 'sold' || (b.floors && b.floors.length > 0 && b.floors.every(f => f.isAvailable === false))
+
+      if (!isSoldA && isSoldB) return -1
+      if (isSoldA && !isSoldB) return 1
+
       switch (query.sortBy) {
         case 'price_asc': {
           const pA = a.price ?? 0

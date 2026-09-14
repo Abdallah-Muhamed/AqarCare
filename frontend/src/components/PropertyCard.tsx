@@ -20,11 +20,14 @@ const finishingLabel: Record<string, string> = {
 const statusBadge: Record<string, { label: string; cls: string }> = {
   Available:  { label: 'متاح', cls: 'badge-green' },
   Reserved:   { label: 'محجوز', cls: 'badge-gold' },
-  Sold:       { label: 'مباع', cls: 'badge' },
+  Sold:       { label: 'تم البيع', cls: 'badge-sold' },
 }
 
 export default function PropertyCard({ property: p }: Props) {
-  const st = statusBadge[p.status] ?? { label: p.status, cls: 'badge' }
+  const isSold = p.status?.toLowerCase() === 'sold' || (p.floors && p.floors.length > 0 && p.floors.every(f => f.isAvailable === false))
+  const st = isSold 
+    ? { label: 'تم البيع', cls: 'badge-sold' } 
+    : (statusBadge[p.status] ?? { label: p.status, cls: 'badge' })
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
   const [imgError, setImgError] = useState(false)
   const placeholderImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
@@ -56,7 +59,7 @@ export default function PropertyCard({ property: p }: Props) {
     : null
   
   return (
-    <Link to={`/properties/${p.id}`} className="prop-card card">
+    <Link to={`/properties/${p.id}`} className={`prop-card card ${isSold ? 'prop-card--sold' : ''}`}>
       {/* Image */}
       <div className="prop-card__img-wrap">
         {isVideo && !imgError ? (
@@ -77,21 +80,29 @@ export default function PropertyCard({ property: p }: Props) {
             onError={() => setImgError(true)}
           />
         )}
-        {isVideo && (
+        {isSold && (
+          <>
+            <div className="prop-card__sold-overlay" />
+            <div className="prop-card__sold-stamp">
+              <span>تم البيع</span>
+            </div>
+          </>
+        )}
+        {isVideo && !isSold && (
           <div className="prop-card__video-indicator">
             <Play size={24} fill="white" />
           </div>
         )}
         <div className="prop-card__overlay" />
-        {p.isFeatured && (
+        {p.isFeatured && !isSold && (
           <div className="prop-card__featured"><Star size={12} fill="currentColor" />مميز</div>
         )}
-        {p.isUnderConstruction && (
+        {p.isUnderConstruction && !isSold && (
           <div className="prop-card__featured" style={{ right: p.isFeatured ? '74px' : '12px', background: '#fffbeb', color: '#b45309' }}>
             🏗️ تحت الإنشاء
           </div>
         )}
-        {p.listingType && (
+        {!isSold && p.listingType && (
           <div className={`prop-card__listing badge ${p.listingType === 'Sale' ? 'badge-blue' : 'badge-gold'}`}>
             {listingLabel[p.listingType] ?? p.listingType}
           </div>
@@ -172,6 +183,21 @@ export default function PropertyCard({ property: p }: Props) {
         {/* Price */}
         <div className="prop-card__price">
           {(() => {
+            if (isSold) {
+              return (
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', padding: '2px 0' }}>
+                  <span style={{ fontSize: '0.92rem', fontWeight: 900, color: '#dc2626', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span>🔴</span> تم البيع بالكامل
+                  </span>
+                  {p.price != null && (
+                    <span style={{ fontSize: '0.8rem', color: 'var(--clr-text-muted)', textDecoration: 'line-through' }}>
+                      {p.price.toLocaleString('ar-EG')} ج.م
+                    </span>
+                  )}
+                </div>
+              );
+            }
+
             const availableFloors = p.floors && p.floors.length > 0
               ? p.floors.filter(f => f.isAvailable)
               : [];
