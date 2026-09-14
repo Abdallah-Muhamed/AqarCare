@@ -39,14 +39,6 @@ interface Property {
   floors?: PropertyFloor[];
 }
 
-interface FinishingPackage {
-  id: number;
-  name: string;
-  slug: string;
-  pricePerSqm: number;
-  shortDescription: string;
-}
-
 // ── Security note ─────────────────────────────────────────────────────────────
 // The API key is NEVER stored in the source code.
 // The user enters it in the login form → it is sent to the server on every
@@ -70,7 +62,6 @@ export default function AdminPanelPage() {
   const [apiKey, setApiKey] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [properties, setProperties] = useState<Property[]>([]);
-  const [packages, setPackages] = useState<FinishingPackage[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
   const [mapPickerProperty, setMapPickerProperty] = useState<Property | null>(null);
@@ -137,7 +128,6 @@ export default function AdminPanelPage() {
         sessionStorage.setItem('adminApiKey', apiKey);
         setIsAuthenticated(true);
         fetchProperties(apiKey);
-        fetchPackages();
       } else if (res.status === 401) {
         setError('مفتاح API غير صحيح');
       } else {
@@ -156,7 +146,6 @@ export default function AdminPanelPage() {
       setApiKey(saved);
       setIsAuthenticated(true);
       fetchProperties(saved);
-      fetchPackages();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -172,15 +161,6 @@ export default function AdminPanelPage() {
       }
     } catch {
       setError('فشل تحميل العقارات');
-    }
-  };
-
-  const fetchPackages = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/finishing-packages`);
-      if (res.ok) setPackages(await res.json());
-    } catch {
-      console.error('Failed to fetch packages');
     }
   };
 
@@ -687,21 +667,6 @@ export default function AdminPanelPage() {
                     </div>
 
                     <div className="form-group">
-                      <label>باقة التشطيب</label>
-                      <select
-                        value={formData.finishingPackageId}
-                        onChange={(e) => setFormData({ ...formData, finishingPackageId: e.target.value })}
-                      >
-                        <option value="">بدون باقة</option>
-                        {packages.map((pkg) => (
-                          <option key={pkg.id} value={pkg.id}>
-                            {pkg.name} — {pkg.pricePerSqm.toLocaleString('ar-EG')} ج/م²
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
                       <label>الحالة</label>
                       <select
                         value={formData.status}
@@ -941,7 +906,7 @@ export default function AdminPanelPage() {
                         type="text"
                         value={formData.detailedAddress}
                         onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
-                        placeholder="مثال: برج الصفوة، أمام مسجد البكري، الدور 3"
+                        placeholder="مثال: برج الصفوة، أمام مسجد البكري"
                       />
                       <small style={{ color: 'var(--clr-text-muted)', fontSize: '0.78rem' }}>
                         يظهر هذا العنوان كاملاً على كارت العقار وصفحة التفاصيل لتوجيه العملاء بدقة.
