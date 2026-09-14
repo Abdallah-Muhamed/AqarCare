@@ -75,15 +75,23 @@ public class AIBrokerService
             var typeArabic = FormatPropertyTypeArabic(p.PropertyType);
             var listingArabic = FormatListingTypeArabic(p.ListingType);
             var streetAnalysis = AnalyzeStreetLocation(p.Title, p.Address, p.DetailedAddress, p.Description, p.StreetWidth);
+            var districtArabic = (p.District == "منشية البكري" || (p.Title != null && p.Title.Contains("الشعبية")) || (p.Address != null && p.Address.Contains("الشعبية")))
+                ? "منشية البكري (الشعبية)"
+                : (p.District ?? "المحلة الكبرى");
 
             inventoryBuilder.AppendLine(
-                $"- [عقار #{p.Id}]: العنوان: \"{p.Title}\" | النوع: {typeArabic} ({listingArabic}) | الحي/المنطقة: {p.District}، {p.City} | العنوان بالتفصيل: {p.Address} {p.DetailedAddress} | {streetAnalysis} | المساحة: {p.AreaSqm}م² | السعر: {priceStr} | نظام الدفع: {installmentStr} | التشطيب: {finishingArabic} | الغرف: {p.Bedrooms} | الحمامات: {p.Bathrooms} | المصعد: {(p.ElevatorAvailable ? "يوجد أسانسير" : "بدون")} | العدادات: {(p.ElectricityMeterAvailable ? "كهرباء " : "")}{(p.WaterMeterAvailable ? "مياه " : "")}{(p.GasMeterAvailable ? "غاز" : "")} | الأدوار المتاحة: [{floorsSummary}] | نبذة: {p.Description}"
+                $"- [عقار #{p.Id}]: العنوان: \"{p.Title}\" | النوع: {typeArabic} ({listingArabic}) | الحي/المنطقة: {districtArabic}، {p.City} | العنوان بالتفصيل: {p.Address} {p.DetailedAddress} | {streetAnalysis} | المساحة: {p.AreaSqm}م² | السعر: {priceStr} | نظام الدفع: {installmentStr} | التشطيب: {finishingArabic} | الغرف: {p.Bedrooms} | الحمامات: {p.Bathrooms} | المصعد: {(p.ElevatorAvailable ? "يوجد أسانسير" : "بدون")} | العدادات: {(p.ElectricityMeterAvailable ? "كهرباء " : "")}{(p.WaterMeterAvailable ? "مياه " : "")}{(p.GasMeterAvailable ? "غاز" : "")} | الأدوار المتاحة: [{floorsSummary}] | نبذة: {p.Description}"
             );
         }
 
         // 3. Formulate System Prompt
         var systemPrompt = $@"أنت 'مستشارك العقاري' - بائع وبروكر عقاري مصري محترف ومقنع جداً وخبير بالسوق العقاري في المحلة الكبرى يعمل لدى منصة AqarCare (عقار كير).
 مهمتك ليست مجرد فلترة أو بحث في قاعدة البيانات، بل التحدث كبائع عقارات مصري شاطر وخبير، يبادر فوراً بعرض أفضل الوحدات المتاحة للعميل وإقناعه بمميزاتها وقيمتها وموقعها بدقة، ثم يسأله عن رأيه فيها ويدعوه للمعاينة.
+
+معلومة جغرافية جوهرية عن المحلة الكبرى (الشعبية = منشية البكري):
+- في مدينة المحلة الكبرى، منطقة 'الشعبية' هي نفسها تماماً منطقة 'منشية البكري'! الاسمان يشيران إلى نفس الحي والمكان والكتلة السكنية الواحدة، ويستخدمهما أهالي المحلة بالتبادل (تضم شوارع: جمال عبد الناصر، محطة المنار، شارع المأمون، شارع الفلل، امتداد الصفوة، شارع عمار بن ياسر، طلعت النجار).
+- إذا قال العميل 'بدور في الشعبية' أو قال 'بدور في منشية البكري'، فكافة العقارات المتاحة عندك في القائمة تقع في هذه المنطقة وتلبي طلبه فوراً!
+- إياك إطلاقاً أن تفرّق بينهما أو تقول للعميل: 'مش متاح في الشعبية بس متاح في منشية البكري'، بل أكد له فوراً: 'متاح عندنا خيارات ممتازة في الشعبية / منشية البكري' واعرض عليه الوحدات مباشرة!
 
 فهم ومقارنة الشوارع العمومية والجانبية (ذكاء وخبرة البروكر):
 1. الشارع العمومي (الرئيسي) مثل شارع المأمون، امتداد الصفوة، جمال عبد الناصر:
