@@ -1,4 +1,4 @@
-﻿/* Floating Broker Launcher */
+/* Floating Broker Launcher */
 .broker-launcher {
   position: fixed;
   bottom: 24px;
@@ -637,6 +637,57 @@
 .broker-chat-send-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Professional Advisory Banner */
+.broker-notice-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #fdfbf7;
+  border: 1px solid #ebdccb;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  box-shadow: 0 2px 6px rgba(37, 62, 52, 0.04);
+}
+
+.broker-notice-banner__icon {
+  color: #b7793d;
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.broker-notice-banner__content {
+  flex: 1;
+  min-width: 0;
+}
+
+.broker-notice-banner__text {
+  margin: 0;
+  font-size: 0.76rem;
+  line-height: 1.55;
+  color: #4a5850;
+}
+
+.broker-notice-banner__text strong {
+  color: #253e34;
+  font-weight: 700;
+}
+
+.broker-notice-banner__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  color: #1b7a4b;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.broker-notice-banner__link:hover {
+  color: #125433;
 }
 
 /* Mobile Adjustments */

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { MessageSquare, Sparkles, Send, X, RotateCcw, Building2, ExternalLink, MapPin, Phone, Maximize2, Minimize2 } from 'lucide-react'
+import { MessageSquare, Sparkles, Send, X, RotateCcw, Building2, ExternalLink, MapPin, Phone, Maximize2, Minimize2, ShieldCheck } from 'lucide-react'
 import { api } from '../../api'
 import type { ChatMessage, PropertyListItem } from '../../types'
 import './ChatBrokerWidget.css'
@@ -229,6 +229,26 @@ export const ChatBrokerWidget: React.FC = () => {
           {/* Messages Body */}
           <div className="broker-chat-messages">
             <div className="broker-chat-messages__inner">
+              {/* Professional Advisory Notice */}
+              <div className="broker-notice-banner">
+                <div className="broker-notice-banner__icon">
+                  <ShieldCheck size={16} />
+                </div>
+                <div className="broker-notice-banner__content">
+                  <p className="broker-notice-banner__text">
+                    <strong>تنويه استرشادي:</strong> ترشيحات المساعد الذكي مقدمة للاستكشاف الأولي. للتأكد التام من تفاصيل الأسعار والتعاقد أو في حال رغبتك في مواصفات خاصة لم تجدها بدقة، يسعدنا تواصلك المباشر مع فريقنا العقاري عبر{' '}
+                    <a
+                      href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('السلام عليكم، أرغب في استشارة عقارية والتأكد من تفاصيل بعض الوحدات المتاحة على عقار كير.')}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="broker-notice-banner__link"
+                    >
+                      الواتساب <Phone size={11} />
+                    </a>
+                  </p>
+                </div>
+              </div>
+
               {messages.map(msg => (
                 <div
                   key={msg.id}
