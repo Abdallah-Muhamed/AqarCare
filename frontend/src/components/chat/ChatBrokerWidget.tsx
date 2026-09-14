@@ -64,10 +64,18 @@ export const ChatBrokerWidget: React.FC = () => {
     if (isOpen) {
       setTimeout(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-        inputRef.current?.focus()
       }, 100)
     }
   }, [isOpen, messages, loading, isFullScreen])
+
+  // Focus input on initial open ONLY on desktop with physical keyboard (never on mobile touchscreens)
+  useEffect(() => {
+    if (isOpen && typeof window !== 'undefined' && window.innerWidth > 768) {
+      setTimeout(() => {
+        inputRef.current?.focus()
+      }, 200)
+    }
+  }, [isOpen])
 
   // Hide on Admin pages
   if (location.pathname.startsWith('/admin')) {
@@ -364,7 +372,10 @@ export const ChatBrokerWidget: React.FC = () => {
                   <button
                     key={i}
                     className="broker-chip"
-                    onClick={() => handleSendMessage(starter)}
+                    onClick={() => {
+                      inputRef.current?.blur()
+                      handleSendMessage(starter)
+                    }}
                   >
                     {starter}
                   </button>
