@@ -1456,4 +1456,56 @@
   border: 1px solid rgba(59, 130, 246, 0.3);
 }
 
+/* Floor Status Button (متاح / مباع) */
+.btn-floor-status {
+  padding: 0.38rem 0.85rem;
+  border-radius: 99px;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.btn-floor-status--available {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+.btn-floor-status--available:hover {
+  background: rgba(16, 185, 129, 0.25);
+  border-color: #10b981;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.2);
+}
+
+.btn-floor-status--sold {
+  background: rgba(239, 68, 68, 0.18);
+  color: #ef4444;
+  border-color: rgba(239, 68, 68, 0.45);
+}
+
+.btn-floor-status--sold:hover {
+  background: rgba(239, 68, 68, 0.28);
+  border-color: #ef4444;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
+}
+
+.floor-row--sold {
+  background: rgba(239, 68, 68, 0.06) !important;
+}
+
+.floor-row--sold td input {
+  opacity: 0.75;
+}
+
+
 

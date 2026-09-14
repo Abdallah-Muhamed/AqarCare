@@ -287,6 +287,30 @@
   transform: translateY(-2px);
 }
 
+.floor-spec-card--sold {
+  background: #fbf9f6;
+  border-color: #e5e0d8;
+  opacity: 0.88;
+}
+
+.floor-spec-card--sold:hover {
+  transform: none;
+  border-color: #cbd5e1;
+}
+
+.badge-sold {
+  background: #fee2e2;
+  color: #dc2626;
+  border: 1px solid #fca5a5;
+  font-weight: 800;
+}
+
+.floor-group-box__badge--sold {
+  background: #fee2e2 !important;
+  color: #dc2626 !important;
+  border-color: #fca5a5 !important;
+}
+
 .floor-spec-card__header {
   display: flex;
   justify-content: space-between;

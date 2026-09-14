@@ -253,64 +253,83 @@ export default function PropertyDetailPage() {
               {/* Multiple Floors / Units Section */}
               {prop.floors && prop.floors.length > 0 && (() => {
                 const groups = groupFloors(prop.floors)
-                const totalUnits = prop.floors.length
+                const availableUnits = prop.floors.filter(f => f.isAvailable).length
+                const soldUnits = prop.floors.filter(f => !f.isAvailable).length
 
                 return (
                   <div className="detail-floors-card">
                     <div className="detail-floors-title">
                       <Building2 size={20} />
-                      <span>الأدوار والشقق المتاحة ({groups.length > 1 ? `${groups.length} أدوار` : groups[0]?.floorTitle} — {totalUnits} شقق متاحة)</span>
+                      <span>
+                        الأدوار والشقق ({groups.length > 1 ? `${groups.length} أدوار` : groups[0]?.floorTitle} — {availableUnits > 0 ? `${availableUnits} شقق متاحة` : 'جميع الوحدات مباعة'}{soldUnits > 0 ? ` • ${soldUnits} مباع` : ''})
+                      </span>
                     </div>
 
                     <div className="detail-floors-groups">
-                      {groups.map((group, gIdx) => (
-                        <div key={gIdx} className="floor-group-box">
-                          {(groups.length > 1 || group.items.length > 1) && (
-                            <div className="floor-group-box__header">
-                              <div className="floor-group-box__title">
-                                🏢 <span>{group.floorTitle}</span>
+                      {groups.map((group, gIdx) => {
+                        const groupAvail = group.items.filter(i => i.isAvailable).length
+                        const groupSold = group.items.filter(i => !i.isAvailable).length
+
+                        return (
+                          <div key={gIdx} className="floor-group-box">
+                            {(groups.length > 1 || group.items.length > 1) && (
+                              <div className="floor-group-box__header">
+                                <div className="floor-group-box__title">
+                                  🏢 <span>{group.floorTitle}</span>
+                                </div>
+                                {group.items.length > 1 && (
+                                  <span className={`floor-group-box__badge ${groupAvail === 0 ? 'floor-group-box__badge--sold' : ''}`}>
+                                    {groupAvail > 0 ? `${groupAvail} شقق متاحة بالدور` : 'تم بيع شقق الدور بالكامل'}
+                                    {groupSold > 0 && groupAvail > 0 ? ` (${groupSold} مباع)` : ''}
+                                  </span>
+                                )}
                               </div>
-                              {group.items.length > 1 && (
-                                <span className="floor-group-box__badge">
-                                  {group.items.length} شقق متاحة بالدور
-                                </span>
-                              )}
-                            </div>
-                          )}
+                            )}
 
-                          <div className="detail-floors-grid">
-                            {group.items.map((item, idx) => {
-                              const aptName = group.items.length > 1
-                                ? (item.floorName && !item.floorName.startsWith('الدور')
-                                    ? item.floorName
-                                    : `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`)
-                                : (item.floorName && item.floorName !== group.floorTitle && !item.floorName.startsWith('الدور')
-                                    ? item.floorName
-                                    : (item.areaSqm ? `شقة (${item.areaSqm} م²)` : 'شقة بالدور'))
+                            <div className="detail-floors-grid">
+                              {group.items.map((item, idx) => {
+                                const aptName = group.items.length > 1
+                                  ? (item.floorName && !item.floorName.startsWith('الدور')
+                                      ? item.floorName
+                                      : `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`)
+                                  : (item.floorName && item.floorName !== group.floorTitle && !item.floorName.startsWith('الدور')
+                                      ? item.floorName
+                                      : (item.areaSqm ? `شقة (${item.areaSqm} م²)` : 'شقة بالدور'))
 
-                              return (
-                                <div key={item.id ?? idx} className="floor-spec-card">
-                                  <div className="floor-spec-card__header">
-                                    <span style={{ fontWeight: 800, color: 'var(--clr-text)' }}>{aptName}</span>
-                                    <span className={`badge ${item.isAvailable ? 'badge-green' : 'badge'}`} style={{ fontSize: '0.68rem', padding: '0.2rem 0.5rem' }}>
-                                      {item.isAvailable ? 'متاح' : 'مباع'}
-                                    </span>
-                                  </div>
-                                  <div className="floor-spec-card__price">
-                                    {item.price != null
-                                      ? <>💵 كاش: {item.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span></>
-                                      : 'السعر عند الطلب'}
-                                  </div>
-                                  {item.installmentPrice != null && (
-                                    <div className="floor-spec-card__price" style={{ color: '#1d4ed8', fontSize: '0.98rem', marginTop: '2px' }}>
-                                      💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
+                                return (
+                                  <div key={item.id ?? idx} className={`floor-spec-card ${!item.isAvailable ? 'floor-spec-card--sold' : ''}`}>
+                                    <div className="floor-spec-card__header">
+                                      <span style={{ fontWeight: 800, color: item.isAvailable ? 'var(--clr-text)' : '#64748b' }}>{aptName}</span>
+                                      <span className={`badge ${item.isAvailable ? 'badge-green' : 'badge-sold'}`} style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', fontWeight: 800 }}>
+                                        {item.isAvailable ? '🟢 متاح' : '🔴 تم البيع'}
+                                      </span>
                                     </div>
-                                  )}
-                                  {item.pricePerMeter != null && (
-                                    <div className="floor-spec-card__sub" style={{ color: 'var(--clr-gold)', fontWeight: 700 }}>
-                                      📏 سعر المتر: {item.pricePerMeter.toLocaleString('ar-EG')} ج/م²
+                                    <div className="floor-spec-card__price">
+                                      {item.isAvailable ? (
+                                        item.price != null
+                                          ? <>💵 كاش: {item.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span></>
+                                          : 'السعر عند الطلب'
+                                      ) : (
+                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                          {item.price != null ? (
+                                            <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.92rem' }}>
+                                              💵 {item.price.toLocaleString('ar-EG')} ج
+                                            </span>
+                                          ) : <span />}
+                                          <span style={{ color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>❌ مباع</span>
+                                        </div>
+                                      )}
                                     </div>
-                                  )}
+                                    {item.isAvailable && item.installmentPrice != null && (
+                                      <div className="floor-spec-card__price" style={{ color: '#1d4ed8', fontSize: '0.98rem', marginTop: '2px' }}>
+                                        💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
+                                      </div>
+                                    )}
+                                    {item.pricePerMeter != null && (
+                                      <div className="floor-spec-card__sub" style={{ color: item.isAvailable ? 'var(--clr-gold)' : '#94a3b8', fontWeight: 700 }}>
+                                        📏 سعر المتر: {item.pricePerMeter.toLocaleString('ar-EG')} ج/م²
+                                      </div>
+                                    )}
                                   {item.areaSqm != null && (
                                     <div className="floor-spec-card__sub">
                                       📐 المساحة: {item.areaSqm} م²
@@ -331,9 +350,10 @@ export default function PropertyDetailPage() {
                             })}
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      )
+                    })}
                   </div>
+                </div>
                 )
               })()}
 

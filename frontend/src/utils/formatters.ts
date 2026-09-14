@@ -78,9 +78,9 @@ export function formatFloorsText(
   if (!floors || floors.length === 0) return ''
 
   const available = floors.filter(f => f.isAvailable !== false)
-  const targetFloors = available.length > 0 ? available : floors
+  if (available.length === 0) return 'جميع الأدوار مباعة'
 
-  const groups = groupFloors(targetFloors)
+  const groups = groupFloors(available)
   if (groups.length === 0) return ''
 
   return groups.map(g => {

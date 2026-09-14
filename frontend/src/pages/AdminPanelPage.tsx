@@ -695,7 +695,7 @@ export default function AdminPanelPage() {
                     <div>
                       <h3 className="form-section__title">🏢 الأدوار والأسعار وسعر المتر</h3>
                       <p className="form-section__sub">
-                        حدد الدور والمساحة والغرف والحمامات وسعر الكاش أو سعر المتر ويتم حسابهما تلقائياً، مع إمكانية إضافة سعر التقسيط لكل دور
+                        حدد الدور والمساحة والغرف والحمامات وسعر الكاش أو سعر المتر ويتم حسابهما تلقائياً، مع إمكانية إضافة سعر التقسيط لكل دور، وتمييز أي دور أو شقة كـ (متاح 🟢) أو (مباع 🔴) بضغطة زر.
                       </p>
                     </div>
                     <button
@@ -724,13 +724,13 @@ export default function AdminPanelPage() {
                             <th>سعر المتر (جنيه)</th>
                             <th>سعر الكاش (جنيه)</th>
                             <th>سعر التقسيط (جنيه)</th>
-                            <th>متاح؟</th>
-                            <th>حذف</th>
+                            <th style={{ minWidth: '125px', textAlign: 'center' }}>الحالة (متاح / مباع)</th>
+                            <th style={{ textAlign: 'center' }}>حذف</th>
                           </tr>
                         </thead>
                         <tbody>
                           {floors.map((floor, index) => (
-                            <tr key={index}>
+                            <tr key={index} className={!floor.isAvailable ? 'floor-row--sold' : ''}>
                               <td>
                                 <input
                                   type="text"
@@ -805,12 +805,14 @@ export default function AdminPanelPage() {
                                 />
                               </td>
                               <td style={{ textAlign: 'center' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={floor.isAvailable}
-                                  onChange={(e) => updateFloor(index, { isAvailable: e.target.checked })}
-                                  style={{ width: 18, height: 18, accentColor: 'var(--clr-gold)' }}
-                                />
+                                <button
+                                  type="button"
+                                  onClick={() => updateFloor(index, { isAvailable: !floor.isAvailable })}
+                                  className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
+                                  title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
+                                >
+                                  {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
+                                </button>
                               </td>
                               <td style={{ textAlign: 'center' }}>
                                 <button
@@ -1123,11 +1125,18 @@ export default function AdminPanelPage() {
                           <span className={`admin-badge ${property.isPublished ? 'admin-badge--available' : 'admin-badge--sold'}`} style={{ fontSize: '0.72rem' }}>
                             {property.isPublished ? '🌐 منشور' : '🔒 مسودة'}
                           </span>
-                          {property.floors && property.floors.length > 0 && (
-                            <span className="admin-badge admin-badge--floors" title="الأدوار المتاحة">
-                              🏢 {formatFloorsText(property.floors)}
-                            </span>
-                          )}
+                          {property.floors && property.floors.length > 0 && (() => {
+                            const avail = property.floors.filter(f => f.isAvailable !== false).length;
+                            const sold = property.floors.filter(f => f.isAvailable === false).length;
+                            return (
+                              <span
+                                className={`admin-badge ${avail === 0 ? 'admin-badge--sold' : 'admin-badge--floors'}`}
+                                title={`الأدوار: ${formatFloorsText(property.floors)}`}
+                              >
+                                🏢 {property.floors.length} أدوار ({avail} متاح{sold > 0 ? ` • ${sold} مباع` : ''})
+                              </span>
+                            );
+                          })()}
                         </div>
 
                         <div className="property-actions">
