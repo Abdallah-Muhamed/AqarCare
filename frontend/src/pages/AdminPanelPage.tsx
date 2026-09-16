@@ -286,29 +286,56 @@ export default function AdminPanelPage() {
         ? updated.areaSqm
         : (formData.areaSqm ? parseFloat(formData.areaSqm) : 0);
 
-      // If price was updated
+      // If price (cash) was updated
       if ('price' in patch) {
         if (updated.price && effectiveArea > 0) {
           updated.pricePerMeter = Math.round(updated.price / effectiveArea);
         } else if (!updated.price) {
+          if (updated.installmentPrice && effectiveArea > 0) {
+            updated.pricePerMeter = Math.round(updated.installmentPrice / effectiveArea);
+          } else {
+            updated.pricePerMeter = null;
+          }
+        }
+      }
+      // If installmentPrice was updated
+      else if ('installmentPrice' in patch) {
+        if (!updated.price && updated.installmentPrice && effectiveArea > 0) {
+          updated.pricePerMeter = Math.round(updated.installmentPrice / effectiveArea);
+        } else if (!updated.price && !updated.installmentPrice) {
           updated.pricePerMeter = null;
         }
       }
       // If pricePerMeter was updated
       else if ('pricePerMeter' in patch) {
         if (updated.pricePerMeter && effectiveArea > 0) {
-          updated.price = Math.round(updated.pricePerMeter * effectiveArea);
+          if (!updated.price && updated.installmentPrice) {
+            updated.installmentPrice = Math.round(updated.pricePerMeter * effectiveArea);
+          } else {
+            updated.price = Math.round(updated.pricePerMeter * effectiveArea);
+          }
         } else if (!updated.pricePerMeter) {
-          updated.price = null;
+          if (!updated.price && updated.installmentPrice) {
+            updated.installmentPrice = null;
+          } else {
+            updated.price = null;
+          }
         }
       }
       // If areaSqm was updated
       else if ('areaSqm' in patch) {
         if (updated.areaSqm && updated.areaSqm > 0) {
           if (updated.pricePerMeter && updated.pricePerMeter > 0) {
-            updated.price = Math.round(updated.pricePerMeter * updated.areaSqm);
-          } else if (updated.price && updated.price > 0) {
-            updated.pricePerMeter = Math.round(updated.price / updated.areaSqm);
+            if (!updated.price && updated.installmentPrice) {
+              updated.installmentPrice = Math.round(updated.pricePerMeter * updated.areaSqm);
+            } else {
+              updated.price = Math.round(updated.pricePerMeter * updated.areaSqm);
+            }
+          } else {
+            const baseP = updated.price ?? updated.installmentPrice;
+            if (baseP && baseP > 0) {
+              updated.pricePerMeter = Math.round(baseP / updated.areaSqm);
+            }
           }
         }
       }
@@ -878,7 +905,7 @@ export default function AdminPanelPage() {
                                 placeholder="0"
                                 onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
                                 className="floor-input"
-                                title="يتم حساب سعر الكاش تلقائياً بناءً على سعر المتر والمساحة"
+                                title="يتم حساب سعر الكاش أو التقسيط تلقائياً بناءً على سعر المتر والمساحة"
                               />
                             </div>
 
@@ -902,6 +929,7 @@ export default function AdminPanelPage() {
                                 placeholder="0"
                                 onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
                                 className="floor-input"
+                                title="في حال عدم وجود سعر كاش، يتم حساب سعر المتر تلقائياً بناءً على سعر التقسيط والمساحة"
                               />
                             </div>
 
@@ -995,7 +1023,7 @@ export default function AdminPanelPage() {
                                   placeholder="0"
                                   onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
                                   className="floor-input"
-                                  title="يتم حساب سعر الكاش تلقائياً بناءً على سعر المتر والمساحة"
+                                  title="يتم حساب سعر الكاش أو التقسيط تلقائياً بناءً على سعر المتر والمساحة"
                                 />
                               </td>
                               <td>
@@ -1015,6 +1043,7 @@ export default function AdminPanelPage() {
                                   placeholder="0"
                                   onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
                                   className="floor-input"
+                                  title="في حال عدم وجود سعر كاش، يتم حساب سعر المتر تلقائياً بناءً على سعر التقسيط والمساحة"
                                 />
                               </td>
                               <td style={{ textAlign: 'center' }}>

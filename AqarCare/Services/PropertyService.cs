@@ -232,11 +232,15 @@ public class PropertyService
             {
                 var floorPrice = f.Price;
                 var floorPpm = f.PricePerMeter;
-                if (!floorPpm.HasValue && floorPrice.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
+                if (!floorPpm.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
                 {
-                    floorPpm = Math.Round(floorPrice.Value / f.AreaSqm.Value, 2);
+                    var basePrice = floorPrice ?? f.InstallmentPrice;
+                    if (basePrice.HasValue)
+                    {
+                        floorPpm = Math.Round(basePrice.Value / f.AreaSqm.Value, 2);
+                    }
                 }
-                else if (!floorPrice.HasValue && floorPpm.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
+                else if (!floorPrice.HasValue && !f.InstallmentPrice.HasValue && floorPpm.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
                 {
                     floorPrice = Math.Round(floorPpm.Value * f.AreaSqm.Value, 2);
                 }
@@ -341,11 +345,15 @@ public class PropertyService
             {
                 var floorPrice = inputFloor.Price;
                 var floorPpm = inputFloor.PricePerMeter;
-                if (!floorPpm.HasValue && floorPrice.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
+                if (!floorPpm.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
                 {
-                    floorPpm = Math.Round(floorPrice.Value / inputFloor.AreaSqm.Value, 2);
+                    var basePrice = floorPrice ?? inputFloor.InstallmentPrice;
+                    if (basePrice.HasValue)
+                    {
+                        floorPpm = Math.Round(basePrice.Value / inputFloor.AreaSqm.Value, 2);
+                    }
                 }
-                else if (!floorPrice.HasValue && floorPpm.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
+                else if (!floorPrice.HasValue && !inputFloor.InstallmentPrice.HasValue && floorPpm.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
                 {
                     floorPrice = Math.Round(floorPpm.Value * inputFloor.AreaSqm.Value, 2);
                 }

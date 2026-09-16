@@ -43,13 +43,15 @@ export default function PropertyCard({ property: p }: Props) {
   const floorPpms = (p.floors || [])
     .map(f => {
       if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter
-      if (f.price != null && f.areaSqm != null && f.areaSqm > 0) return Math.round(f.price / f.areaSqm)
+      const basePrice = f.price ?? f.installmentPrice
+      if (basePrice != null && f.areaSqm != null && f.areaSqm > 0) return Math.round(basePrice / f.areaSqm)
       return null
     })
     .filter((ppm): ppm is number => ppm != null && ppm > 0)
 
-  const unitPpm = (p.price != null && p.areaSqm != null && p.areaSqm > 0)
-    ? Math.round(p.price / p.areaSqm)
+  const propBasePrice = p.price ?? p.installmentPrice
+  const unitPpm = (propBasePrice != null && p.areaSqm != null && p.areaSqm > 0)
+    ? Math.round(propBasePrice / p.areaSqm)
     : null
 
   const minPpm = floorPpms.length > 0 ? Math.min(...floorPpms) : unitPpm

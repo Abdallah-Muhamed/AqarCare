@@ -345,11 +345,19 @@ export default function PropertyDetailPage() {
                                         💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
                                       </div>
                                     )}
-                                    {item.pricePerMeter != null && (
-                                      <div className="floor-spec-card__sub" style={{ color: item.isAvailable ? 'var(--clr-gold)' : '#94a3b8', fontWeight: 700 }}>
-                                        📏 سعر المتر: {item.pricePerMeter.toLocaleString('ar-EG')} ج/م²
-                                      </div>
-                                    )}
+                                     {(() => {
+                                       const itemPpm = item.pricePerMeter ?? (
+                                         (item.price ?? item.installmentPrice) && item.areaSqm && item.areaSqm > 0
+                                           ? Math.round((item.price ?? item.installmentPrice)! / item.areaSqm)
+                                           : null
+                                       );
+                                       if (itemPpm == null) return null;
+                                       return (
+                                         <div className="floor-spec-card__sub" style={{ color: item.isAvailable ? 'var(--clr-gold)' : '#94a3b8', fontWeight: 700 }}>
+                                           📏 سعر المتر: {itemPpm.toLocaleString('ar-EG')} ج/م²
+                                         </div>
+                                       );
+                                     })()}
                                   {item.areaSqm != null && (
                                     <div className="floor-spec-card__sub">
                                       📐 المساحة: {item.areaSqm} م²
@@ -436,11 +444,34 @@ export default function PropertyDetailPage() {
                   </>
                 );
               })()}
-              {prop.price != null && prop.areaSqm != null && prop.areaSqm > 0 && (!prop.floors || prop.floors.length === 0) && (
-                <div className="price-card__per-m">
-                  {(prop.price / prop.areaSqm).toLocaleString('ar-EG', { maximumFractionDigits: 0 })} جنيه / م²
-                </div>
-              )}
+              {(() => {
+                const floorPpms = (prop.floors || [])
+                  .map(f => {
+                    if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter;
+                    const base = f.price ?? f.installmentPrice;
+                    if (base != null && f.areaSqm != null && f.areaSqm > 0) return Math.round(base / f.areaSqm);
+                    return null;
+                  })
+                  .filter((p): p is number => p != null && p > 0);
+
+                const fallbackPrice = prop.price ?? prop.installmentPrice;
+                const singlePpm = (fallbackPrice != null && prop.areaSqm != null && prop.areaSqm > 0)
+                  ? Math.round(fallbackPrice / prop.areaSqm)
+                  : null;
+
+                const minPpm = floorPpms.length > 0 ? Math.min(...floorPpms) : singlePpm;
+                const maxPpm = floorPpms.length > 0 ? Math.max(...floorPpms) : singlePpm;
+
+                if (minPpm == null) return null;
+
+                return (
+                  <div className="price-card__per-m">
+                    📏 {minPpm === maxPpm
+                      ? `${minPpm.toLocaleString('ar-EG')} جنيه / م²`
+                      : `يبدأ من ${minPpm.toLocaleString('ar-EG')} جنيه / م²`}
+                  </div>
+                );
+              })()}
 
               <div className="price-card__divider" />
 
