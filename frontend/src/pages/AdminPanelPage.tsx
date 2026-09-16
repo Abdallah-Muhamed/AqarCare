@@ -487,17 +487,58 @@ export default function AdminPanelPage() {
       apartmentsPerFloor: property.apartmentsPerFloor?.toString() ?? '',
     });
 
+    const propArea = property.areaSqm ? parseFloat(property.areaSqm.toString()) : null;
+    const propBedrooms = property.bedrooms ? parseInt(property.bedrooms.toString()) : null;
+    const propBathrooms = property.bathrooms ? parseInt(property.bathrooms.toString()) : null;
+
+    const mapFloorData = (f: PropertyFloor, index: number): PropertyFloor => ({
+      ...f,
+      areaSqm: f.areaSqm ?? propArea,
+      bedrooms: f.bedrooms ?? propBedrooms,
+      bathrooms: f.bathrooms ?? propBathrooms,
+      floorNumber: f.floorNumber ?? (property.floorNumber ?? index + 1),
+      floorName: f.floorName || (f.floorNumber ? `الدور ${f.floorNumber}` : (property.floorNumber ? `الدور ${property.floorNumber}` : `الدور ${index + 1}`)),
+      price: f.price ?? property.price,
+      installmentPrice: f.installmentPrice ?? property.installmentPrice,
+      pricePerMeter: f.pricePerMeter ?? (
+        (f.price ?? f.installmentPrice ?? property.price ?? property.installmentPrice) && (f.areaSqm ?? propArea)
+          ? Math.round((f.price ?? f.installmentPrice ?? property.price ?? property.installmentPrice)! / (f.areaSqm ?? propArea)!)
+          : null
+      ),
+      isAvailable: f.isAvailable !== false,
+      sortOrder: f.sortOrder ?? index,
+    });
+
     if (property.floors && property.floors.length > 0) {
-      setFloors(property.floors);
+      setFloors(property.floors.map(mapFloorData));
     } else {
-      fetch(`${API_BASE_URL}/api/properties/${property.id}`)
-        .then(r => r.json())
-        .then(d => {
-          if (d.floors && d.floors.length > 0) setFloors(d.floors);
-          else setFloors([]);
-        })
-        .catch(() => setFloors([]));
+      setFloors([{
+        floorNumber: property.floorNumber ?? 1,
+        floorName: property.floorNumber ? `الدور ${property.floorNumber}` : 'الدور 1',
+        price: property.price,
+        pricePerMeter: (property.price && property.areaSqm)
+          ? Math.round(property.price / property.areaSqm)
+          : ((property.installmentPrice && property.areaSqm) ? Math.round(property.installmentPrice / property.areaSqm) : null),
+        installmentPrice: property.installmentPrice,
+        soldPrice: property.soldPrice,
+        areaSqm: property.areaSqm,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        isAvailable: property.status !== 'Sold',
+        sortOrder: 0,
+      }]);
     }
+
+    // Always fetch fresh full details via authenticated admin endpoint
+    adminFetch(`/api/admin/properties/${property.id}`)
+      .then(async (r) => {
+        if (!r.ok) return;
+        const d = await r.json();
+        if (d && d.floors && d.floors.length > 0) {
+          setFloors(d.floors.map(mapFloorData));
+        }
+      })
+      .catch(() => {});
 
     setShowForm(true);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -819,10 +860,13 @@ export default function AdminPanelPage() {
                                 type="text"
                                 value={floor.floorName ?? ''}
                                 placeholder={`الدور ${index + 1}`}
-                                onChange={(e) => updateFloor(index, {
-                                  floorName: e.target.value,
-                                  floorNumber: parseInt(e.target.value.replace(/\D/g, '')) || (index + 1)
-                                })}
+                                onChange={(e) => {
+                                  const digits = e.target.value.match(/\d+/);
+                                  updateFloor(index, {
+                                    floorName: e.target.value,
+                                    floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                  });
+                                }}
                                 className="floor-card__name-input"
                                 title="اسم أو مسمى الدور"
                               />
@@ -977,10 +1021,13 @@ export default function AdminPanelPage() {
                                   type="text"
                                   value={floor.floorName ?? ''}
                                   placeholder={`الدور ${index + 1}`}
-                                  onChange={(e) => updateFloor(index, {
-                                    floorName: e.target.value,
-                                    floorNumber: parseInt(e.target.value.replace(/\D/g, '')) || (index + 1)
-                                  })}
+                                  onChange={(e) => {
+                                    const digits = e.target.value.match(/\d+/);
+                                    updateFloor(index, {
+                                      floorName: e.target.value,
+                                      floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                    });
+                                  }}
                                   className="floor-input"
                                 />
                               </td>

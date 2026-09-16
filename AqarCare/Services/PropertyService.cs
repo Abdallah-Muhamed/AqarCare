@@ -254,6 +254,8 @@ public class PropertyService
                     InstallmentPrice = f.InstallmentPrice,
                     SoldPrice = f.SoldPrice,
                     AreaSqm = f.AreaSqm,
+                    Bedrooms = f.Bedrooms,
+                    Bathrooms = f.Bathrooms,
                     IsAvailable = f.IsAvailable,
                     SortOrder = f.SortOrder != 0 ? f.SortOrder : sort++
                 });
@@ -370,6 +372,8 @@ public class PropertyService
                         existingFloor.InstallmentPrice = inputFloor.InstallmentPrice;
                         existingFloor.SoldPrice = inputFloor.SoldPrice;
                         existingFloor.AreaSqm = inputFloor.AreaSqm;
+                        existingFloor.Bedrooms = inputFloor.Bedrooms;
+                        existingFloor.Bathrooms = inputFloor.Bathrooms;
                         existingFloor.IsAvailable = inputFloor.IsAvailable;
                         existingFloor.SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++;
                     }
@@ -386,6 +390,8 @@ public class PropertyService
                         InstallmentPrice = inputFloor.InstallmentPrice,
                         SoldPrice = inputFloor.SoldPrice,
                         AreaSqm = inputFloor.AreaSqm,
+                        Bedrooms = inputFloor.Bedrooms,
+                        Bathrooms = inputFloor.Bathrooms,
                         IsAvailable = inputFloor.IsAvailable,
                         SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++
                     });
@@ -487,7 +493,7 @@ public class PropertyService
             x.InstallmentPrice,
             x.IsUnderConstruction,
             x.Floors?.OrderBy(f => f.SortOrder)
-                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder, f.Bedrooms, f.Bathrooms))
                 .ToList(),
             x.IsPublished,
             x.ApartmentsPerFloor);
@@ -539,7 +545,7 @@ public class PropertyService
             x.IsUnderConstruction,
             x.Floors?
                 .OrderBy(f => f.SortOrder)
-                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder, f.Bedrooms, f.Bathrooms))
                 .ToList() ?? new List<PropertyFloorDto>(),
             x.ApartmentsPerFloor);
 }
