@@ -73,9 +73,7 @@ public class MapService
                     f.SoldPrice,
                     f.AreaSqm,
                     f.IsAvailable,
-                    f.SortOrder,
-                    f.Bedrooms,
-                    f.Bathrooms)).ToList()))
+                    f.SortOrder)).ToList()))
             .ToListAsync(ct);
 
         return new CityMapDto(

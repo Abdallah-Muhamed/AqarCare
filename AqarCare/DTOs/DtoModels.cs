@@ -16,9 +16,7 @@ public record PropertyFloorDto(
     decimal? SoldPrice,
     decimal? AreaSqm,
     bool IsAvailable,
-    int SortOrder,
-    int? Bedrooms = null,
-    int? Bathrooms = null);
+    int SortOrder);
 
 public record PropertyFloorInput(
     int? Id,
@@ -30,9 +28,7 @@ public record PropertyFloorInput(
     decimal? SoldPrice = null,
     decimal? AreaSqm = null,
     bool IsAvailable = true,
-    int SortOrder = 0,
-    int? Bedrooms = null,
-    int? Bathrooms = null);
+    int SortOrder = 0);
 
 public record PropertyListItemDto(
     int Id,

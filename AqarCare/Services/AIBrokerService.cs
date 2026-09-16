@@ -63,13 +63,7 @@ public class AIBrokerService
         foreach (var p in properties)
         {
             var floorsSummary = p.Floors != null && p.Floors.Any()
-                ? string.Join(", ", p.Floors.Where(f => f.IsAvailable).Select(f => {
-                    var basePrice = f.Price ?? f.InstallmentPrice;
-                    var ppm = f.PricePerMeter ?? (f.AreaSqm.HasValue && f.AreaSqm.Value > 0 && basePrice.HasValue ? (decimal?)Math.Round(basePrice.Value / (decimal)f.AreaSqm.Value) : null);
-                    var priceLabel = f.Price.HasValue ? $"{f.Price.Value:N0} ج كاش" : (f.InstallmentPrice.HasValue ? $"{f.InstallmentPrice.Value:N0} ج تقسيط" : "غير محدد");
-                    var ppmLabel = ppm.HasValue ? ppm.Value.ToString("N0") : "غير محدد";
-                    return $"{FormatFloorDisplay(f)} (سعر: {priceLabel}, م²: {ppmLabel})";
-                }))
+                ? string.Join(", ", p.Floors.Where(f => f.IsAvailable).Select(f => $"{FormatFloorDisplay(f)} (سعر: {(f.Price.HasValue ? f.Price.Value.ToString("N0") + " ج" : "غير محدد")}, م²: {(f.PricePerMeter.HasValue ? f.PricePerMeter.Value.ToString("N0") : "غير محدد")})"))
                 : "غير مقسم لأدوار";
 
             var priceStr = p.Price.HasValue ? $"{p.Price.Value:N0} ج.م" : "غير محدد";

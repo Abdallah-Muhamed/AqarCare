@@ -1451,27 +1451,54 @@ export default function AdminPanelPage() {
                       <div className="property-info">
                         <h3>{property.title || 'غير محدد'}</h3>
                         {(() => {
-                          const floorCash = (property.floors || []).map(f => f.price).filter((p): p is number => p != null && p > 0);
-                          const floorInst = (property.floors || []).map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
-                          const minCash = floorCash.length > 0 ? Math.min(...floorCash) : property.price;
-                          const maxCash = floorCash.length > 0 ? Math.max(...floorCash) : property.price;
-                          const minInst = floorInst.length > 0 ? Math.min(...floorInst) : property.installmentPrice;
-                          const maxInst = floorInst.length > 0 ? Math.max(...floorInst) : property.installmentPrice;
+                          const availableFloors = property.floors && property.floors.length > 0
+                            ? property.floors.filter(f => f.isAvailable !== false)
+                            : [];
+
+                          const cashPrices = availableFloors
+                            .map(f => f.price)
+                            .filter((pr): pr is number => pr != null && pr > 0);
+
+                          const installmentPrices = availableFloors
+                            .map(f => f.installmentPrice)
+                            .filter((pr): pr is number => pr != null && pr > 0);
+
+                          if (cashPrices.length > 0 || installmentPrices.length > 0) {
+                            const minCash = cashPrices.length > 0 ? Math.min(...cashPrices) : null;
+                            const maxCash = cashPrices.length > 0 ? Math.max(...cashPrices) : null;
+                            const minInst = installmentPrices.length > 0 ? Math.min(...installmentPrices) : null;
+                            const maxInst = installmentPrices.length > 0 ? Math.max(...installmentPrices) : null;
+
+                            const formatPrice = (min: number | null, max: number | null) => {
+                              if (min == null) return null;
+                              if (max == null || min === max) return `${min.toLocaleString('ar-EG')} جنيه`;
+                              return `يبدأ من ${min.toLocaleString('ar-EG')} جنيه`;
+                            };
+
+                            return (
+                              <p className="price">
+                                {minCash != null ? (
+                                  <span>{formatPrice(minCash, maxCash)}</span>
+                                ) : (
+                                  <span>السعر غير محدد</span>
+                                )}
+                                {minInst != null && (
+                                  <span style={{ fontSize: '0.82rem', color: 'var(--clr-gold)', display: 'block', marginTop: '0.15rem' }}>
+                                    💳 تقسيط: {formatPrice(minInst, maxInst)}
+                                  </span>
+                                )}
+                              </p>
+                            );
+                          }
 
                           return (
                             <p className="price">
-                              {minCash != null ? (
-                                <>
-                                  {minCash === maxCash
-                                    ? `${minCash.toLocaleString('ar-EG')} جنيه`
-                                    : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`}
-                                </>
-                              ) : 'السعر غير محدد'}
-                              {minInst != null && (
+                              {property.price != null
+                                ? `${property.price.toLocaleString('ar-EG')} جنيه`
+                                : 'السعر غير محدد'}
+                              {property.installmentPrice != null && (
                                 <span style={{ fontSize: '0.82rem', color: 'var(--clr-gold)', display: 'block', marginTop: '0.15rem' }}>
-                                  💳 تقسيط: {minInst === maxInst
-                                    ? `${minInst.toLocaleString('ar-EG')} جنيه`
-                                    : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`}
+                                  💳 تقسيط: {property.installmentPrice.toLocaleString('ar-EG')} جنيه
                                 </span>
                               )}
                             </p>
