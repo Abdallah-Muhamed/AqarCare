@@ -361,13 +361,24 @@ export default function AdminPanelPage() {
         : '/api/admin/properties';
       const method = editingProperty ? 'PUT' : 'POST';
 
+      const floorCashPrices = floors.filter(f => f.price != null && f.price > 0).map(f => f.price!);
+      const floorInstPrices = floors.filter(f => f.installmentPrice != null && f.installmentPrice > 0).map(f => f.installmentPrice!);
+
+      const computedPrice = floorCashPrices.length > 0
+        ? Math.min(...floorCashPrices)
+        : (formData.price ? parseFloat(formData.price) : null);
+
+      const computedInstallmentPrice = floorInstPrices.length > 0
+        ? Math.min(...floorInstPrices)
+        : (formData.installmentPrice ? parseFloat(formData.installmentPrice) : null);
+
       const res = await adminFetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
-          price: formData.price ? parseFloat(formData.price) : null,
-          installmentPrice: formData.installmentPrice ? parseFloat(formData.installmentPrice) : null,
+          price: computedPrice,
+          installmentPrice: computedInstallmentPrice,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
           areaSqm: (floors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm)
             ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null),
@@ -843,10 +854,52 @@ export default function AdminPanelPage() {
                     </div>
                   </div>
 
+                  {floors.length > 0 && (() => {
+                    const floorCash = floors.map(f => f.price).filter((p): p is number => p != null && p > 0);
+                    const floorInst = floors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
+                    const minCash = floorCash.length > 0 ? Math.min(...floorCash) : null;
+                    const maxCash = floorCash.length > 0 ? Math.max(...floorCash) : null;
+                    const minInst = floorInst.length > 0 ? Math.min(...floorInst) : null;
+                    const maxInst = floorInst.length > 0 ? Math.max(...floorInst) : null;
+                    return (
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '10px 0 16px', padding: '10px 16px', background: 'rgba(45,74,62,0.06)', border: '1px solid rgba(45,74,62,0.16)', borderRadius: '10px', fontSize: '0.9rem', alignItems: 'center' }}>
+                        <span style={{ color: '#182821', fontWeight: 700 }}>
+                          💵 سعر الكاش للعقار: <span style={{ color: '#047857', fontSize: '1.05rem', fontWeight: 900 }}>{minCash != null ? (minCash === maxCash ? `${minCash.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                        </span>
+                        <span style={{ color: '#1e40af', fontWeight: 700 }}>
+                          💳 سعر التقسيط: <span style={{ color: '#2563eb', fontSize: '1.05rem', fontWeight: 900 }}>{minInst != null ? (minInst === maxInst ? `${minInst.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                        </span>
+                        <span style={{ fontSize: '0.78rem', color: '#64748b', marginRight: 'auto' }}>
+                          ℹ️ يُحسب السعر الإجمالي للعقار تلقائياً ومباشرة من أقل سعر مسجل في الأدوار بالأسفل
+                        </span>
+                      </div>
+                    );
+                  })()}
+
                   {floors.length === 0 ? (
                     <div className="no-floors-box">
                       <span>🏢</span>
-                      <p>لم يتم إضافة أدوار بعد. اضغط على "إضافة دور" لتحديد الدور وسعره أو سعر المتر.</p>
+                      <p>لم يتم إضافة أدوار بعد. يمكنك إما الضغط على "＋ إضافة دور" لتسعير كل دور على حدة، أو تحديد السعر العام للعقار أدناه:</p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', maxWidth: '600px', margin: '14px auto 0', textAlign: 'right' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label>سعر الكاش (جنيه)</label>
+                          <input
+                            type="number"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label>سعر التقسيط (جنيه)</label>
+                          <input
+                            type="number"
+                            value={formData.installmentPrice}
+                            onChange={(e) => setFormData({ ...formData, installmentPrice: e.target.value })}
+                            placeholder="0"
+                          />
+                        </div>
+                      </div>
                     </div>
                   ) : floorViewMode === 'cards' ? (
                     /* ── Responsive Floor Cards Layout (No Horizontal Scroll) ── */
@@ -1397,16 +1450,33 @@ export default function AdminPanelPage() {
                       </div>
                       <div className="property-info">
                         <h3>{property.title || 'غير محدد'}</h3>
-                        <p className="price">
-                          {property.price != null
-                            ? `${property.price.toLocaleString('ar-EG')} جنيه`
-                            : 'السعر غير محدد'}
-                          {property.installmentPrice != null && (
-                            <span style={{ fontSize: '0.82rem', color: 'var(--clr-gold)', display: 'block', marginTop: '0.15rem' }}>
-                              💳 تقسيط: {property.installmentPrice.toLocaleString('ar-EG')} جنيه
-                            </span>
-                          )}
-                        </p>
+                        {(() => {
+                          const floorCash = (property.floors || []).map(f => f.price).filter((p): p is number => p != null && p > 0);
+                          const floorInst = (property.floors || []).map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
+                          const minCash = floorCash.length > 0 ? Math.min(...floorCash) : property.price;
+                          const maxCash = floorCash.length > 0 ? Math.max(...floorCash) : property.price;
+                          const minInst = floorInst.length > 0 ? Math.min(...floorInst) : property.installmentPrice;
+                          const maxInst = floorInst.length > 0 ? Math.max(...floorInst) : property.installmentPrice;
+
+                          return (
+                            <p className="price">
+                              {minCash != null ? (
+                                <>
+                                  {minCash === maxCash
+                                    ? `${minCash.toLocaleString('ar-EG')} جنيه`
+                                    : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`}
+                                </>
+                              ) : 'السعر غير محدد'}
+                              {minInst != null && (
+                                <span style={{ fontSize: '0.82rem', color: 'var(--clr-gold)', display: 'block', marginTop: '0.15rem' }}>
+                                  💳 تقسيط: {minInst === maxInst
+                                    ? `${minInst.toLocaleString('ar-EG')} جنيه`
+                                    : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`}
+                                </span>
+                              )}
+                            </p>
+                          );
+                        })()}
                         <p className="location">
                           📍 {[property.city, property.district].filter(Boolean).join('، ') || 'غير محدد'}
                         </p>

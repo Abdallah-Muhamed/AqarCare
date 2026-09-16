@@ -261,9 +261,13 @@ public class PropertyService
                 });
             }
 
-            if (!entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
+            if (entity.Floors.Any(fl => fl.Price.HasValue && fl.Price.Value > 0))
             {
-                entity.Price = entity.Floors.Where(fl => fl.Price.HasValue).Min(fl => fl.Price);
+                entity.Price = entity.Floors.Where(fl => fl.Price.HasValue && fl.Price.Value > 0).Min(fl => fl.Price);
+            }
+            if (entity.Floors.Any(fl => fl.InstallmentPrice.HasValue && fl.InstallmentPrice.Value > 0))
+            {
+                entity.InstallmentPrice = entity.Floors.Where(fl => fl.InstallmentPrice.HasValue && fl.InstallmentPrice.Value > 0).Min(fl => fl.InstallmentPrice);
             }
         }
 
@@ -288,13 +292,10 @@ public class PropertyService
 
         if (entity is null) return null;
 
-        var firstFloorPrice = request.Floors?.FirstOrDefault(f => f.Price.HasValue)?.Price;
-        var firstFloorInstallment = request.Floors?.FirstOrDefault(f => f.InstallmentPrice.HasValue)?.InstallmentPrice;
-
         entity.Title = request.Title;
         entity.Description = request.Description;
-        entity.Price = request.Price ?? firstFloorPrice ?? entity.Price;
-        entity.InstallmentPrice = request.InstallmentPrice ?? firstFloorInstallment ?? entity.InstallmentPrice;
+        entity.Price = request.Price;
+        entity.InstallmentPrice = request.InstallmentPrice;
         entity.SoldPrice = request.SoldPrice;
         entity.AreaSqm = request.AreaSqm;
         entity.Bedrooms = request.Bedrooms;
@@ -398,9 +399,13 @@ public class PropertyService
                 }
             }
 
-            if (!entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
+            if (entity.Floors.Any(fl => fl.Price.HasValue && fl.Price.Value > 0))
             {
-                entity.Price = entity.Floors.Where(fl => fl.Price.HasValue).Min(fl => fl.Price);
+                entity.Price = entity.Floors.Where(fl => fl.Price.HasValue && fl.Price.Value > 0).Min(fl => fl.Price);
+            }
+            if (entity.Floors.Any(fl => fl.InstallmentPrice.HasValue && fl.InstallmentPrice.Value > 0))
+            {
+                entity.InstallmentPrice = entity.Floors.Where(fl => fl.InstallmentPrice.HasValue && fl.InstallmentPrice.Value > 0).Min(fl => fl.InstallmentPrice);
             }
         }
 
