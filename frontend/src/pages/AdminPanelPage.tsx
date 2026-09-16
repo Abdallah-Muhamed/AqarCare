@@ -64,7 +64,7 @@ export default function AdminPanelPage() {
   const [properties, setProperties] = useState<Property[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [mapPickerProperty, setMapPickerProperty] = useState<Property | null>(null);
+  const [mapPickerProperty, setMapPickerProperty] = useState<{ id: number; title?: string | null } | Property | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold'>('all');
@@ -371,6 +371,7 @@ export default function AdminPanelPage() {
         }),
       });
 
+      const isNew = !editingProperty;
       if (res.ok) {
         const result = await res.json();
         if (mediaFiles.length > 0) await handleMediaUpload(result.id);
@@ -379,6 +380,14 @@ export default function AdminPanelPage() {
         resetForm();
         setMediaFiles([]);
         fetchProperties();
+
+        // Automatically open the map picker for the newly created property
+        if (isNew && result?.id) {
+          setMapPickerProperty({
+            id: result.id,
+            title: result.title || formData.title || `عقار #${result.id}`,
+          });
+        }
       } else {
         const body = await res.json().catch(() => null);
         setError(body?.title ?? 'فشل حفظ العقار');
