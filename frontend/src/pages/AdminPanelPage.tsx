@@ -3,7 +3,7 @@ import './AdminPanelPage.css';
 import { API_BASE_URL } from '../constants/api';
 import MapPickerModal from '../components/admin/MapPickerModal';
 import type { PropertyFloor } from '../types';
-import { formatFloorsText } from '../utils/formatters';
+import { formatFloorsText, parseMultiFloorNumbers } from '../utils/formatters';
 
 interface Property {
   id: number;
@@ -67,6 +67,7 @@ export default function AdminPanelPage() {
   const [mapPickerProperty, setMapPickerProperty] = useState<{ id: number; title?: string | null } | Property | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold'>('all');
   const [floorViewMode, setFloorViewMode] = useState<'cards' | 'table'>('cards');
 
@@ -348,6 +349,34 @@ export default function AdminPanelPage() {
     setFloors(prev => prev.filter((_, i) => i !== index));
   };
 
+  const expandFloorIfMultiple = (index: number) => {
+    setFloors(prev => {
+      const target = prev[index];
+      if (!target || !target.floorName) return prev;
+
+      const detectedFloors = parseMultiFloorNumbers(target.floorName);
+      if (detectedFloors.length <= 1) return prev;
+
+      const newFloors: PropertyFloor[] = detectedFloors.map((floorNum, idx) => ({
+        ...target,
+        id: idx === 0 ? target.id : undefined,
+        floorNumber: floorNum,
+        floorName: `الدور ${floorNum}`,
+        sortOrder: floorNum,
+      }));
+
+      setTimeout(() => {
+        setSuccessMsg(`تم نسخ وتوزيع بيانات الدور تلقائياً على الأدوار (${detectedFloors.join('، ')})`);
+      }, 50);
+
+      return [
+        ...prev.slice(0, index),
+        ...newFloors,
+        ...prev.slice(index + 1),
+      ];
+    });
+  };
+
 
   // ── form handlers ─────────────────────────────────────────────────────────────
 
@@ -361,8 +390,35 @@ export default function AdminPanelPage() {
         : '/api/admin/properties';
       const method = editingProperty ? 'PUT' : 'POST';
 
-      const floorCashPrices = floors.filter(f => f.price != null && f.price > 0).map(f => f.price!);
-      const floorInstPrices = floors.filter(f => f.installmentPrice != null && f.installmentPrice > 0).map(f => f.installmentPrice!);
+      // Auto-expand any floor that has multi-floor notation (e.g. 2/3/4 or 2-4)
+      const finalFloors: PropertyFloor[] = [];
+      for (const f of floors) {
+        const multi = parseMultiFloorNumbers(f.floorName);
+        if (multi.length > 1) {
+          multi.forEach((num, idx) => {
+            finalFloors.push({
+              ...f,
+              id: idx === 0 ? f.id : undefined,
+              floorNumber: num,
+              floorName: `الدور ${num}`,
+              sortOrder: num,
+            });
+          });
+        } else {
+          let cleanNum = f.floorNumber;
+          if (cleanNum != null && cleanNum > 50) {
+            const m = String(cleanNum).match(/\d{1,2}/);
+            cleanNum = m ? parseInt(m[0], 10) : null;
+          }
+          finalFloors.push({
+            ...f,
+            floorNumber: cleanNum,
+          });
+        }
+      }
+
+      const floorCashPrices = finalFloors.filter(f => f.price != null && f.price > 0).map(f => f.price!);
+      const floorInstPrices = finalFloors.filter(f => f.installmentPrice != null && f.installmentPrice > 0).map(f => f.installmentPrice!);
 
       const computedPrice = floorCashPrices.length > 0
         ? Math.min(...floorCashPrices)
@@ -380,19 +436,19 @@ export default function AdminPanelPage() {
           price: computedPrice,
           installmentPrice: computedInstallmentPrice,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
-          areaSqm: (floors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm)
+          areaSqm: (finalFloors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm)
             ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null),
-          floorNumber: (floors.length === 1 && floors[0].floorNumber != null ? floors[0].floorNumber : null)
+          floorNumber: (finalFloors.length === 1 && finalFloors[0].floorNumber != null ? finalFloors[0].floorNumber : null)
             ?? (formData.floorNumber ? parseInt(formData.floorNumber) : null),
-          bedrooms: (floors.find(f => f.bedrooms != null)?.bedrooms)
+          bedrooms: (finalFloors.find(f => f.bedrooms != null)?.bedrooms)
             ?? (formData.bedrooms ? parseInt(formData.bedrooms) : null),
-          bathrooms: (floors.find(f => f.bathrooms != null)?.bathrooms)
+          bathrooms: (finalFloors.find(f => f.bathrooms != null)?.bathrooms)
             ?? (formData.bathrooms ? parseInt(formData.bathrooms) : null),
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
           apartmentsPerFloor: formData.apartmentsPerFloor ? parseInt(formData.apartmentsPerFloor) : null,
           isUnderConstruction: formData.isUnderConstruction,
-          floors: floors.map((f, i) => ({
+          floors: finalFloors.map((f, i) => ({
             id: f.id,
             floorNumber: f.floorNumber,
             floorName: f.floorName,
@@ -404,7 +460,7 @@ export default function AdminPanelPage() {
             bedrooms: f.bedrooms,
             bathrooms: f.bathrooms,
             isAvailable: f.isAvailable,
-            sortOrder: i,
+            sortOrder: f.sortOrder ?? i,
           })),
         }),
       });
@@ -727,6 +783,8 @@ export default function AdminPanelPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="property-form">
+                {error && <div className="form-error" style={{ padding: '0.8rem 1rem', background: '#fef2f2', color: '#b91c1c', borderRadius: 'var(--radius-md)', marginBottom: '1rem', border: '1px solid #fecaca', fontWeight: 600 }}>⚠️ {error}</div>}
+                {successMsg && <div className="form-success" style={{ padding: '0.8rem 1rem', background: '#ecfdf5', color: '#047857', borderRadius: 'var(--radius-md)', marginBottom: '1rem', border: '1px solid #a7f3d0', fontWeight: 600 }}>✨ {successMsg}</div>}
 
                 {/* Section: Basic Info */}
                 <div className="form-section">
@@ -920,9 +978,20 @@ export default function AdminPanelPage() {
                                     floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
                                   });
                                 }}
+                                onBlur={() => expandFloorIfMultiple(index)}
                                 className="floor-card__name-input"
-                                title="اسم أو مسمى الدور"
+                                title="اسم أو مسمى الدور (يمكنك كتابة 2/3/4 لتكرار البيانات للأدوار تلقائياً)"
                               />
+                              {parseMultiFloorNumbers(floor.floorName).length > 1 && (
+                                <button
+                                  type="button"
+                                  onClick={() => expandFloorIfMultiple(index)}
+                                  className="btn-expand-floors"
+                                  title="انقر لنسخ وتوزيع البيانات على أدوار منفصلة تلقائياً"
+                                >
+                                  ⚡ نسخ للأدوار ({parseMultiFloorNumbers(floor.floorName).length})
+                                </button>
+                              )}
                             </div>
 
                             <div className="floor-card__header-actions">
@@ -1070,19 +1139,33 @@ export default function AdminPanelPage() {
                           {floors.map((floor, index) => (
                             <tr key={index} className={!floor.isAvailable ? 'floor-row--sold' : ''}>
                               <td>
-                                <input
-                                  type="text"
-                                  value={floor.floorName ?? ''}
-                                  placeholder={`الدور ${index + 1}`}
-                                  onChange={(e) => {
-                                    const digits = e.target.value.match(/\d+/);
-                                    updateFloor(index, {
-                                      floorName: e.target.value,
-                                      floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
-                                    });
-                                  }}
-                                  className="floor-input"
-                                />
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <input
+                                    type="text"
+                                    value={floor.floorName ?? ''}
+                                    placeholder={`الدور ${index + 1}`}
+                                    onChange={(e) => {
+                                      const digits = e.target.value.match(/\d+/);
+                                      updateFloor(index, {
+                                        floorName: e.target.value,
+                                        floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                      });
+                                    }}
+                                    onBlur={() => expandFloorIfMultiple(index)}
+                                    className="floor-input"
+                                    title="اسم أو مسمى الدور (يمكنك كتابة 2/3/4 لتكرار البيانات للأدوار تلقائياً)"
+                                  />
+                                  {parseMultiFloorNumbers(floor.floorName).length > 1 && (
+                                    <button
+                                      type="button"
+                                      onClick={() => expandFloorIfMultiple(index)}
+                                      className="btn-expand-floors"
+                                      title="انقر لنسخ وتوزيع البيانات على أدوار منفصلة تلقائياً"
+                                    >
+                                      ⚡ نسخ ({parseMultiFloorNumbers(floor.floorName).length})
+                                    </button>
+                                  )}
+                                </div>
                               </td>
                               <td>
                                 <input

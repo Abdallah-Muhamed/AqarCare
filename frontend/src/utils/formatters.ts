@@ -7,6 +7,58 @@ export interface FloorGroup {
 }
 
 /**
+ * Parses multi-floor patterns such as:
+ * - "2/3/4" or "2/4/5/6/8" or "10/12/14/16"
+ * - "2، 3، 4" or "2, 3, 4"
+ * - "2-5" or "2 - 5" (range)
+ * - "2 و 3 و 4"
+ * - Arabic digits: "١/٢/٤/٥"
+ * Returns an array of detected floor numbers, or empty array if not a multi-floor pattern.
+ */
+export function parseMultiFloorNumbers(input?: string | null): number[] {
+  if (!input) return []
+
+  // Convert Arabic-Indic digits (٠-٩) to ASCII (0-9)
+  const normalized = input.replace(/[٠-٩]/g, d => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)))
+
+  // Must contain multi-floor separator between digits: e.g. "2/3/4", "2-5", "2, 3", "2 و 3"
+  const hasDelimiter = /\d+\s*[\/,\،\\و\-]\s*\d+/.test(normalized) ||
+                        /(?:من\s+)?\d+\s*(?:إلى|الي|to)\s*\d+/i.test(normalized)
+
+  if (!hasDelimiter) {
+    return []
+  }
+
+  // Check for range pattern like "2-5" or "2 - 5" or "من 2 الى 5"
+  const rangeMatch = normalized.match(/(?:من\s+)?(\d+)\s*(?:-|إلى|الي|to)\s*(\d+)/i)
+  if (rangeMatch) {
+    const start = parseInt(rangeMatch[1], 10)
+    const end = parseInt(rangeMatch[2], 10)
+    if (!isNaN(start) && !isNaN(end) && start < end && (end - start) <= 30) {
+      const rangeNums: number[] = []
+      for (let i = start; i <= end; i++) {
+        rangeNums.push(i)
+      }
+      return rangeNums
+    }
+  }
+
+  // Split on delimiters: /, ,, ،, \, و, whitespace, dash
+  const tokens = normalized.split(/[\/,\،\\\s+و\-]+/)
+  const nums: number[] = []
+  for (const token of tokens) {
+    const trimmed = token.trim()
+    if (!trimmed) continue
+    const n = parseInt(trimmed, 10)
+    if (!isNaN(n) && n >= 0 && n <= 50 && !nums.includes(n)) {
+      nums.push(n)
+    }
+  }
+
+  return nums.length > 1 ? nums : []
+}
+
+/**
  * Normalizes a floor name or floor number into a clean Arabic title.
  * e.g. "الدور 7 - 10 - 11" or 71011 -> "الأدوار 7 و 10 و 11"
  * e.g. 0 -> "الدور الأرضي"
@@ -18,11 +70,22 @@ export function normalizeFloorTitle(floorName?: string | null, floorNumber?: num
     if (name.includes('7 - 10 - 11') || name.includes('7-10-11') || floorNumber === 71011) {
       return 'الأدوار 7 و 10 و 11'
     }
+
+    const multi = parseMultiFloorNumbers(name)
+    if (multi.length > 1) {
+      return `الأدوار ${multi.join(' و ')}`
+    }
   }
 
   if (floorNumber != null) {
     if (floorNumber === 71011) return 'الأدوار 7 و 10 و 11'
     if (floorNumber === 0) return 'الدور الأرضي'
+    if (floorNumber > 50) {
+      const digits = String(floorNumber).split('').filter(d => d !== '0')
+      if (digits.length > 1) {
+        return `الأدوار ${digits.join(' و ')}`
+      }
+    }
     return `الدور ${floorNumber}`
   }
 
@@ -51,7 +114,7 @@ export function groupFloors(floors: (PropertyFloor | { floorNumber?: number | nu
 
   floors.forEach((f) => {
     const title = normalizeFloorTitle(f.floorName, f.floorNumber)
-    const key = f.floorNumber != null && f.floorNumber !== 71011
+    const key = f.floorNumber != null && f.floorNumber !== 71011 && f.floorNumber <= 50
       ? String(f.floorNumber)
       : title
 
@@ -82,6 +145,28 @@ export function formatFloorsText(
 
   const groups = groupFloors(available)
   if (groups.length === 0) return ''
+
+  // If only 1 floor group
+  if (groups.length === 1) {
+    const g = groups[0]
+    if (g.items.length > 1) {
+      return `${g.floorTitle} (${g.items.length} شقق متاحة بالدور)`
+    }
+    return g.floorTitle
+  }
+
+  // If multiple groups and all are single-apartment floors e.g. "الدور 2", "الدور 4", etc.:
+  // format cleanly as "الأدوار 2 و 4 و 5" instead of repeating "الدور"
+  const allSingle = groups.every(g => g.items.length === 1)
+  const canUseAdwar = groups.every(g => g.floorTitle.startsWith('الدور ') || g.floorTitle === 'الدور الأرضي')
+
+  if (allSingle && canUseAdwar) {
+    const labels = groups.map(g => {
+      if (g.floorTitle === 'الدور الأرضي') return 'الأرضي'
+      return g.floorTitle.replace(/^الدور\s+/, '')
+    })
+    return `الأدوار ${labels.join(' و ')}`
+  }
 
   return groups.map(g => {
     if (g.items.length > 1) {
