@@ -231,9 +231,13 @@ export default function MapPage() {
         const listingLabel = LISTING_LABELS[p.listingType ?? ''] ?? ''
         const finishing = p.finishingStatus ? (FINISHING_LABELS[p.finishingStatus] ?? p.finishingStatus) : ''
 
+        const isHouse = p.propertyType === 'House' || p.propertyType === 'Villa'
+        const isLand  = p.propertyType === 'Land'
+        const isShop  = p.propertyType === 'Shop' || p.propertyType === 'Commercial'
+
         // Price calculation considering floors
-        const availableFloors = p.floors && p.floors.length > 0 ? p.floors.filter(f => f.isAvailable) : []
-        const targetFloors = availableFloors.length > 0 ? availableFloors : (p.floors || [])
+        const availableFloors = !isHouse && !isLand && p.floors && p.floors.length > 0 ? p.floors.filter(f => f.isAvailable) : []
+        const targetFloors = availableFloors.length > 0 ? availableFloors : (!isHouse && !isLand ? (p.floors || []) : [])
         const cashPrices = targetFloors.map(f => f.price).filter((pr): pr is number => pr != null && pr > 0)
         const instPrices = targetFloors.map(f => f.installmentPrice).filter((pr): pr is number => pr != null && pr > 0)
 
@@ -245,19 +249,19 @@ export default function MapPage() {
 
         const formatPrice = (min: number | null, max: number | null) => {
           if (min == null) return null
-          if (max == null || min === max) return `${min.toLocaleString('ar-EG')} جنيه`
+          if (isHouse || isLand || isShop || max == null || min === max) return `${min.toLocaleString('ar-EG')} جنيه`
           return `يبدأ من ${min.toLocaleString('ar-EG')} جنيه`
         }
 
         const defaultImg = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
         const imgUrl = p.primaryImageUrl || defaultImg
 
-        const hasFloors = (p.floors && p.floors.length > 0) || p.floorNumber != null
-        const floorsText = p.floors && p.floors.length > 0
-          ? formatFloorsText(p.floors)
+        const hasFloors = !isLand && (((p.floors && p.floors.length > 0)) || p.floorNumber != null)
+        const floorsText = !isLand && (p.floors && p.floors.length > 0
+          ? formatFloorsText(p.floors, p.propertyType)
           : p.floorNumber != null
             ? (p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`)
-            : null
+            : null)
 
         const hasServices = p.waterMeterAvailable || p.electricityMeterAvailable || p.gasMeterAvailable || p.elevatorAvailable || p.installmentAvailable || minInst != null
 
@@ -327,9 +331,9 @@ export default function MapPage() {
                     {minCash != null ? (
                       <div className="mappage__mobile-card-price-line">
                         <span className="mappage__mobile-card-price-val">
-                          سعر الكاش: {formatPrice(minCash, maxCash)}
+                          {isHouse ? 'سعر البيت كاش' : isLand ? 'سعر الأرض كاش' : isShop ? 'سعر المحل كاش' : 'سعر الكاش'}: {formatPrice(minCash, maxCash)}
                         </span>
-                        {cashPrices.length > 1 && minCash !== maxCash && (
+                        {!isHouse && !isLand && cashPrices.length > 1 && minCash !== maxCash && (
                           <span className="mappage__mobile-card-badge-sub">حسب الدور</span>
                         )}
                       </div>
@@ -341,8 +345,8 @@ export default function MapPage() {
 
                     {minInst != null && (
                       <div className="mappage__mobile-card-price-line mappage__mobile-card-price-inst">
-                        <span>💳 سعر التقسيط: {formatPrice(minInst, maxInst)}</span>
-                        {instPrices.length > 1 && minInst !== maxInst && (
+                        <span>💳 {isHouse ? 'سعر التقسيط للبيت' : isLand ? 'سعر التقسيط للأرض' : isShop ? 'سعر التقسيط للمحل' : 'سعر التقسيط'}: {formatPrice(minInst, maxInst)}</span>
+                        {!isHouse && !isLand && instPrices.length > 1 && minInst !== maxInst && (
                           <span className="mappage__mobile-card-badge-sub">حسب الدور</span>
                         )}
                       </div>
@@ -354,21 +358,21 @@ export default function MapPage() {
                     {p.areaSqm != null && (
                       <div className="mappage__mobile-card-spec">📐 <span>{p.areaSqm} م²</span></div>
                     )}
-                    {p.bedrooms != null && (
+                    {!isLand && !isShop && p.bedrooms != null && (
                       <div className="mappage__mobile-card-spec">🛏️ <span>{p.bedrooms} غرف</span></div>
                     )}
-                    {p.bathrooms != null && (
+                    {!isLand && p.bathrooms != null && (
                       <div className="mappage__mobile-card-spec">🚿 <span>{p.bathrooms} حمام</span></div>
                     )}
                     {hasFloors && floorsText && (
                       <div className="mappage__mobile-card-spec">🏢 <span>{floorsText}</span></div>
                     )}
-                    {p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
+                    {!isHouse && !isLand && !isShop && p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
                       <div className="mappage__mobile-card-spec">
                         🏢 <span>{p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}</span>
                       </div>
                     )}
-                    {finishing && (
+                    {!isLand && finishing && (
                       <div className="mappage__mobile-card-spec">🎨 <span>{finishing}</span></div>
                     )}
                   </div>

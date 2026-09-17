@@ -136,9 +136,19 @@ export function groupFloors(floors: (PropertyFloor | { floorNumber?: number | nu
  * e.g. "الدور 1 و 3", "الأدوار 7 و 10 و 11 (3 شقق بالدور)"
  */
 export function formatFloorsText(
-  floors?: (PropertyFloor | { floorNumber?: number | null; floorName?: string | null; isAvailable?: boolean })[]
+  floors?: (PropertyFloor | { floorNumber?: number | null; floorName?: string | null; isAvailable?: boolean })[],
+  propertyType?: string | null
 ): string {
   if (!floors || floors.length === 0) return ''
+
+  // For House or Villa, floors describe the house structure/levels, not separate units for sale
+  if (propertyType === 'House' || propertyType === 'Villa') {
+    const count = floors.length
+    if (count === 1) return 'دور واحد'
+    if (count === 2) return 'دورين'
+    if (count <= 10) return `${count} أدوار`
+    return `${count} دور`
+  }
 
   const available = floors.filter(f => f.isAvailable !== false)
   if (available.length === 0) return 'جميع الأدوار مباعة'

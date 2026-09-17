@@ -417,16 +417,45 @@ export default function AdminPanelPage() {
         }
       }
 
-      const floorCashPrices = finalFloors.filter(f => f.price != null && f.price > 0).map(f => f.price!);
-      const floorInstPrices = finalFloors.filter(f => f.installmentPrice != null && f.installmentPrice > 0).map(f => f.installmentPrice!);
+      const isHouseType = formData.propertyType === 'House';
+      const isLandType  = formData.propertyType === 'Land';
+      const isShopType  = formData.propertyType === 'Shop';
 
-      const computedPrice = floorCashPrices.length > 0
-        ? Math.min(...floorCashPrices)
-        : (formData.price ? parseFloat(formData.price) : null);
+      let computedPrice: number | null = null;
+      let computedInstallmentPrice: number | null = null;
 
-      const computedInstallmentPrice = floorInstPrices.length > 0
-        ? Math.min(...floorInstPrices)
-        : (formData.installmentPrice ? parseFloat(formData.installmentPrice) : null);
+      if (isHouseType || isLandType || isShopType) {
+        computedPrice = formData.price ? parseFloat(formData.price) : null;
+        computedInstallmentPrice = formData.installmentPrice ? parseFloat(formData.installmentPrice) : null;
+      } else {
+        const floorCashPrices = finalFloors.filter(f => f.price != null && f.price > 0).map(f => f.price!);
+        const floorInstPrices = finalFloors.filter(f => f.installmentPrice != null && f.installmentPrice > 0).map(f => f.installmentPrice!);
+
+        computedPrice = floorCashPrices.length > 0
+          ? Math.min(...floorCashPrices)
+          : (formData.price ? parseFloat(formData.price) : null);
+
+        computedInstallmentPrice = floorInstPrices.length > 0
+          ? Math.min(...floorInstPrices)
+          : (formData.installmentPrice ? parseFloat(formData.installmentPrice) : null);
+      }
+
+      const processedFloors = (isLandType || isShopType)
+        ? []
+        : finalFloors.map((f, i) => ({
+            id: f.id,
+            floorNumber: f.floorNumber,
+            floorName: f.floorName,
+            price: isHouseType ? null : f.price,
+            pricePerMeter: isHouseType ? null : f.pricePerMeter,
+            installmentPrice: isHouseType ? null : f.installmentPrice,
+            soldPrice: f.soldPrice,
+            areaSqm: f.areaSqm,
+            bedrooms: isShopType ? null : f.bedrooms,
+            bathrooms: f.bathrooms,
+            isAvailable: isHouseType ? true : f.isAvailable,
+            sortOrder: f.sortOrder ?? i,
+          }));
 
       const res = await adminFetch(url, {
         method,
@@ -436,32 +465,25 @@ export default function AdminPanelPage() {
           price: computedPrice,
           installmentPrice: computedInstallmentPrice,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
-          areaSqm: (finalFloors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm)
-            ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null),
-          floorNumber: (finalFloors.length === 1 && finalFloors[0].floorNumber != null ? finalFloors[0].floorNumber : null)
-            ?? (formData.floorNumber ? parseInt(formData.floorNumber) : null),
-          bedrooms: (finalFloors.find(f => f.bedrooms != null)?.bedrooms)
-            ?? (formData.bedrooms ? parseInt(formData.bedrooms) : null),
-          bathrooms: (finalFloors.find(f => f.bathrooms != null)?.bathrooms)
-            ?? (formData.bathrooms ? parseInt(formData.bathrooms) : null),
+          areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : (processedFloors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm ?? null),
+          floorNumber: (isHouseType || isLandType)
+            ? null
+            : (formData.floorNumber ? parseInt(formData.floorNumber) : ((processedFloors.length === 1 && processedFloors[0].floorNumber != null ? processedFloors[0].floorNumber : null))),
+          bedrooms: (isLandType || isShopType)
+            ? null
+            : (formData.bedrooms ? parseInt(formData.bedrooms) : ((processedFloors.find(f => f.bedrooms != null)?.bedrooms) ?? null)),
+          bathrooms: isLandType
+            ? null
+            : (formData.bathrooms ? parseInt(formData.bathrooms) : ((processedFloors.find(f => f.bathrooms != null)?.bathrooms) ?? null)),
+          finishingStatus: isLandType ? null : formData.finishingStatus,
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
-          apartmentsPerFloor: formData.apartmentsPerFloor ? parseInt(formData.apartmentsPerFloor) : null,
+          apartmentsPerFloor: (isHouseType || isLandType || isShopType)
+            ? null
+            : (formData.apartmentsPerFloor ? parseInt(formData.apartmentsPerFloor) : null),
+          elevatorAvailable: isLandType ? false : formData.elevatorAvailable,
           isUnderConstruction: formData.isUnderConstruction,
-          floors: finalFloors.map((f, i) => ({
-            id: f.id,
-            floorNumber: f.floorNumber,
-            floorName: f.floorName,
-            price: f.price,
-            pricePerMeter: f.pricePerMeter,
-            installmentPrice: f.installmentPrice,
-            soldPrice: f.soldPrice,
-            areaSqm: f.areaSqm,
-            bedrooms: f.bedrooms,
-            bathrooms: f.bathrooms,
-            isAvailable: f.isAvailable,
-            sortOrder: f.sortOrder ?? i,
-          })),
+          floors: processedFloors,
         }),
       });
 
@@ -558,26 +580,46 @@ export default function AdminPanelPage() {
     const propBedrooms = property.bedrooms ? parseInt(property.bedrooms.toString()) : null;
     const propBathrooms = property.bathrooms ? parseInt(property.bathrooms.toString()) : null;
 
+    const isHouseProp = property.propertyType === 'House' || property.propertyType === 'Villa';
+    const isLandProp  = property.propertyType === 'Land';
+    const isShopProp  = property.propertyType === 'Shop';
+
     const mapFloorData = (f: PropertyFloor, index: number): PropertyFloor => ({
       ...f,
       areaSqm: f.areaSqm ?? propArea,
-      bedrooms: f.bedrooms ?? propBedrooms,
+      bedrooms: isShopProp ? null : (f.bedrooms ?? propBedrooms),
       bathrooms: f.bathrooms ?? propBathrooms,
       floorNumber: f.floorNumber ?? (property.floorNumber ?? index + 1),
       floorName: f.floorName || (f.floorNumber ? `الدور ${f.floorNumber}` : (property.floorNumber ? `الدور ${property.floorNumber}` : `الدور ${index + 1}`)),
-      price: f.price ?? property.price,
-      installmentPrice: f.installmentPrice ?? property.installmentPrice,
-      pricePerMeter: f.pricePerMeter ?? (
+      price: isHouseProp ? null : (f.price ?? property.price),
+      installmentPrice: isHouseProp ? null : (f.installmentPrice ?? property.installmentPrice),
+      pricePerMeter: isHouseProp ? null : (f.pricePerMeter ?? (
         (f.price ?? f.installmentPrice ?? property.price ?? property.installmentPrice) && (f.areaSqm ?? propArea)
           ? Math.round((f.price ?? f.installmentPrice ?? property.price ?? property.installmentPrice)! / (f.areaSqm ?? propArea)!)
           : null
-      ),
-      isAvailable: f.isAvailable !== false,
+      )),
+      isAvailable: isHouseProp ? true : (f.isAvailable !== false),
       sortOrder: f.sortOrder ?? index,
     });
 
-    if (property.floors && property.floors.length > 0) {
+    if (isLandProp || isShopProp) {
+      setFloors([]);
+    } else if (property.floors && property.floors.length > 0) {
       setFloors(property.floors.map(mapFloorData));
+    } else if (isHouseProp) {
+      setFloors([{
+        floorNumber: 1,
+        floorName: 'الدور الأرضي',
+        price: null,
+        pricePerMeter: null,
+        installmentPrice: null,
+        soldPrice: null,
+        areaSqm: property.areaSqm,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        isAvailable: true,
+        sortOrder: 0,
+      }]);
     } else {
       setFloors([{
         floorNumber: property.floorNumber ?? 1,
@@ -804,7 +846,27 @@ export default function AdminPanelPage() {
                       <label>النوع</label>
                       <select
                         value={formData.propertyType}
-                        onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+                        onChange={(e) => {
+                          const newType = e.target.value;
+                          setFormData({ ...formData, propertyType: newType });
+                          if (newType === 'Land' || newType === 'Shop') {
+                            setFloors([]);
+                          } else if (newType === 'House' && floors.length === 0) {
+                            setFloors([{
+                              floorNumber: 1,
+                              floorName: 'الدور الأرضي',
+                              price: null,
+                              pricePerMeter: null,
+                              installmentPrice: null,
+                              soldPrice: null,
+                              areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
+                              bedrooms: null,
+                              bathrooms: null,
+                              isAvailable: true,
+                              sortOrder: 0,
+                            }]);
+                          }
+                        }}
                       >
                         <option value="Apartment">شقة</option>
                         <option value="House">بيت</option>
@@ -824,17 +886,19 @@ export default function AdminPanelPage() {
                       </select>
                     </div>
 
-                    <div className="form-group">
-                      <label>حالة التشطيب</label>
-                      <select
-                        value={formData.finishingStatus}
-                        onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
-                      >
-                        {FINISHING_OPTIONS.map(opt => (
-                          <option key={opt.value} value={opt.value}>{opt.label}</option>
-                        ))}
-                      </select>
-                    </div>
+                    {formData.propertyType !== 'Land' && (
+                      <div className="form-group">
+                        <label>حالة التشطيب</label>
+                        <select
+                          value={formData.finishingStatus}
+                          onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
+                        >
+                          {FINISHING_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div className="form-group">
                       <label>الحالة</label>
@@ -848,336 +912,295 @@ export default function AdminPanelPage() {
                       </select>
                     </div>
 
-                    <div className="form-group">
-                      <label>عدد الشقق في الدور</label>
-                      <input
-                        type="number"
-                        value={formData.apartmentsPerFloor}
-                        onChange={(e) => setFormData({ ...formData, apartmentsPerFloor: e.target.value })}
-                        placeholder="مثال: 3"
-                        min="1"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section: Floors & Pricing */}
-                <div className="form-section">
-                  <div className="form-section__header-row">
-                    <div>
-                      <h3 className="form-section__title">🏢 الأدوار والأسعار وسعر المتر</h3>
-                      <p className="form-section__sub">
-                        حدد بيانات وأسعار كل دور على حدة مع الحساب التلقائي لسعر الكاش أو سعر المتر، وتمييز حالة الدور (متاح 🟢 أو مباع 🔴).
-                      </p>
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      {floors.length > 0 && (
-                        <div className="floor-view-toggle">
-                          <button
-                            type="button"
-                            className={`floor-view-btn ${floorViewMode === 'cards' ? 'active' : ''}`}
-                            onClick={() => setFloorViewMode('cards')}
-                            title="عرض بطاقات تفصيلي بدون سكرول أفقي"
-                          >
-                            🗂️ بطاقات (مريح)
-                          </button>
-                          <button
-                            type="button"
-                            className={`floor-view-btn ${floorViewMode === 'table' ? 'active' : ''}`}
-                            onClick={() => setFloorViewMode('table')}
-                            title="عرض جدول مضغوط"
-                          >
-                            📊 جدول
-                          </button>
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        className="btn-add-floor"
-                        onClick={addFloor}
-                      >
-                        <span>＋</span> إضافة دور
-                      </button>
-                      {floors.length > 0 && (
-                        <button
-                          type="button"
-                          className="btn-add-floor"
-                          onClick={duplicateLastFloor}
-                          style={{ background: '#2563eb', borderColor: '#1d4ed8' }}
-                          title="إضافة دور جديد بنفس مواصفات وأسعار الدور السابق لتوفير الوقت"
-                        >
-                          <span>📋</span> تكرار بيانات الدور الأخير
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {floors.length > 0 && (() => {
-                    const floorCash = floors.map(f => f.price).filter((p): p is number => p != null && p > 0);
-                    const floorInst = floors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
-                    const minCash = floorCash.length > 0 ? Math.min(...floorCash) : null;
-                    const maxCash = floorCash.length > 0 ? Math.max(...floorCash) : null;
-                    const minInst = floorInst.length > 0 ? Math.min(...floorInst) : null;
-                    const maxInst = floorInst.length > 0 ? Math.max(...floorInst) : null;
-                    return (
-                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '10px 0 16px', padding: '10px 16px', background: 'rgba(45,74,62,0.06)', border: '1px solid rgba(45,74,62,0.16)', borderRadius: '10px', fontSize: '0.9rem', alignItems: 'center' }}>
-                        <span style={{ color: '#182821', fontWeight: 700 }}>
-                          💵 سعر الكاش للعقار: <span style={{ color: '#047857', fontSize: '1.05rem', fontWeight: 900 }}>{minCash != null ? (minCash === maxCash ? `${minCash.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
-                        </span>
-                        <span style={{ color: '#1e40af', fontWeight: 700 }}>
-                          💳 سعر التقسيط: <span style={{ color: '#2563eb', fontSize: '1.05rem', fontWeight: 900 }}>{minInst != null ? (minInst === maxInst ? `${minInst.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
-                        </span>
-                        <span style={{ fontSize: '0.78rem', color: '#64748b', marginRight: 'auto' }}>
-                          ℹ️ يُحسب السعر الإجمالي للعقار تلقائياً ومباشرة من أقل سعر مسجل في الأدوار بالأسفل
-                        </span>
+                    {formData.propertyType === 'Apartment' && (
+                      <div className="form-group">
+                        <label>عدد الشقق في الدور</label>
+                        <input
+                          type="number"
+                          value={formData.apartmentsPerFloor}
+                          onChange={(e) => setFormData({ ...formData, apartmentsPerFloor: e.target.value })}
+                          placeholder="مثال: 3"
+                          min="1"
+                        />
                       </div>
-                    );
-                  })()}
+                    )}
 
-                  {floors.length === 0 ? (
-                    <div className="no-floors-box">
-                      <span>🏢</span>
-                      <p>لم يتم إضافة أدوار بعد. يمكنك إما الضغط على "＋ إضافة دور" لتسعير كل دور على حدة، أو تحديد السعر العام للعقار أدناه:</p>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', maxWidth: '600px', margin: '14px auto 0', textAlign: 'right' }}>
-                        <div className="form-group" style={{ margin: 0 }}>
-                          <label>سعر الكاش (جنيه)</label>
+                    {/* General Price & Area for House, Land, and Shop */}
+                    {(formData.propertyType === 'House' || formData.propertyType === 'Land' || formData.propertyType === 'Shop') && (
+                      <>
+                        <div className="form-group">
+                          <label>
+                            {formData.propertyType === 'House' ? 'سعر البيت كاش (جنيه) *' :
+                             formData.propertyType === 'Land' ? 'سعر الأرض كاش (جنيه) *' :
+                             'سعر المحل كاش (جنيه) *'}
+                          </label>
                           <input
                             type="number"
                             value={formData.price}
                             onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                             placeholder="0"
+                            required
                           />
                         </div>
-                        <div className="form-group" style={{ margin: 0 }}>
+
+                        <div className="form-group">
                           <label>سعر التقسيط (جنيه)</label>
                           <input
                             type="number"
                             value={formData.installmentPrice}
                             onChange={(e) => setFormData({ ...formData, installmentPrice: e.target.value })}
-                            placeholder="0"
+                            placeholder="0 (اختياري)"
                           />
                         </div>
-                      </div>
-                    </div>
-                  ) : floorViewMode === 'cards' ? (
-                    /* ── Responsive Floor Cards Layout (No Horizontal Scroll) ── */
-                    <div className="floors-cards-list">
-                      {floors.map((floor, index) => (
-                        <div key={index} className={`floor-card ${!floor.isAvailable ? 'floor-card--sold' : ''}`}>
-                          <div className="floor-card__header">
-                            <div className="floor-card__title-wrap">
-                              <span className="floor-card__badge">#{index + 1}</span>
-                              <input
-                                type="text"
-                                value={floor.floorName ?? ''}
-                                placeholder={`الدور ${index + 1}`}
-                                onChange={(e) => {
-                                  const digits = e.target.value.match(/\d+/);
-                                  updateFloor(index, {
-                                    floorName: e.target.value,
-                                    floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
-                                  });
-                                }}
-                                onBlur={() => expandFloorIfMultiple(index)}
-                                className="floor-card__name-input"
-                                title="اسم أو مسمى الدور (يمكنك كتابة 2/3/4 لتكرار البيانات للأدوار تلقائياً)"
-                              />
-                              {parseMultiFloorNumbers(floor.floorName).length > 1 && (
-                                <button
-                                  type="button"
-                                  onClick={() => expandFloorIfMultiple(index)}
-                                  className="btn-expand-floors"
-                                  title="انقر لنسخ وتوزيع البيانات على أدوار منفصلة تلقائياً"
-                                >
-                                  ⚡ نسخ للأدوار ({parseMultiFloorNumbers(floor.floorName).length})
-                                </button>
-                              )}
-                            </div>
 
-                            <div className="floor-card__header-actions">
-                              <button
-                                type="button"
-                                onClick={() => updateFloor(index, {
-                                  isAvailable: !floor.isAvailable,
-                                  soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
-                                })}
-                                className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
-                                title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
-                              >
-                                {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
-                              </button>
+                        <div className="form-group">
+                          <label>
+                            {formData.propertyType === 'House' ? 'المساحة الإجمالية للبيت (م²) *' :
+                             formData.propertyType === 'Land' ? 'مساحة الأرض (م²) *' :
+                             'مساحة المحل (م²) *'}
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.areaSqm}
+                            onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
+                            placeholder="مثال: 150"
+                            required
+                          />
+                        </div>
 
-                              <button
-                                type="button"
-                                onClick={() => duplicateFloor(index)}
-                                className="floor-card__btn-action"
-                                title="نسخ مواصفات هذا الدور في دور جديد"
-                              >
-                                📋 نسخ
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => removeFloor(index)}
-                                className="floor-card__btn-action floor-card__btn-action--delete"
-                                title="حذف هذا الدور"
-                              >
-                                ✕ حذف
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="floor-card__body">
-                            <div className="floor-card__field">
-                              <label>المساحة (م²)</label>
+                        {formData.propertyType === 'Shop' && (
+                          <>
+                            <div className="form-group">
+                              <label>الدور (0 للأرضي)</label>
                               <input
                                 type="number"
-                                value={floor.areaSqm ?? ''}
-                                placeholder={formData.areaSqm || '0'}
-                                onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
-                                className="floor-input"
-                              />
-                            </div>
-
-                            <div className="floor-card__field">
-                              <label>غرف النوم</label>
-                              <input
-                                type="number"
-                                value={floor.bedrooms ?? ''}
+                                value={formData.floorNumber}
+                                onChange={(e) => setFormData({ ...formData, floorNumber: e.target.value })}
                                 placeholder="0"
-                                min="0"
-                                onChange={(e) => updateFloor(index, { bedrooms: e.target.value ? parseInt(e.target.value) : null })}
-                                className="floor-input"
                               />
                             </div>
-
-                            <div className="floor-card__field">
+                            <div className="form-group">
                               <label>الحمامات</label>
                               <input
                                 type="number"
-                                value={floor.bathrooms ?? ''}
+                                value={formData.bathrooms}
+                                onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
                                 placeholder="0"
-                                min="0"
-                                onChange={(e) => updateFloor(index, { bathrooms: e.target.value ? parseInt(e.target.value) : null })}
-                                className="floor-input"
                               />
                             </div>
+                          </>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
 
-                            <div className="floor-card__field">
-                              <label>سعر المتر (جنيه)</label>
-                              <input
-                                type="number"
-                                value={floor.pricePerMeter ?? ''}
-                                placeholder="0"
-                                onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
-                                className="floor-input"
-                                title="يتم حساب سعر الكاش أو التقسيط تلقائياً بناءً على سعر المتر والمساحة"
-                              />
-                            </div>
+                {/* Section: Floors & Pricing */}
+                {formData.propertyType !== 'Land' && formData.propertyType !== 'Shop' && (
+                  <div className="form-section">
+                    <div className="form-section__header-row">
+                      <div>
+                        <h3 className="form-section__title">
+                          {formData.propertyType === 'House' ? '🏠 مواصفات وتفاصيل أدوار البيت' : '🏢 الأدوار والأسعار وسعر المتر'}
+                        </h3>
+                        <p className="form-section__sub">
+                          {formData.propertyType === 'House'
+                            ? 'حدد مواصفات ومساحات كل دور من أدوار البيت (البيت يُباع بالكامل كوحدة واحدة بسعر إجمالي محدد بالأعلى، ولا يتم تسعير كل دور منفرداً).'
+                            : 'حدد بيانات وأسعار كل دور على حدة مع الحساب التلقائي لسعر الكاش أو سعر المتر، وتمييز حالة الدور (متاح 🟢 أو مباع 🔴).'}
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {floors.length > 0 && (
+                          <div className="floor-view-toggle">
+                            <button
+                              type="button"
+                              className={`floor-view-btn ${floorViewMode === 'cards' ? 'active' : ''}`}
+                              onClick={() => setFloorViewMode('cards')}
+                              title="عرض بطاقات تفصيلي بدون سكرول أفقي"
+                            >
+                              🗂️ بطاقات (مريح)
+                            </button>
+                            <button
+                              type="button"
+                              className={`floor-view-btn ${floorViewMode === 'table' ? 'active' : ''}`}
+                              onClick={() => setFloorViewMode('table')}
+                              title="عرض جدول مضغوط"
+                            >
+                              📊 جدول
+                            </button>
+                          </div>
+                        )}
+                        <button
+                          type="button"
+                          className="btn-add-floor"
+                          onClick={addFloor}
+                        >
+                          <span>＋</span> إضافة دور
+                        </button>
+                        {floors.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn-add-floor"
+                            onClick={duplicateLastFloor}
+                            style={{ background: '#2563eb', borderColor: '#1d4ed8' }}
+                            title="إضافة دور جديد بنفس مواصفات الدور السابق لتوفير الوقت"
+                          >
+                            <span>📋</span> تكرار بيانات الدور الأخير
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-                            <div className="floor-card__field">
-                              <label>سعر الكاش (جنيه)</label>
-                              <input
-                                type="number"
-                                value={floor.price ?? ''}
-                                placeholder="0"
-                                onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
-                                className="floor-input"
-                                title="يتم حساب سعر المتر تلقائياً بناءً على سعر الكاش والمساحة"
-                              />
-                            </div>
+                    {formData.propertyType === 'House' ? (
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '10px 0 16px', padding: '12px 16px', background: 'rgba(37,99,235,0.06)', border: '1px solid rgba(37,99,235,0.2)', borderRadius: '10px', fontSize: '0.9rem', alignItems: 'center' }}>
+                        <span style={{ color: '#1e3a8a', fontWeight: 800 }}>
+                          🏠 يباع البيت بالكامل كوحدة واحدة
+                        </span>
+                        <span style={{ color: '#047857', fontWeight: 700 }}>
+                          سعر الكاش الإجمالي: <span style={{ fontSize: '1.05rem', fontWeight: 900 }}>{formData.price ? `${Number(formData.price).toLocaleString('ar-EG')} جنيه` : 'غير محدد بالأعلى'}</span>
+                        </span>
+                        {formData.installmentPrice && (
+                          <span style={{ color: '#2563eb', fontWeight: 700 }}>
+                            سعر التقسيط الإجمالي: <span style={{ fontSize: '1.05rem', fontWeight: 900 }}>{Number(formData.installmentPrice).toLocaleString('ar-EG')} جنيه</span>
+                          </span>
+                        )}
+                        <span style={{ fontSize: '0.8rem', color: '#64748b', marginRight: 'auto' }}>
+                          ℹ️ الأدوار بالأسفل لتوضيح المساحات والغرف لكل دور فقط بدون أسعار منفصلة
+                        </span>
+                      </div>
+                    ) : (
+                      floors.length > 0 && (() => {
+                        const floorCash = floors.map(f => f.price).filter((p): p is number => p != null && p > 0);
+                        const floorInst = floors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
+                        const minCash = floorCash.length > 0 ? Math.min(...floorCash) : null;
+                        const maxCash = floorCash.length > 0 ? Math.max(...floorCash) : null;
+                        const minInst = floorInst.length > 0 ? Math.min(...floorInst) : null;
+                        const maxInst = floorInst.length > 0 ? Math.max(...floorInst) : null;
+                        return (
+                          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '10px 0 16px', padding: '10px 16px', background: 'rgba(45,74,62,0.06)', border: '1px solid rgba(45,74,62,0.16)', borderRadius: '10px', fontSize: '0.9rem', alignItems: 'center' }}>
+                            <span style={{ color: '#182821', fontWeight: 700 }}>
+                              💵 سعر الكاش للعقار: <span style={{ color: '#047857', fontSize: '1.05rem', fontWeight: 900 }}>{minCash != null ? (minCash === maxCash ? `${minCash.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                            </span>
+                            <span style={{ color: '#1e40af', fontWeight: 700 }}>
+                              💳 سعر التقسيط: <span style={{ color: '#2563eb', fontSize: '1.05rem', fontWeight: 900 }}>{minInst != null ? (minInst === maxInst ? `${minInst.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                            </span>
+                            <span style={{ fontSize: '0.78rem', color: '#64748b', marginRight: 'auto' }}>
+                              ℹ️ يُحسب السعر الإجمالي للعقار تلقائياً ومباشرة من أقل سعر مسجل في الأدوار بالأسفل
+                            </span>
+                          </div>
+                        );
+                      })()
+                    )}
 
-                            <div className="floor-card__field">
-                              <label>سعر التقسيط (جنيه)</label>
-                              <input
-                                type="number"
-                                value={floor.installmentPrice ?? ''}
-                                placeholder="0"
-                                onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
-                                className="floor-input"
-                                title="في حال عدم وجود سعر كاش، يتم حساب سعر المتر تلقائياً بناءً على سعر التقسيط والمساحة"
-                              />
-                            </div>
-
-                            {!floor.isAvailable && (
-                              <div className="floor-card__field floor-card__field--sold-price">
-                                <label style={{ color: '#ef4444', fontWeight: 700 }}>سعر البيع الفعلي</label>
-                                <input
-                                  type="number"
-                                  value={floor.soldPrice ?? ''}
-                                  placeholder="سعر البيع الفعلي"
-                                  onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
-                                  className="floor-input"
-                                  style={{ borderColor: '#ef4444', background: '#fef2f2', color: '#b91c1c', fontWeight: 700 }}
-                                  title="أدخل سعر البيع الفعلي الذي تم الاتفاق عليه لهذا الدور"
-                                />
-                              </div>
-                            )}
+                    {floors.length === 0 ? (
+                      <div className="no-floors-box">
+                        <span>🏢</span>
+                        <p>لم يتم إضافة أدوار بعد. يمكنك إما الضغط على "＋ إضافة دور" لتسعير كل دور على حدة، أو تحديد السعر العام للعقار أدناه:</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', maxWidth: '600px', margin: '14px auto 0', textAlign: 'right' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label>سعر الكاش (جنيه)</label>
+                            <input
+                              type="number"
+                              value={formData.price}
+                              onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                              placeholder="0"
+                            />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label>سعر التقسيط (جنيه)</label>
+                            <input
+                              type="number"
+                              value={formData.installmentPrice}
+                              onChange={(e) => setFormData({ ...formData, installmentPrice: e.target.value })}
+                              placeholder="0"
+                            />
                           </div>
                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    /* ── Classic Table Layout ── */
-                    <div className="floors-table-container">
-                      <table className="floors-table">
-                        <thead>
-                          <tr>
-                            <th>الدور / الاسم</th>
-                            <th>المساحة (م²)</th>
-                            <th>غرف النوم</th>
-                            <th>الحمامات</th>
-                            <th>سعر المتر (جنيه)</th>
-                            <th>سعر الكاش (جنيه)</th>
-                            <th>سعر التقسيط (جنيه)</th>
-                            <th style={{ minWidth: '115px', textAlign: 'center' }}>الحالة</th>
-                            <th style={{ minWidth: '120px', textAlign: 'center' }}>سعر البيع الفعلي</th>
-                            <th style={{ textAlign: 'center' }}>حذف</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {floors.map((floor, index) => (
-                            <tr key={index} className={!floor.isAvailable ? 'floor-row--sold' : ''}>
-                              <td>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <input
-                                    type="text"
-                                    value={floor.floorName ?? ''}
-                                    placeholder={`الدور ${index + 1}`}
-                                    onChange={(e) => {
-                                      const digits = e.target.value.match(/\d+/);
-                                      updateFloor(index, {
-                                        floorName: e.target.value,
-                                        floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
-                                      });
-                                    }}
-                                    onBlur={() => expandFloorIfMultiple(index)}
-                                    className="floor-input"
-                                    title="اسم أو مسمى الدور (يمكنك كتابة 2/3/4 لتكرار البيانات للأدوار تلقائياً)"
-                                  />
-                                  {parseMultiFloorNumbers(floor.floorName).length > 1 && (
-                                    <button
-                                      type="button"
-                                      onClick={() => expandFloorIfMultiple(index)}
-                                      className="btn-expand-floors"
-                                      title="انقر لنسخ وتوزيع البيانات على أدوار منفصلة تلقائياً"
-                                    >
-                                      ⚡ نسخ ({parseMultiFloorNumbers(floor.floorName).length})
-                                    </button>
-                                  )}
-                                </div>
-                              </td>
-                              <td>
+                      </div>
+                    ) : floorViewMode === 'cards' ? (
+                      /* ── Responsive Floor Cards Layout (No Horizontal Scroll) ── */
+                      <div className="floors-cards-list">
+                        {floors.map((floor, index) => (
+                          <div key={index} className={`floor-card ${(!floor.isAvailable && formData.propertyType !== 'House') ? 'floor-card--sold' : ''}`}>
+                            <div className="floor-card__header">
+                              <div className="floor-card__title-wrap">
+                                <span className="floor-card__badge">#{index + 1}</span>
+                                <input
+                                  type="text"
+                                  value={floor.floorName ?? ''}
+                                  placeholder={`الدور ${index + 1}`}
+                                  onChange={(e) => {
+                                    const digits = e.target.value.match(/\d+/);
+                                    updateFloor(index, {
+                                      floorName: e.target.value,
+                                      floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                    });
+                                  }}
+                                  onBlur={() => expandFloorIfMultiple(index)}
+                                  className="floor-card__name-input"
+                                  title="اسم أو مسمى الدور (يمكنك كتابة 2/3/4 لتكرار البيانات للأدوار تلقائياً)"
+                                />
+                                {parseMultiFloorNumbers(floor.floorName).length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => expandFloorIfMultiple(index)}
+                                    className="btn-expand-floors"
+                                    title="انقر لنسخ وتوزيع البيانات على أدوار منفصلة تلقائياً"
+                                  >
+                                    ⚡ نسخ للأدوار ({parseMultiFloorNumbers(floor.floorName).length})
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="floor-card__header-actions">
+                                {formData.propertyType !== 'House' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateFloor(index, {
+                                      isAvailable: !floor.isAvailable,
+                                      soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
+                                    })}
+                                    className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
+                                    title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
+                                  >
+                                    {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => duplicateFloor(index)}
+                                  className="floor-card__btn-action"
+                                  title="نسخ مواصفات هذا الدور في دور جديد"
+                                >
+                                  📋 نسخ
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeFloor(index)}
+                                  className="floor-card__btn-action floor-card__btn-action--delete"
+                                  title="حذف هذا الدور"
+                                >
+                                  ✕ حذف
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="floor-card__body">
+                              <div className="floor-card__field">
+                                <label>المساحة (م²)</label>
                                 <input
                                   type="number"
                                   value={floor.areaSqm ?? ''}
                                   placeholder={formData.areaSqm || '0'}
                                   onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
                                   className="floor-input"
-                                  style={{ width: '80px' }}
                                 />
-                              </td>
-                              <td>
+                              </div>
+
+                              <div className="floor-card__field">
+                                <label>غرف النوم</label>
                                 <input
                                   type="number"
                                   value={floor.bedrooms ?? ''}
@@ -1185,10 +1208,11 @@ export default function AdminPanelPage() {
                                   min="0"
                                   onChange={(e) => updateFloor(index, { bedrooms: e.target.value ? parseInt(e.target.value) : null })}
                                   className="floor-input"
-                                  style={{ width: '65px' }}
                                 />
-                              </td>
-                              <td>
+                              </div>
+
+                              <div className="floor-card__field">
+                                <label>الحمامات</label>
                                 <input
                                   type="number"
                                   value={floor.bathrooms ?? ''}
@@ -1196,84 +1220,219 @@ export default function AdminPanelPage() {
                                   min="0"
                                   onChange={(e) => updateFloor(index, { bathrooms: e.target.value ? parseInt(e.target.value) : null })}
                                   className="floor-input"
-                                  style={{ width: '65px' }}
                                 />
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  value={floor.pricePerMeter ?? ''}
-                                  placeholder="0"
-                                  onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
-                                  className="floor-input"
-                                  title="يتم حساب سعر الكاش أو التقسيط تلقائياً بناءً على سعر المتر والمساحة"
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  value={floor.price ?? ''}
-                                  placeholder="0"
-                                  onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
-                                  className="floor-input"
-                                  title="يتم حساب سعر المتر تلقائياً بناءً على سعر الكاش والمساحة"
-                                />
-                              </td>
-                              <td>
-                                <input
-                                  type="number"
-                                  value={floor.installmentPrice ?? ''}
-                                  placeholder="0"
-                                  onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
-                                  className="floor-input"
-                                  title="في حال عدم وجود سعر كاش، يتم حساب سعر المتر تلقائياً بناءً على سعر التقسيط والمساحة"
-                                />
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => updateFloor(index, {
-                                    isAvailable: !floor.isAvailable,
-                                    soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
-                                  })}
-                                  className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
-                                  title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
-                                >
-                                  {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
-                                </button>
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                {!floor.isAvailable ? (
+                              </div>
+
+                              {formData.propertyType !== 'House' && (
+                                <>
+                                  <div className="floor-card__field">
+                                    <label>سعر المتر (جنيه)</label>
+                                    <input
+                                      type="number"
+                                      value={floor.pricePerMeter ?? ''}
+                                      placeholder="0"
+                                      onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
+                                      className="floor-input"
+                                      title="يتم حساب سعر الكاش أو التقسيط تلقائياً بناءً على سعر المتر والمساحة"
+                                    />
+                                  </div>
+
+                                  <div className="floor-card__field">
+                                    <label>سعر الكاش (جنيه)</label>
+                                    <input
+                                      type="number"
+                                      value={floor.price ?? ''}
+                                      placeholder="0"
+                                      onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
+                                      className="floor-input"
+                                      title="يتم حساب سعر المتر تلقائياً بناءً على سعر الكاش والمساحة"
+                                    />
+                                  </div>
+
+                                  <div className="floor-card__field">
+                                    <label>سعر التقسيط (جنيه)</label>
+                                    <input
+                                      type="number"
+                                      value={floor.installmentPrice ?? ''}
+                                      placeholder="0"
+                                      onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                      className="floor-input"
+                                      title="في حال عدم وجود سعر كاش، يتم حساب سعر المتر تلقائياً بناءً على سعر التقسيط والمساحة"
+                                    />
+                                  </div>
+
+                                  {!floor.isAvailable && (
+                                    <div className="floor-card__field floor-card__field--sold-price">
+                                      <label style={{ color: '#ef4444', fontWeight: 700 }}>سعر البيع الفعلي</label>
+                                      <input
+                                        type="number"
+                                        value={floor.soldPrice ?? ''}
+                                        placeholder="سعر البيع الفعلي"
+                                        onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                        style={{ borderColor: '#ef4444', background: '#fef2f2', color: '#b91c1c', fontWeight: 700 }}
+                                        title="أدخل سعر البيع الفعلي الذي تم الاتفاق عليه لهذا الدور"
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      /* ── Classic Table Layout ── */
+                      <div className="floors-table-container">
+                        <table className="floors-table">
+                          <thead>
+                            <tr>
+                              <th>الدور / الاسم</th>
+                              <th>المساحة (م²)</th>
+                              <th>غرف النوم</th>
+                              <th>الحمامات</th>
+                              {formData.propertyType !== 'House' && (
+                                <>
+                                  <th>سعر المتر (جنيه)</th>
+                                  <th>سعر الكاش (جنيه)</th>
+                                  <th>سعر التقسيط (جنيه)</th>
+                                  <th style={{ minWidth: '115px', textAlign: 'center' }}>الحالة</th>
+                                  <th style={{ minWidth: '120px', textAlign: 'center' }}>سعر البيع الفعلي</th>
+                                </>
+                              )}
+                              <th style={{ textAlign: 'center' }}>حذف</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {floors.map((floor, index) => (
+                              <tr key={index} className={(!floor.isAvailable && formData.propertyType !== 'House') ? 'floor-row--sold' : ''}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <input
+                                      type="text"
+                                      value={floor.floorName ?? ''}
+                                      placeholder={`الدور ${index + 1}`}
+                                      onChange={(e) => {
+                                        const digits = e.target.value.match(/\d+/);
+                                        updateFloor(index, {
+                                          floorName: e.target.value,
+                                          floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                        });
+                                      }}
+                                      onBlur={() => expandFloorIfMultiple(index)}
+                                      className="floor-input"
+                                      title="اسم أو مسمى الدور"
+                                    />
+                                  </div>
+                                </td>
+                                <td>
                                   <input
                                     type="number"
-                                    value={floor.soldPrice ?? ''}
-                                    placeholder="سعر البيع"
-                                    onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                    value={floor.areaSqm ?? ''}
+                                    placeholder={formData.areaSqm || '0'}
+                                    onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
                                     className="floor-input"
-                                    style={{ width: '100px', borderColor: '#ef4444', background: '#fef2f2', fontWeight: 700 }}
-                                    title="أدخل سعر البيع الفعلي الذي تم الاتفاق عليه لهذا الدور"
+                                    style={{ width: '80px' }}
                                   />
-                                ) : (
-                                  <span style={{ color: 'var(--clr-text-muted)', fontSize: '0.8rem' }}>—</span>
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    value={floor.bedrooms ?? ''}
+                                    placeholder="0"
+                                    min="0"
+                                    onChange={(e) => updateFloor(index, { bedrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                    className="floor-input"
+                                    style={{ width: '65px' }}
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    value={floor.bathrooms ?? ''}
+                                    placeholder="0"
+                                    min="0"
+                                    onChange={(e) => updateFloor(index, { bathrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                    className="floor-input"
+                                    style={{ width: '65px' }}
+                                  />
+                                </td>
+                                {formData.propertyType !== 'House' && (
+                                  <>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        value={floor.pricePerMeter ?? ''}
+                                        placeholder="0"
+                                        onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        value={floor.price ?? ''}
+                                        placeholder="0"
+                                        onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        value={floor.installmentPrice ?? ''}
+                                        placeholder="0"
+                                        onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                      />
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateFloor(index, {
+                                          isAvailable: !floor.isAvailable,
+                                          soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
+                                        })}
+                                        className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
+                                        title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
+                                      >
+                                        {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
+                                      </button>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                      {!floor.isAvailable ? (
+                                        <input
+                                          type="number"
+                                          value={floor.soldPrice ?? ''}
+                                          placeholder="سعر البيع"
+                                          onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                          className="floor-input"
+                                          style={{ width: '100px', borderColor: '#ef4444', background: '#fef2f2', fontWeight: 700 }}
+                                        />
+                                      ) : (
+                                        <span style={{ color: 'var(--clr-text-muted)', fontSize: '0.8rem' }}>—</span>
+                                      )}
+                                    </td>
+                                  </>
                                 )}
-                              </td>
-                              <td style={{ textAlign: 'center' }}>
-                                <button
-                                  type="button"
-                                  onClick={() => removeFloor(index)}
-                                  className="btn-delete-floor"
-                                  title="حذف الدور"
-                                >
-                                  ✕
-                                </button>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </div>
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFloor(index)}
+                                    className="btn-delete-floor"
+                                    title="حذف الدور"
+                                  >
+                                    ✕
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Section: Location */}
                 <div className="form-section">
@@ -1357,15 +1516,17 @@ export default function AdminPanelPage() {
                       <span className="checkbox-card__icon">🔥</span>
                       <span>عداد غاز متاح</span>
                     </label>
-                    <label className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.elevatorAvailable}
-                        onChange={(e) => setFormData({ ...formData, elevatorAvailable: e.target.checked })}
-                      />
-                      <span className="checkbox-card__icon">🛗</span>
-                      <span>يوجد أسانسير</span>
-                    </label>
+                    {formData.propertyType !== 'Land' && (
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.elevatorAvailable}
+                          onChange={(e) => setFormData({ ...formData, elevatorAvailable: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">🛗</span>
+                        <span>يوجد أسانسير</span>
+                      </label>
+                    )}
                   </div>
                 </div>
 

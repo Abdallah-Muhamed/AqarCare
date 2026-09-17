@@ -225,20 +225,26 @@ public class PropertyService
             UpdatedAt = DateTime.UtcNow
         };
 
-        if (request.Floors != null && request.Floors.Count > 0)
+        var isHouse = request.PropertyType == "House" || request.PropertyType == "Villa";
+        var isLandOrShop = request.PropertyType == "Land" || request.PropertyType == "Shop";
+
+        if (!isLandOrShop && request.Floors != null && request.Floors.Count > 0)
         {
             var sort = 0;
             foreach (var f in request.Floors)
             {
-                var floorPrice = f.Price;
-                var floorPpm = f.PricePerMeter;
-                if (!floorPpm.HasValue && floorPrice.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
+                decimal? floorPrice = isHouse ? null : f.Price;
+                decimal? floorPpm = isHouse ? null : f.PricePerMeter;
+                if (!isHouse)
                 {
-                    floorPpm = Math.Round(floorPrice.Value / f.AreaSqm.Value, 2);
-                }
-                else if (!floorPrice.HasValue && floorPpm.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
-                {
-                    floorPrice = Math.Round(floorPpm.Value * f.AreaSqm.Value, 2);
+                    if (!floorPpm.HasValue && floorPrice.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
+                    {
+                        floorPpm = Math.Round(floorPrice.Value / f.AreaSqm.Value, 2);
+                    }
+                    else if (!floorPrice.HasValue && floorPpm.HasValue && f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
+                    {
+                        floorPrice = Math.Round(floorPpm.Value * f.AreaSqm.Value, 2);
+                    }
                 }
 
                 entity.Floors.Add(new PropertyFloor
@@ -247,15 +253,15 @@ public class PropertyService
                     FloorName = f.FloorName,
                     Price = floorPrice,
                     PricePerMeter = floorPpm,
-                    InstallmentPrice = f.InstallmentPrice,
-                    SoldPrice = f.SoldPrice,
+                    InstallmentPrice = isHouse ? null : f.InstallmentPrice,
+                    SoldPrice = isHouse ? null : f.SoldPrice,
                     AreaSqm = f.AreaSqm,
-                    IsAvailable = f.IsAvailable,
+                    IsAvailable = isHouse ? true : f.IsAvailable,
                     SortOrder = f.SortOrder != 0 ? f.SortOrder : sort++
                 });
             }
 
-            if (!entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
+            if (!isHouse && !entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
             {
                 entity.Price = entity.Floors.Where(fl => fl.Price.HasValue).Min(fl => fl.Price);
             }
@@ -282,23 +288,26 @@ public class PropertyService
 
         if (entity is null) return null;
 
+        var isHouse = request.PropertyType == "House" || request.PropertyType == "Villa";
+        var isLandOrShop = request.PropertyType == "Land" || request.PropertyType == "Shop";
+
         var firstFloorPrice = request.Floors?.FirstOrDefault(f => f.Price.HasValue)?.Price;
         var firstFloorInstallment = request.Floors?.FirstOrDefault(f => f.InstallmentPrice.HasValue)?.InstallmentPrice;
 
         entity.Title = request.Title;
         entity.Description = request.Description;
-        entity.Price = request.Price ?? firstFloorPrice ?? entity.Price;
-        entity.InstallmentPrice = request.InstallmentPrice ?? firstFloorInstallment ?? entity.InstallmentPrice;
+        entity.Price = (isHouse || isLandOrShop) ? request.Price : (request.Price ?? firstFloorPrice ?? entity.Price);
+        entity.InstallmentPrice = (isHouse || isLandOrShop) ? request.InstallmentPrice : (request.InstallmentPrice ?? firstFloorInstallment ?? entity.InstallmentPrice);
         entity.SoldPrice = request.SoldPrice;
         entity.AreaSqm = request.AreaSqm;
-        entity.Bedrooms = request.Bedrooms;
-        entity.Bathrooms = request.Bathrooms;
+        entity.Bedrooms = isLandOrShop ? null : request.Bedrooms;
+        entity.Bathrooms = (request.PropertyType == "Land") ? null : request.Bathrooms;
         entity.PropertyType = request.PropertyType;
         entity.ListingType = request.ListingType;
-        entity.FinishingStatus = request.FinishingStatus;
+        entity.FinishingStatus = (request.PropertyType == "Land") ? null : request.FinishingStatus;
         entity.FinishingPackageId = request.FinishingPackageId;
         entity.InstallmentAvailable = request.InstallmentAvailable;
-        entity.FloorNumber = request.FloorNumber;
+        entity.FloorNumber = (isHouse || request.PropertyType == "Land") ? null : request.FloorNumber;
         entity.City = string.IsNullOrWhiteSpace(request.City) ? "المحلة الكبرى" : request.City;
         entity.District = request.District;
         entity.Address = request.Address;
@@ -310,10 +319,10 @@ public class PropertyService
         entity.WaterMeterAvailable = request.WaterMeterAvailable;
         entity.ElectricityMeterAvailable = request.ElectricityMeterAvailable;
         entity.GasMeterAvailable = request.GasMeterAvailable;
-        entity.ElevatorAvailable = request.ElevatorAvailable;
+        entity.ElevatorAvailable = (request.PropertyType == "Land") ? false : request.ElevatorAvailable;
         entity.NumberOfFloors = request.NumberOfFloors;
         entity.FloorsFinishing = request.FloorsFinishing;
-        entity.ApartmentsPerFloor = request.ApartmentsPerFloor;
+        entity.ApartmentsPerFloor = (isHouse || isLandOrShop) ? null : request.ApartmentsPerFloor;
         entity.FrontageWidth = request.FrontageWidth;
         entity.FrontageLength = request.FrontageLength;
         entity.StreetWidth = request.StreetWidth;
@@ -323,7 +332,14 @@ public class PropertyService
         entity.HasGas = request.HasGas;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        if (request.Floors != null)
+        if (isLandOrShop)
+        {
+            if (entity.Floors.Any())
+            {
+                _db.PropertyFloors.RemoveRange(entity.Floors);
+            }
+        }
+        else if (request.Floors != null)
         {
             var inputFloorIds = request.Floors
                 .Where(f => f.Id.HasValue && f.Id.Value > 0)
@@ -339,15 +355,18 @@ public class PropertyService
             var sort = 0;
             foreach (var inputFloor in request.Floors)
             {
-                var floorPrice = inputFloor.Price;
-                var floorPpm = inputFloor.PricePerMeter;
-                if (!floorPpm.HasValue && floorPrice.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
+                decimal? floorPrice = isHouse ? null : inputFloor.Price;
+                decimal? floorPpm = isHouse ? null : inputFloor.PricePerMeter;
+                if (!isHouse)
                 {
-                    floorPpm = Math.Round(floorPrice.Value / inputFloor.AreaSqm.Value, 2);
-                }
-                else if (!floorPrice.HasValue && floorPpm.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
-                {
-                    floorPrice = Math.Round(floorPpm.Value * inputFloor.AreaSqm.Value, 2);
+                    if (!floorPpm.HasValue && floorPrice.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
+                    {
+                        floorPpm = Math.Round(floorPrice.Value / inputFloor.AreaSqm.Value, 2);
+                    }
+                    else if (!floorPrice.HasValue && floorPpm.HasValue && inputFloor.AreaSqm.HasValue && inputFloor.AreaSqm.Value > 0)
+                    {
+                        floorPrice = Math.Round(floorPpm.Value * inputFloor.AreaSqm.Value, 2);
+                    }
                 }
 
                 if (inputFloor.Id.HasValue && inputFloor.Id.Value > 0)
@@ -359,10 +378,10 @@ public class PropertyService
                         existingFloor.FloorName = inputFloor.FloorName;
                         existingFloor.Price = floorPrice;
                         existingFloor.PricePerMeter = floorPpm;
-                        existingFloor.InstallmentPrice = inputFloor.InstallmentPrice;
-                        existingFloor.SoldPrice = inputFloor.SoldPrice;
+                        existingFloor.InstallmentPrice = isHouse ? null : inputFloor.InstallmentPrice;
+                        existingFloor.SoldPrice = isHouse ? null : inputFloor.SoldPrice;
                         existingFloor.AreaSqm = inputFloor.AreaSqm;
-                        existingFloor.IsAvailable = inputFloor.IsAvailable;
+                        existingFloor.IsAvailable = isHouse ? true : inputFloor.IsAvailable;
                         existingFloor.SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++;
                     }
                 }
@@ -375,16 +394,16 @@ public class PropertyService
                         FloorName = inputFloor.FloorName,
                         Price = floorPrice,
                         PricePerMeter = floorPpm,
-                        InstallmentPrice = inputFloor.InstallmentPrice,
-                        SoldPrice = inputFloor.SoldPrice,
+                        InstallmentPrice = isHouse ? null : inputFloor.InstallmentPrice,
+                        SoldPrice = isHouse ? null : inputFloor.SoldPrice,
                         AreaSqm = inputFloor.AreaSqm,
-                        IsAvailable = inputFloor.IsAvailable,
+                        IsAvailable = isHouse ? true : inputFloor.IsAvailable,
                         SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++
                     });
                 }
             }
 
-            if (!entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
+            if (!isHouse && !entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
             {
                 entity.Price = entity.Floors.Where(fl => fl.Price.HasValue).Min(fl => fl.Price);
             }
@@ -479,7 +498,17 @@ public class PropertyService
             x.InstallmentPrice,
             x.IsUnderConstruction,
             x.Floors?.OrderBy(f => f.SortOrder)
-                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .Select(f => new PropertyFloorDto(
+                    f.Id,
+                    f.FloorNumber,
+                    f.FloorName,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.Price,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.PricePerMeter,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.InstallmentPrice,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.SoldPrice,
+                    f.AreaSqm,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? true : f.IsAvailable,
+                    f.SortOrder))
                 .ToList(),
             x.IsPublished,
             x.ApartmentsPerFloor);
@@ -531,7 +560,17 @@ public class PropertyService
             x.IsUnderConstruction,
             x.Floors?
                 .OrderBy(f => f.SortOrder)
-                .Select(f => new PropertyFloorDto(f.Id, f.FloorNumber, f.FloorName, f.Price, f.PricePerMeter, f.InstallmentPrice, f.SoldPrice, f.AreaSqm, f.IsAvailable, f.SortOrder))
+                .Select(f => new PropertyFloorDto(
+                    f.Id,
+                    f.FloorNumber,
+                    f.FloorName,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.Price,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.PricePerMeter,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.InstallmentPrice,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.SoldPrice,
+                    f.AreaSqm,
+                    (x.PropertyType == "House" || x.PropertyType == "Villa") ? true : f.IsAvailable,
+                    f.SortOrder))
                 .ToList() ?? new List<PropertyFloorDto>(),
             x.ApartmentsPerFloor);
 }

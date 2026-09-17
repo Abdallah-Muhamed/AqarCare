@@ -39,8 +39,12 @@ export default function PropertyCard({ property: p }: Props) {
     ? (generalLoc && !detailedLoc.includes(p.district || '') ? `${detailedLoc} — ${generalLoc}` : detailedLoc)
     : (generalLoc || 'غير محدد')
 
+  const isHouse = p.propertyType === 'House' || p.propertyType === 'Villa'
+  const isLand  = p.propertyType === 'Land'
+  const isShop  = p.propertyType === 'Shop' || p.propertyType === 'Commercial'
+
   // Price per meter calculation
-  const floorPpms = (p.floors || [])
+  const floorPpms = (!isHouse && !isLand ? (p.floors || []) : [])
     .map(f => {
       if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter
       const basePrice = f.price ?? f.installmentPrice
@@ -57,7 +61,7 @@ export default function PropertyCard({ property: p }: Props) {
   const minPpm = floorPpms.length > 0 ? Math.min(...floorPpms) : unitPpm
   const maxPpm = floorPpms.length > 0 ? Math.max(...floorPpms) : unitPpm
   const ppmText = minPpm != null
-    ? (minPpm === maxPpm ? `${minPpm.toLocaleString('ar-EG')} ج/م²` : `يبدأ من ${minPpm.toLocaleString('ar-EG')} ج/م²`)
+    ? (isHouse || isLand || isShop || minPpm === maxPpm ? `${minPpm.toLocaleString('ar-EG')} ج/م²` : `يبدأ من ${minPpm.toLocaleString('ar-EG')} ج/م²`)
     : null
   
   return (
@@ -130,39 +134,46 @@ export default function PropertyCard({ property: p }: Props) {
 
         {/* Specs */}
         <div className="prop-card__specs">
-          {p.floors && p.floors.length > 0 ? (
-            <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title="الأدوار المتاحة">
-              🏢 {formatFloorsText(p.floors)}
+          {!isLand && (p.floors && p.floors.length > 0 ? (
+            <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title={isHouse ? "عدد الأدوار" : "الأدوار المتاحة"}>
+              🏢 {formatFloorsText(p.floors, p.propertyType)}
             </div>
           ) : p.floorNumber != null ? (
             <div className="prop-card__spec">
               🏢 {p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}
             </div>
-          ) : null}
-          <div className="prop-card__spec">
-            <BedDouble size={15} />
-            {(() => {
-              const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
-              const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
-                Math.min(...floorBeds) === Math.max(...floorBeds)
-                  ? Math.min(...floorBeds)
-                  : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
-              ) : null);
-              return `${bedVal ?? '—'} غرف`;
-            })()}
-          </div>
-          <div className="prop-card__spec">
-            <Bath size={15} />
-            {(() => {
-              const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
-              const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
-                Math.min(...floorBaths) === Math.max(...floorBaths)
-                  ? Math.min(...floorBaths)
-                  : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
-              ) : null);
-              return `${bathVal ?? '—'} حمام`;
-            })()}
-          </div>
+          ) : null)}
+
+          {!isLand && !isShop && (
+            <div className="prop-card__spec">
+              <BedDouble size={15} />
+              {(() => {
+                const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
+                const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
+                  Math.min(...floorBeds) === Math.max(...floorBeds)
+                    ? Math.min(...floorBeds)
+                    : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+                ) : null);
+                return `${bedVal ?? '—'} غرف`;
+              })()}
+            </div>
+          )}
+
+          {!isLand && (
+            <div className="prop-card__spec">
+              <Bath size={15} />
+              {(() => {
+                const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
+                const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
+                  Math.min(...floorBaths) === Math.max(...floorBaths)
+                    ? Math.min(...floorBaths)
+                    : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+                ) : null);
+                return `${bathVal ?? '—'} حمام`;
+              })()}
+            </div>
+          )}
+
           <div className="prop-card__spec">
             <Maximize2 size={15} />
             {(() => {
@@ -175,7 +186,8 @@ export default function PropertyCard({ property: p }: Props) {
               return `${areaVal ?? '—'} م²`;
             })()}
           </div>
-          {p.finishingStatus && (
+
+          {!isLand && p.finishingStatus && (
             <div className="prop-card__spec" title="نوع التشطيب">
               🎨 {finishingLabel[p.finishingStatus] ?? p.finishingStatus}
             </div>
@@ -200,7 +212,7 @@ export default function PropertyCard({ property: p }: Props) {
               );
             }
 
-            const availableFloors = p.floors && p.floors.length > 0
+            const availableFloors = !isHouse && !isLand && p.floors && p.floors.length > 0
               ? p.floors.filter(f => f.isAvailable)
               : [];
 
@@ -212,7 +224,7 @@ export default function PropertyCard({ property: p }: Props) {
               .map(f => f.installmentPrice)
               .filter((pr): pr is number => pr != null && pr > 0);
 
-            // If floors with prices exist
+            // If apartment floors with individual prices exist
             if (cashPrices.length > 0 || installmentPrices.length > 0) {
               const minCash = cashPrices.length > 0 ? Math.min(...cashPrices) : null;
               const maxCash = cashPrices.length > 0 ? Math.max(...cashPrices) : null;
@@ -261,19 +273,22 @@ export default function PropertyCard({ property: p }: Props) {
               );
             }
 
-            // Fallback for single unit without floors
+            const cashLabel = isHouse ? 'سعر البيت كاش' : isLand ? 'سعر الأرض كاش' : isShop ? 'سعر المحل كاش' : 'سعر الكاش';
+            const instLabel = isHouse ? 'سعر التقسيط للبيت' : isLand ? 'سعر التقسيط للأرض' : isShop ? 'سعر التقسيط للمحل' : 'سعر التقسيط';
+
+            // Fallback for single unit / House / Land / Shop
             return (
               <div>
                 {p.price != null ? (
                   <div>
-                    سعر الكاش : {p.price.toLocaleString('ar-EG')} <span>جنيه</span>
+                    {cashLabel} : {p.price.toLocaleString('ar-EG')} <span>جنيه</span>
                   </div>
                 ) : (
                   <span>السعر غير محدد</span>
                 )}
                 {p.installmentPrice != null && (
                   <small style={{ display: 'block', fontSize: '0.78rem', color: '#2563eb', fontWeight: 700, marginTop: '2px' }}>
-                    💳 سعر التقسيط : {p.installmentPrice.toLocaleString('ar-EG')} جنيه
+                    💳 {instLabel} : {p.installmentPrice.toLocaleString('ar-EG')} جنيه
                   </small>
                 )}
                 {ppmText && (

@@ -88,6 +88,30 @@ namespace AqarCare
                 db.Database.Migrate();
             }
 
+            if (args.Contains("--fix-house-properties", StringComparer.OrdinalIgnoreCase))
+            {
+                using var scope = app.Services.CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<AqarCareDbContext>();
+                var houseIds = db.PropertyUnits
+                    .Where(p => p.PropertyType == "House" || p.PropertyType == "Villa")
+                    .Select(p => p.Id)
+                    .ToList();
+                Console.WriteLine($"Found {houseIds.Count} house/villa properties: {string.Join(", ", houseIds)}");
+                var houseFloors = db.PropertyFloors
+                    .Where(f => houseIds.Contains(f.PropertyUnitId))
+                    .ToList();
+                foreach (var f in houseFloors)
+                {
+                    f.Price = null;
+                    f.PricePerMeter = null;
+                    f.InstallmentPrice = null;
+                    f.IsAvailable = true;
+                }
+                var rows = db.SaveChanges();
+                Console.WriteLine($"Fixed house properties: Cleared prices on {rows} floor records.");
+                return;
+            }
+
             if (args.Contains("--sync-local-map-to-prod", StringComparer.OrdinalIgnoreCase))
             {
                 var prodConn = builder.Configuration.GetConnectionString("DefaultConnection");

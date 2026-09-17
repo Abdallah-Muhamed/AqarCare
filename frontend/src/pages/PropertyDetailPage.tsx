@@ -82,6 +82,9 @@ export default function PropertyDetailPage() {
   )
 
   const st = statusLabel[prop.status] ?? { label: prop.status, cls: 'badge' }
+  const isHouse = prop.propertyType === 'House' || prop.propertyType === 'Villa'
+  const isLand  = prop.propertyType === 'Land'
+  const isShop  = prop.propertyType === 'Shop' || prop.propertyType === 'Commercial'
 
   return (
     <div className="detail-page">
@@ -146,40 +149,49 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="detail-specs">
-                <div className="detail-spec">
-                  <BedDouble size={18} />
-                  <div>
-                    <strong>
-                      {(() => {
-                        const floorBeds = (prop.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
-                        const bedVal = prop.bedrooms ?? (floorBeds.length > 0 ? (
-                          Math.min(...floorBeds) === Math.max(...floorBeds)
-                            ? Math.min(...floorBeds)
-                            : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
-                        ) : null);
-                        return bedVal ?? '—';
-                      })()}
-                    </strong>
-                    <small>غرف نوم</small>
+                {/* Bedrooms: only for residential (not Land or Shop) */}
+                {!isLand && !isShop && (
+                  <div className="detail-spec">
+                    <BedDouble size={18} />
+                    <div>
+                      <strong>
+                        {(() => {
+                          const floorBeds = (prop.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
+                          const bedVal = prop.bedrooms ?? (floorBeds.length > 0 ? (
+                            Math.min(...floorBeds) === Math.max(...floorBeds)
+                              ? Math.min(...floorBeds)
+                              : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+                          ) : null);
+                          return bedVal ?? '—';
+                        })()}
+                      </strong>
+                      <small>غرف نوم</small>
+                    </div>
                   </div>
-                </div>
-                <div className="detail-spec">
-                  <Bath size={18} />
-                  <div>
-                    <strong>
-                      {(() => {
-                        const floorBaths = (prop.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
-                        const bathVal = prop.bathrooms ?? (floorBaths.length > 0 ? (
-                          Math.min(...floorBaths) === Math.max(...floorBaths)
-                            ? Math.min(...floorBaths)
-                            : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
-                        ) : null);
-                        return bathVal ?? '—';
-                      })()}
-                    </strong>
-                    <small>حمامات</small>
+                )}
+
+                {/* Bathrooms: only for residential and commercial (not Land) */}
+                {!isLand && (
+                  <div className="detail-spec">
+                    <Bath size={18} />
+                    <div>
+                      <strong>
+                        {(() => {
+                          const floorBaths = (prop.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
+                          const bathVal = prop.bathrooms ?? (floorBaths.length > 0 ? (
+                            Math.min(...floorBaths) === Math.max(...floorBaths)
+                              ? Math.min(...floorBaths)
+                              : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+                          ) : null);
+                          return bathVal ?? '—';
+                        })()}
+                      </strong>
+                      <small>حمامات</small>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {/* Area */}
                 <div className="detail-spec">
                   <Maximize2 size={18} />
                   <div>
@@ -197,16 +209,20 @@ export default function PropertyDetailPage() {
                     <small>م²</small>
                   </div>
                 </div>
+
                 {prop.propertyType && (
                   <div className="detail-spec"><Tag size={18} /><div><strong>{typeLabel[prop.propertyType] ?? prop.propertyType}</strong><small>النوع</small></div></div>
                 )}
-                {prop.finishingStatus && (
+
+                {/* Finishing: not applicable to Land */}
+                {!isLand && prop.finishingStatus && (
                   <div className="detail-spec"><span style={{fontSize:'1.1rem'}}>🎨</span><div><strong>{finishingLabel[prop.finishingStatus] ?? prop.finishingStatus}</strong><small>التشطيب</small></div></div>
                 )}
               </div>
 
               <div className="detail-specs" style={{ marginTop: 'var(--space-md)' }}>
-                {prop.apartmentsPerFloor != null && prop.apartmentsPerFloor > 0 && (
+                {/* Apartments per floor: only for Apartment buildings */}
+                {!isHouse && !isLand && !isShop && prop.apartmentsPerFloor != null && prop.apartmentsPerFloor > 0 && (
                   <div className="detail-spec">
                     <Building2 size={18} />
                     <div>
@@ -221,25 +237,33 @@ export default function PropertyDetailPage() {
                     </div>
                   </div>
                 )}
-                {prop.floorNumber != null && (!prop.floors || prop.floors.length === 0) && (
-                  <div className="detail-spec"><Building2 size={18} /><div><strong>{prop.floorNumber}</strong><small>رقم الدور</small></div></div>
+
+                {/* Floor number: only for single unit without floors, not for House or Land */}
+                {!isHouse && !isLand && prop.floorNumber != null && (!prop.floors || prop.floors.length === 0) && (
+                  <div className="detail-spec"><Building2 size={18} /><div><strong>{prop.floorNumber === 0 ? 'الأرضي' : prop.floorNumber}</strong><small>رقم الدور</small></div></div>
                 )}
-                <div className="detail-spec"><ArrowUpDown size={18} /><div><strong>{prop.elevatorAvailable ? 'متوفر' : 'غير متوفر'}</strong><small>أسانسير</small></div></div>
+
+                {!isLand && (
+                  <div className="detail-spec"><ArrowUpDown size={18} /><div><strong>{prop.elevatorAvailable ? 'متوفر' : 'غير متوفر'}</strong><small>أسانسير</small></div></div>
+                )}
                 <div className="detail-spec"><Droplets size={18} /><div><strong>{prop.waterMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد مياه</small></div></div>
                 <div className="detail-spec"><Zap size={18} /><div><strong>{prop.electricityMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد كهرباء</small></div></div>
                 <div className="detail-spec"><Flame size={18} /><div><strong>{prop.gasMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد غاز</small></div></div>
                 <div className="detail-spec"><CheckCircle2 size={18} /><div><strong>{prop.installmentAvailable ? 'متاح' : 'غير متاح'}</strong><small>تقسيط</small></div></div>
                 {(() => {
-                  const availableFloors = prop.floors?.filter(f => f.isAvailable) ?? [];
+                  const availableFloors = !isHouse && !isLand ? (prop.floors?.filter(f => f.isAvailable) ?? []) : [];
                   const floorCashPrices = availableFloors.map(f => f.price).filter((p): p is number => p != null && p > 0);
                   const minCash = floorCashPrices.length > 0 ? Math.min(...floorCashPrices) : prop.price;
                   const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price;
-                  const isCashRange = floorCashPrices.length > 1 && minCash !== maxCash;
+                  const isCashRange = !isHouse && !isLand && floorCashPrices.length > 1 && minCash !== maxCash;
 
                   const floorInstPrices = availableFloors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
                   const minInst = floorInstPrices.length > 0 ? Math.min(...floorInstPrices) : prop.installmentPrice;
                   const maxInst = floorInstPrices.length > 0 ? Math.max(...floorInstPrices) : prop.installmentPrice;
-                  const isInstRange = floorInstPrices.length > 1 && minInst !== maxInst;
+                  const isInstRange = !isHouse && !isLand && floorInstPrices.length > 1 && minInst !== maxInst;
+
+                  const cashLabel = isHouse ? 'سعر البيت كاش' : isLand ? 'سعر الأرض كاش' : isShop ? 'سعر المحل كاش' : 'سعر الكاش';
+                  const instLabel = isHouse ? 'سعر البيت تقسيط' : isLand ? 'سعر الأرض تقسيط' : isShop ? 'سعر المحل تقسيط' : 'سعر التقسيط';
 
                   return (
                     <>
@@ -250,7 +274,7 @@ export default function PropertyDetailPage() {
                             <strong>
                               {isCashRange ? `يبدأ من ${minCash.toLocaleString('ar-EG')}` : minCash.toLocaleString('ar-EG')} ج
                             </strong>
-                            <small>سعر الكاش</small>
+                            <small>{cashLabel}</small>
                           </div>
                         </div>
                       )}
@@ -261,7 +285,7 @@ export default function PropertyDetailPage() {
                             <strong>
                               {isInstRange ? `يبدأ من ${minInst.toLocaleString('ar-EG')}` : minInst.toLocaleString('ar-EG')} ج
                             </strong>
-                            <small>سعر التقسيط</small>
+                            <small>{instLabel}</small>
                           </div>
                         </div>
                       )}
@@ -270,19 +294,29 @@ export default function PropertyDetailPage() {
                 })()}
               </div>
 
-              {/* Multiple Floors / Units Section */}
-              {prop.floors && prop.floors.length > 0 && (() => {
+              {/* Multiple Floors / Units Section: not applicable to Land */}
+              {!isLand && prop.floors && prop.floors.length > 0 && (() => {
                 const groups = groupFloors(prop.floors)
                 const availableUnits = prop.floors.filter(f => f.isAvailable).length
                 const soldUnits = prop.floors.filter(f => !f.isAvailable).length
 
                 return (
                   <div className="detail-floors-card">
-                    <div className="detail-floors-title">
-                      <Building2 size={20} />
-                      <span>
-                        الأدوار والشقق ({groups.length > 1 ? `${groups.length} أدوار` : groups[0]?.floorTitle} — {availableUnits > 0 ? `${availableUnits} شقق متاحة` : 'جميع الوحدات مباعة'}{soldUnits > 0 ? ` • ${soldUnits} مباع` : ''})
-                      </span>
+                    <div className="detail-floors-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Building2 size={20} />
+                        <span>
+                          {isHouse
+                            ? `تفاصيل ومواصفات أدوار البيت (${groups.length > 1 ? `${groups.length} أدوار` : groups[0]?.floorTitle})`
+                            : `الأدوار والشقق (${groups.length > 1 ? `${groups.length} أدوار` : groups[0]?.floorTitle} — ${availableUnits > 0 ? `${availableUnits} شقق متاحة` : 'جميع الوحدات مباعة'}${soldUnits > 0 ? ` • ${soldUnits} مباع` : ''})`
+                          }
+                        </span>
+                      </div>
+                      {isHouse && (
+                        <span className="badge badge-green" style={{ fontSize: '0.8rem', padding: '0.35rem 0.75rem', fontWeight: 800 }}>
+                          🏠 يباع البيت بالكامل كوحدة واحدة
+                        </span>
+                      )}
                     </div>
 
                     <div className="detail-floors-groups">
@@ -295,9 +329,9 @@ export default function PropertyDetailPage() {
                             {(groups.length > 1 || group.items.length > 1) && (
                               <div className="floor-group-box__header">
                                 <div className="floor-group-box__title">
-                                  🏢 <span>{group.floorTitle}</span>
+                                  {isHouse ? '🏠' : '🏢'} <span>{group.floorTitle}</span>
                                 </div>
-                                {group.items.length > 1 && (
+                                {!isHouse && group.items.length > 1 && (
                                   <span className={`floor-group-box__badge ${groupAvail === 0 ? 'floor-group-box__badge--sold' : ''}`}>
                                     {groupAvail > 0 ? `${groupAvail} شقق متاحة بالدور` : 'تم بيع شقق الدور بالكامل'}
                                     {groupSold > 0 && groupAvail > 0 ? ` (${groupSold} مباع)` : ''}
@@ -308,80 +342,88 @@ export default function PropertyDetailPage() {
 
                             <div className="detail-floors-grid">
                               {group.items.map((item, idx) => {
-                                const aptName = group.items.length > 1
-                                  ? (item.floorName && !item.floorName.startsWith('الدور')
-                                      ? item.floorName
-                                      : `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`)
-                                  : (item.floorName && item.floorName !== group.floorTitle && !item.floorName.startsWith('الدور')
-                                      ? item.floorName
-                                      : (item.areaSqm ? `شقة (${item.areaSqm} م²)` : 'شقة بالدور'))
+                                const aptName = isHouse
+                                  ? (item.floorName || `الدور ${idx + 1}`)
+                                  : (group.items.length > 1
+                                      ? (item.floorName && !item.floorName.startsWith('الدور')
+                                          ? item.floorName
+                                          : `شقة ${idx + 1} (${item.areaSqm ? `${item.areaSqm} م²` : ''})`)
+                                      : (item.floorName && item.floorName !== group.floorTitle && !item.floorName.startsWith('الدور')
+                                          ? item.floorName
+                                          : (item.areaSqm ? `شقة (${item.areaSqm} م²)` : 'شقة بالدور')))
 
                                 return (
-                                  <div key={item.id ?? idx} className={`floor-spec-card ${!item.isAvailable ? 'floor-spec-card--sold' : ''}`}>
+                                  <div key={item.id ?? idx} className={`floor-spec-card ${!isHouse && !item.isAvailable ? 'floor-spec-card--sold' : ''}`}>
                                     <div className="floor-spec-card__header">
-                                      <span style={{ fontWeight: 800, color: item.isAvailable ? 'var(--clr-text)' : '#64748b' }}>{aptName}</span>
-                                      <span className={`badge ${item.isAvailable ? 'badge-green' : 'badge-sold'}`} style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', fontWeight: 800 }}>
-                                        {item.isAvailable ? '🟢 متاح' : '🔴 تم البيع'}
-                                      </span>
-                                    </div>
-                                    <div className="floor-spec-card__price">
-                                      {item.isAvailable ? (
-                                        item.price != null
-                                          ? <>💵 كاش: {item.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span></>
-                                          : 'السعر عند الطلب'
-                                      ) : (
-                                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                                          {item.price != null ? (
-                                            <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.92rem' }}>
-                                              💵 {item.price.toLocaleString('ar-EG')} ج
-                                            </span>
-                                          ) : <span />}
-                                          <span style={{ color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>❌ مباع</span>
-                                        </div>
+                                      <span style={{ fontWeight: 800, color: (isHouse || item.isAvailable) ? 'var(--clr-text)' : '#64748b' }}>{aptName}</span>
+                                      {!isHouse && (
+                                        <span className={`badge ${item.isAvailable ? 'badge-green' : 'badge-sold'}`} style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', fontWeight: 800 }}>
+                                          {item.isAvailable ? '🟢 متاح' : '🔴 تم البيع'}
+                                        </span>
                                       )}
                                     </div>
-                                    {item.isAvailable && item.installmentPrice != null && (
-                                      <div className="floor-spec-card__price" style={{ color: '#1d4ed8', fontSize: '0.98rem', marginTop: '2px' }}>
-                                        💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
+                                    {!isHouse && (
+                                      <>
+                                        <div className="floor-spec-card__price">
+                                          {item.isAvailable ? (
+                                            item.price != null
+                                              ? <>💵 كاش: {item.price.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span></>
+                                              : 'السعر عند الطلب'
+                                          ) : (
+                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                                              {item.price != null ? (
+                                                <span style={{ textDecoration: 'line-through', color: '#94a3b8', fontSize: '0.92rem' }}>
+                                                  💵 {item.price.toLocaleString('ar-EG')} ج
+                                                </span>
+                                              ) : <span />}
+                                              <span style={{ color: '#dc2626', fontWeight: 800, fontSize: '0.85rem' }}>❌ مباع</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        {item.isAvailable && item.installmentPrice != null && (
+                                          <div className="floor-spec-card__price" style={{ color: '#1d4ed8', fontSize: '0.98rem', marginTop: '2px' }}>
+                                            💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
+                                          </div>
+                                        )}
+                                        {(() => {
+                                          const itemPpm = item.pricePerMeter ?? (
+                                            (item.price ?? item.installmentPrice) && item.areaSqm && item.areaSqm > 0
+                                              ? Math.round((item.price ?? item.installmentPrice)! / item.areaSqm)
+                                              : null
+                                          );
+                                          if (itemPpm == null) return null;
+                                          return (
+                                            <div className="floor-spec-card__sub" style={{ color: item.isAvailable ? 'var(--clr-gold)' : '#94a3b8', fontWeight: 700 }}>
+                                              📏 سعر المتر: {itemPpm.toLocaleString('ar-EG')} ج/م²
+                                            </div>
+                                          );
+                                        })()}
+                                      </>
+                                    )}
+                                    {item.areaSqm != null && (
+                                      <div className="floor-spec-card__sub">
+                                        📐 المساحة: {item.areaSqm} م²
                                       </div>
                                     )}
-                                     {(() => {
-                                       const itemPpm = item.pricePerMeter ?? (
-                                         (item.price ?? item.installmentPrice) && item.areaSqm && item.areaSqm > 0
-                                           ? Math.round((item.price ?? item.installmentPrice)! / item.areaSqm)
-                                           : null
-                                       );
-                                       if (itemPpm == null) return null;
-                                       return (
-                                         <div className="floor-spec-card__sub" style={{ color: item.isAvailable ? 'var(--clr-gold)' : '#94a3b8', fontWeight: 700 }}>
-                                           📏 سعر المتر: {itemPpm.toLocaleString('ar-EG')} ج/م²
-                                         </div>
-                                       );
-                                     })()}
-                                  {item.areaSqm != null && (
-                                    <div className="floor-spec-card__sub">
-                                      📐 المساحة: {item.areaSqm} م²
-                                    </div>
-                                  )}
-                                  {item.bedrooms != null && (
-                                    <div className="floor-spec-card__sub">
-                                      🛏️ غرف النوم: {item.bedrooms} غرف
-                                    </div>
-                                  )}
-                                  {item.bathrooms != null && (
-                                    <div className="floor-spec-card__sub">
-                                      🚿 الحمامات: {item.bathrooms} حمام
-                                    </div>
-                                  )}
-                                </div>
-                              )
-                            })}
+                                    {item.bedrooms != null && (
+                                      <div className="floor-spec-card__sub">
+                                        🛏️ غرف النوم: {item.bedrooms} غرف
+                                      </div>
+                                    )}
+                                    {item.bathrooms != null && (
+                                      <div className="floor-spec-card__sub">
+                                        🚿 الحمامات: {item.bathrooms} حمام
+                                      </div>
+                                    )}
+                                  </div>
+                                )
+                              })}
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })}
+                        )
+                      })}
+                    </div>
                   </div>
-                </div>
                 )
               })()}
 
@@ -410,22 +452,36 @@ export default function PropertyDetailPage() {
             <div className="price-card">
               <div className="price-card__glow" />
               {(() => {
-                const availableFloors = prop.floors?.filter(f => f.isAvailable) ?? [];
+                const availableFloors = !isHouse && !isLand ? (prop.floors?.filter(f => f.isAvailable) ?? []) : [];
                 const floorCashPrices = availableFloors.map(f => f.price).filter((p): p is number => p != null && p > 0);
                 const minCash = floorCashPrices.length > 0 ? Math.min(...floorCashPrices) : prop.price;
                 const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price;
-                const isCashRange = floorCashPrices.length > 1 && minCash !== maxCash;
+                const isCashRange = !isHouse && !isLand && floorCashPrices.length > 1 && minCash !== maxCash;
 
                 const floorInstPrices = availableFloors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
                 const minInst = floorInstPrices.length > 0 ? Math.min(...floorInstPrices) : prop.installmentPrice;
                 const maxInst = floorInstPrices.length > 0 ? Math.max(...floorInstPrices) : prop.installmentPrice;
-                const isInstRange = floorInstPrices.length > 1 && minInst !== maxInst;
+                const isInstRange = !isHouse && !isLand && floorInstPrices.length > 1 && minInst !== maxInst;
+
+                const cashLabel = isHouse
+                  ? '💵 سعر البيت بالكامل (كاش)'
+                  : isLand
+                    ? '💵 سعر الأرض بالكامل (كاش)'
+                    : isShop
+                      ? '💵 سعر المحل (كاش)'
+                      : (isCashRange ? '💵 سعر الكاش (يبدأ من)' : '💵 سعر الكاش');
+
+                const instLabel = isHouse
+                  ? '💳 سعر البيت (تقسيط)'
+                  : isLand
+                    ? '💳 سعر الأرض (تقسيط)'
+                    : isShop
+                      ? '💳 سعر المحل (تقسيط)'
+                      : (isInstRange ? '💳 سعر التقسيط (يبدأ من)' : '💳 سعر التقسيط');
 
                 return (
                   <>
-                    <p className="price-card__label">
-                      💵 {isCashRange ? 'سعر الكاش (يبدأ من)' : 'سعر الكاش'}
-                    </p>
+                    <p className="price-card__label">{cashLabel}</p>
                     <div className="price-card__amount">
                       {minCash != null
                         ? <>{minCash.toLocaleString('ar-EG')}<span>جنيه كاش</span></>
@@ -434,7 +490,7 @@ export default function PropertyDetailPage() {
                     {minInst != null && (
                       <div style={{ marginTop: '0.65rem', padding: '0.6rem 0.85rem', background: 'rgba(37,99,235,0.08)', border: '1px solid rgba(37,99,235,0.22)', borderRadius: '12px' }}>
                         <div style={{ fontSize: '0.76rem', fontWeight: 700, color: '#1e40af', marginBottom: '2px' }}>
-                          💳 {isInstRange ? 'سعر التقسيط (يبدأ من)' : 'سعر التقسيط'}
+                          {instLabel}
                         </div>
                         <div style={{ fontSize: '1.15rem', fontWeight: 900, color: '#1d4ed8' }}>
                           {minInst.toLocaleString('ar-EG')} <span style={{ fontSize: '0.78rem', fontWeight: 700 }}>جنيه تقسيط</span>
@@ -445,7 +501,7 @@ export default function PropertyDetailPage() {
                 );
               })()}
               {(() => {
-                const floorPpms = (prop.floors || [])
+                const floorPpms = (!isHouse && !isLand ? (prop.floors || []) : [])
                   .map(f => {
                     if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter;
                     const base = f.price ?? f.installmentPrice;
@@ -506,22 +562,23 @@ export default function PropertyDetailPage() {
 
       {/* ── Sticky Mobile CTA Bar ─────────────────────────────────── */}
       {(() => {
-        const availableFloors = prop.floors?.filter(f => f.isAvailable) ?? []
+        const availableFloors = !isHouse && !isLand ? (prop.floors?.filter(f => f.isAvailable) ?? []) : []
         const floorCashPrices = availableFloors.map(f => f.price).filter((p): p is number => p != null && p > 0)
         const minCash = floorCashPrices.length > 0 ? Math.min(...floorCashPrices) : prop.price
         const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price
-        const isCashRange = floorCashPrices.length > 1 && minCash !== maxCash
+        const isCashRange = !isHouse && !isLand && floorCashPrices.length > 1 && minCash !== maxCash
 
         const locationText = [prop.district, prop.city].filter(Boolean).join('، ') || 'المحلة الكبرى'
         const waText = encodeURIComponent(
           `السلام عليكم، أود الاستفسار بخصوص العقار رقم #${prop.id}: "${prop.title || 'وحدة عقارية'}" (${locationText}).`
         )
         const waUrl = `https://wa.me/201055937687?text=${waText}`
+        const ctaLabel = isHouse ? 'سعر البيت' : isLand ? 'سعر الأرض' : isShop ? 'سعر المحل' : 'سعر الوحدة'
 
         return (
           <div className="detail-mobile-cta">
             <div className="detail-mobile-cta__price">
-              <span className="detail-mobile-cta__label">سعر الوحدة</span>
+              <span className="detail-mobile-cta__label">{ctaLabel}</span>
               <span className="detail-mobile-cta__amount">
                 {minCash != null ? (
                   <>

@@ -34,9 +34,9 @@ public class AIBrokerService
     public async Task<AIBrokerResponse> GetBrokerReplyAsync(AIBrokerRequest request, CancellationToken ct = default)
     {
         var apiKeys = GetAvailableApiKeys();
-        var model = _configuration["Groq:Model"]?.Trim();
-        if (string.IsNullOrWhiteSpace(model)) model = "openai/gpt-oss-120b";
-        var maxTokens = _configuration.GetValue<int?>("Groq:MaxTokens") ?? 750;
+        var primaryModel = _configuration["Groq:Model"]?.Trim();
+        if (string.IsNullOrWhiteSpace(primaryModel)) primaryModel = "qwen/qwen3.8-27b";
+        var maxTokens = _configuration.GetValue<int?>("Groq:MaxTokens") ?? 400;
         var temperature = _configuration.GetValue<double?>("Groq:Temperature") ?? 0.6;
 
         if (!apiKeys.Any())
@@ -57,121 +57,160 @@ public class AIBrokerService
             .Where(x => x.IsPublished && (x.Status == "Available" || x.Status == "available"))
             .ToListAsync(ct);
 
-        // 2. Build Inventory Context
+        // 2. Build Inventory Context (Compact, Multi-Unit & Area Aware)
         var inventoryBuilder = new StringBuilder();
-        inventoryBuilder.AppendLine("قائمة العقارات المتاحة حالياً في قاعدة بيانات AqarCare:");
+        inventoryBuilder.AppendLine("قائمة العقارات والوحدات المتاحة حالياً في قاعدة بيانات AqarCare:");
         foreach (var p in properties)
         {
-            var floorsSummary = p.Floors != null && p.Floors.Any()
-                ? string.Join(", ", p.Floors.Where(f => f.IsAvailable).Select(f => $"{FormatFloorDisplay(f)} (سعر: {(f.Price.HasValue ? f.Price.Value.ToString("N0") + " ج" : "غير محدد")}, م²: {(f.PricePerMeter.HasValue ? f.PricePerMeter.Value.ToString("N0") : "غير محدد")})"))
-                : "غير مقسم لأدوار";
+            var isHouse = p.PropertyType == "House" || p.PropertyType == "Villa";
+            var availFloors = p.Floors?.Where(f => f.IsAvailable).ToList() ?? new List<PropertyFloor>();
 
-            var priceStr = p.Price.HasValue ? $"{p.Price.Value:N0} ج.م" : "غير محدد";
+            // Distinct unit areas available in this property
+            var distinctAreas = availFloors
+                .Where(f => f.AreaSqm.HasValue && f.AreaSqm.Value > 0)
+                .Select(f => f.AreaSqm!.Value)
+                .Distinct()
+                .OrderBy(a => a)
+                .ToList();
+
+            string areaStr;
+            if (distinctAreas.Count > 1)
+            {
+                areaStr = $"مساحات: {string.Join("م² و ", distinctAreas.Select(a => $"{a:N0}"))}م²";
+            }
+            else if (distinctAreas.Count == 1)
+            {
+                areaStr = $"{distinctAreas[0]:N0}م²";
+            }
+            else
+            {
+                areaStr = $"{p.AreaSqm:N0}م²";
+            }
+
+            // Price range
+            var availPrices = availFloors
+                .Where(f => f.Price.HasValue && f.Price.Value > 0)
+                .Select(f => f.Price!.Value)
+                .ToList();
+
+            string priceStr;
+            if (availPrices.Any())
+            {
+                var minPrice = availPrices.Min();
+                var maxPrice = availPrices.Max();
+                priceStr = minPrice == maxPrice
+                    ? $"{minPrice:N0}ج"
+                    : $"من {minPrice:N0}ج إلى {maxPrice:N0}ج";
+            }
+            else if (p.Price.HasValue)
+            {
+                priceStr = $"{p.Price.Value:N0}ج";
+            }
+            else
+            {
+                priceStr = "غير محدد";
+            }
+
+            // Floors & individual units breakdown
+            string floorsSummary;
+            if (isHouse)
+            {
+                floorsSummary = $"البيت يباع بالكامل كوحدة واحدة ({p.Floors?.Count ?? 1} أدوار)";
+            }
+            else if (availFloors.Any())
+            {
+                var floorGroups = availFloors.GroupBy(f => f.FloorNumber);
+                var groupList = new List<string>();
+
+                foreach (var grp in floorGroups)
+                {
+                    var floorNum = grp.Key;
+                    var floorLabel = floorNum switch
+                    {
+                        71011 => "الأدوار (7 و 10 و 11)",
+                        _ when floorNum.HasValue => $"الدور {floorNum.Value}",
+                        _ => grp.First().FloorName ?? "دور غير محدد"
+                    };
+
+                    var unitsInFloor = grp.Select((f, idx) =>
+                    {
+                        var areaPart = f.AreaSqm.HasValue ? $"{f.AreaSqm.Value:N0}م²" : "";
+                        var pricePart = f.Price.HasValue ? $"{f.Price.Value:N0}ج" : "";
+                        var details = string.Join(" بـ ", new[] { areaPart, pricePart }.Where(s => !string.IsNullOrEmpty(s)));
+
+                        var unitLabel = grp.Count() > 1
+                            ? (f.FloorName != null && f.FloorName.Contains("شقة") ? f.FloorName : $"شقة {idx + 1}")
+                            : "";
+
+                        return !string.IsNullOrEmpty(unitLabel) ? $"{unitLabel} ({details})" : details;
+                    });
+
+                    groupList.Add($"{floorLabel}: {string.Join("، ", unitsInFloor)}");
+                }
+
+                floorsSummary = string.Join(" | ", groupList);
+            }
+            else
+            {
+                floorsSummary = "غير مقسم لأدوار";
+            }
+
             var installmentStr = p.InstallmentAvailable
                 ? (p.InstallmentPrice.HasValue && (!p.Price.HasValue || p.InstallmentPrice.Value < p.Price.Value)
-                    ? $"متاح تقسيط (مقدم يبدأ من: {p.InstallmentPrice.Value:N0} ج مع إمكانية جدولة الباقي)"
-                    : "متاح تقسيط وتسهيلات سداد مرنة حسب الاتفاق")
+                    ? $"متاح تقسيط بمقدم يبدأ من {p.InstallmentPrice.Value:N0}ج"
+                    : "متاح تقسيط")
                 : "كاش فقط";
 
-            var finishingArabic = FormatFinishingArabic(p.FinishingStatus);
+            var finishingArabic = FormatFinishingCompact(p.FinishingStatus);
             var typeArabic = FormatPropertyTypeArabic(p.PropertyType);
             var listingArabic = FormatListingTypeArabic(p.ListingType);
-            var streetAnalysis = AnalyzeStreetLocation(p.Title, p.Address, p.DetailedAddress, p.Description, p.StreetWidth);
             var districtArabic = (p.District == "منشية البكري" || (p.Title != null && p.Title.Contains("الشعبية")) || (p.Address != null && p.Address.Contains("الشعبية")))
                 ? "منشية البكري (الشعبية)"
                 : (p.District ?? "المحلة الكبرى");
-            var constructionStatus = p.IsUnderConstruction ? "تحت الإنشاء (برج تحت الإنشاء)" : "مبنى قائم مكتمل البناء (استلام فوري عظم/نصف تشطيب - غير جاهز للسكن قبل التشطيب)";
+            var streetLoc = GetCompactStreet(p.Title, p.Address, p.DetailedAddress);
+            var constructionStatus = p.IsUnderConstruction ? "تحت الإنشاء" : "مبنى جاهز";
+            var elevator = p.ElevatorAvailable ? "يوجد أسانسير" : "بدون أسانسير";
 
             inventoryBuilder.AppendLine(
-                $"- [عقار #{p.Id}]: العنوان: \"{p.Title}\" | النوع: {typeArabic} ({listingArabic}) | الحي/المنطقة: {districtArabic}، {p.City} | العنوان بالتفصيل: {p.Address} {p.DetailedAddress} | {streetAnalysis} | حالة البناء: {constructionStatus} | المساحة: {p.AreaSqm}م² | السعر: {priceStr} | نظام الدفع: {installmentStr} | التشطيب: {finishingArabic} | الغرف: {p.Bedrooms} | الحمامات: {p.Bathrooms} | المصعد: {(p.ElevatorAvailable ? "يوجد أسانسير" : "بدون")} | العدادات: {(p.ElectricityMeterAvailable ? "كهرباء " : "")}{(p.WaterMeterAvailable ? "مياه " : "")}{(p.GasMeterAvailable ? "غاز" : "")} | الأدوار والوحدات المتاحة: [{floorsSummary}] | نبذة: {p.Description}"
+                $"- [عقار #{p.Id}]: {typeArabic} {listingArabic} | {districtArabic} ({streetLoc}) | {areaStr} | {priceStr} ({installmentStr}) | {finishingArabic} | {p.Bedrooms}غ/{p.Bathrooms}ح | {elevator} | {constructionStatus} | الوحدات المتاحة: [{floorsSummary}]"
             );
         }
 
-        // 3. Formulate System Prompt
-        var systemPrompt = $@"أنت 'مستشارك العقاري' - بائع وبروكر عقاري مصري محترف ومقنع جداً وخبير بالسوق العقاري في المحلة الكبرى لدى منصة AqarCare (عقار كير).
+        // 3. Formulate System Prompt (Focused, high-impact Egyptian broker persona)
+        var systemPrompt = $@"أنت 'مستشارك العقاري' - بائع وبروكر مصري محترف ومقنع بالسوق العقاري في المحلة الكبرى لدى منصة AqarCare (عقار كير).
+تحدث بلهجة مصرية راقية وودودة ومقنعة (يا فندم، يا باشا، تحت أمرك).
 
-معلومات جغرافية وسوقية جوهرية بالمحلة الكبرى:
-1. (الشعبية = منشية البكري): في المحلة الكبرى هما نفس المنطقة والحي تماماً ويُطلق الاسمان بالتبادل! إذا طلب العميل الشعبية أو منشية البكري، فكافة العقارات المتاحة تلبي طلبه مباشرة، وإياك أن تفرّق بينهما!
-2. (العمومي vs الجانبي): الشارع العمومي (مثل المأمون والصفوة وجمال عبد الناصر) أعلى سعراً لواجهته وحركته التجارية، أما الجانبي وثاني نمرة (مثل جانبي جمال عبد الناصر محطة المنار، وثاني نمرة الفلل) فميزته البيعية هي الهدوء وتوفير ضخم بسعر المتر (حوالي 10 آلاف ج/م² مقابل 18-20 ألف على العمومي).
-
-استراتيجية الرد حسب رسالة العميل الأخيرة:
-1. (أولوية قصوى - عند طلب شقة متشطبة أو جاهزة للسكن فوراً):
-   إذا تضمنت رسالة العميل طلب 'متشطبة' أو 'شقة جاهزة للسكن' أو 'تشطيب كامل':
-   - انتبه بحزم: المخزون الحالي لا يحتوي على شقق تشطيب كامل جاهزة للسكن فوراً! كل الوحدات المتاحة هي (عظم على الطوب الأحمر) باستثناء عقار #12 فقط فهو (نصف تشطيب).
-   - ممنوع منعاً باتاً ترشيح أي شقة عظم للعميل أو الإيحاء بأنها جاهزة للسكن!
-   - ردك الإلزامي كبائع صادق ومقنع:
-     * وضّح له بأمانة ولباقة: 'يا فندم الوحدات المتاحة حالياً في الشعبية ومنشية البكري هي شقق على الطوب الأحمر (عظم)، وعندنا خيار ممتاز نصف تشطيب وهو عقار #12 (135م² بسعر 1.755 مليون بشارع طلعت النجار) وده الأقرب والأسرع للفينش النهائي والسكن'.
-     * وضّح له الميزة والوفر: 'ميزة الشقق العظم ونصف التشطيب إنك بتوفر فرق سعر كبير جداً في المتر وبتفرش وتشطب الشقة بالكامل على ذوقك الخاص وبالتقسيم والخامات اللي تريحك'.
-     * رشح له عقار #12 (نصف تشطيب) مع التاج الإلزامي: [PROPERTIES: 12].
-
-2. استراتيجية التفاوض على السعر (قواعد صارمة للبائع المحترف):
-   - قاعدة جوهرية: ممنوع منعاً باتاً أن تذكر للعميل نسب مئوية للتفاوض أو الخصم (مثل 10% أو 15%) أو تفتح له سقف التخفيض من تلقاء نفسك! أي نسب أو حدود هي معايير داخلية لتفكيرك فقط ولا تُقال للعميل إطلاقاً!
-   
-   - الحالة الأولى (إذا سأل العميل بشكل عام: 'في تفاوض؟' أو 'ممكن تقلل السعر شوية؟' أو 'السعر ده نهائي؟'):
-     * لا تذكر أي أرقام أو خصومات من عندك أبداً!
-     * أكد له بلباقة وترحاب أن التفاوض متاح مع المالك أو المطور، ثم اسأله عن الرقم أو الميزانية اللي في باله:
-       'التفاوض متاح يا فندم وأكيد هنقعد مع المالك ونقرب المسافات، حضرتك في بالك رقم أو ميزانية معينة حابب نتفاوض في حدودها؟ وتقدر كمان تتواصل مباشرة مع فريقنا العقاري على الواتساب لبحث أفضل فرصة تفاوض وترتيب جلسة مناسبة لحضرتك'.
-
-   - الحالة الثانية (إذا حدد العميل مبلغاً أو سأل 'في تفاوض في حدود قد إيه؟'):
-     * المعيار السوقي والواقعي للتفاوض: في حدود 50 ألف جنيه لكل مليون تقريباً (مثلاً 40-50 ألف لشقة بمليون، 50-70 ألف لشقة 1.150 مليون، و 100 ألف لشقة بـ 2 مليون).
-     * إذا كان طلب العميل معقولاً وفي حدود هذا المعيار (~50 ألف لكل مليون):
-       - أكد له بثقة وترحاب: 'ده رقم معقول جداً وممكن نقفله مع صاحب الشقة في جلسة التعاقد، وأنا كوسيط ومستشارك العقاري هكون في صفك ومعاك عشان نوصل لأفضل اتفاق يرضيك'.
-       - وادعه للمعاينة بالتنسيق مع الفريق: 'أهم خطوة دلوقتي هي حجز موعد للمعاينة على الطبيعة، وتقدر تتواصل مباشرة مع فريقنا العقاري على الواتساب عشان ينسقوا مع حضرتك الميعاد المناسب ويجهزوا جلسة التفاوض مع المالك'.
-     * إذا طلب العميل تخفيضاً كبيراً أو غير واقعي (مبالغ فيه وبعيد جداً عن الـ 50 ألف لكل مليون، مثل طلب تنزيل 150-250 ألف في شقة بمليون):
-       - وضّح له بأمانة ولباقة: 'يا فندم ده هيكون صعب شوية نظراً لتكاليف العقار وأسعار السوق الحالية'.
-       - اقترح البديل الأقرب من القائمة إن وُجد (مثل الشقة 85م² بـ 850 ألف).
-       - وأضف توجيهاً راقياً للتواصل مع الفريق: 'ومع ذلك، تقدر تتواصل مباشرة مع فريقنا العقاري على الواتساب عشان يشوف لحضرتك لو في أي فرصة للتفاوض أو مرونة إضافية ممكن نوصل ليها مع صاحب العقار تناسب ظروفك'.
-
-   - لمسة احترافية إلزامية: في جميع ردود التفاوض بعد تقديم نصائحك وتقييمك للسعر، اذكر دائماً بأسلوب راقٍ واحترافي إمكانية تواصل العميل مباشرة مع فريقنا العقاري لبحث فرص ومرونة التفاوض المتاحة مع المالك أو المطور.
-   - ممنوع تكرار مواصفات الشقة بالكامل من جديد! أجب عن التفاوض وركز على الميزانية وحجز موعد المعاينة.
-
-3. عند السؤال عن مرحلة البناء أو تاريخ التسليم أو الأدوار (مثل: 'اتبنى فيها قد إيه؟' أو 'الشقق دي في الدور الكام؟'):
-   - التزم التزاماً صارماً ببيانات العقار: الوحدات المتاحة هي في الأدوار المذكورة بالبيانات (مثلاً في عقار #14: الأدوار 7 و 10 و 11)، والتشطيب عظم على الطوب الأحمر مع توفر أسانسير ومرافق.
-   - وضّح أن البرج حالياً تحت الإنشاء، وأفضل خطوة هي النزول لموقع البناء على الطبيعة لرؤية نسبة الإنجاز وجودة الصب والجدول الزمني مع المسؤول عن المشروع أو المطور.
-   - ممنوع منعاً باتاً اختراع أرقام أدوار من خيالك كالدور الرابع أو الخامس!
-
-4. عند بداية المحادثة أو البحث الجديد عن شقق وميزانية:
-   - اعرض فوراً أفضل 1 إلى 2 وحدة مطابقة من القائمة أدناه مع السعر والمساحة وموقع الشارع والوفر، ثم اسأله عن رأيه فيها وادعه للمعاينة.
-
-5. في حال طلب العميل مواصفات أو منطقة أو ميزانية غير متوفرة في القائمة الحالية:
-   - ممنوع منعاً باتاً اختراع عقارات أو بيانات وهمية!
-   - وضّح بلباقة واحترافية وروح بيعية عالية: 'طلب حضرتك مميز ومهم جداً، والمعروض هنا على السيستم حالياً يركز على منشية البكري والشعبية، لكن فريقنا العقاري في AqarCare عنده شبكة علاقات وتحديثات مستمرة لوحدات جديدة في كافة مناطق المحلة. يسعدنا تواصلك المباشر مع فريقنا على الواتساب وهنجهزلك أنسب طلب بأحسن سعر'.
-
-6. (قاعدة تشغيلية صارمة - المواعيد والمعاينات بالتنسيق مع الفريق فقط، والذكاء الاصطناعي لا يؤكد ولا يحدد مواعيد مطلقاً):
-   - بصفتك مساعد ذكي، أنت لست متصلاً بجدول المواعيد ولا تملك صلاحية حجز أو تأكيد المواعيد! ممنوع منعاً باتاً أن تؤكد موعداً للعميل أو تقول: 'تمام معادنا يوم كذا' أو 'أنا سجلتلك الميعاد' أو 'هرتب مع المالك/المطور وأقابلك'!
-   - عندما يطلب العميل موعداً، أو يقترح يوماً وساعة محددة (مثل: 'أنا فاضي الجمعة' أو 'يناسبني بكرة الساعة 5' أو 'عايز أنزل أشوف الشقة'):
-     * ردك الإلزامي والاحترافي:
-       'ممتاز جداً يا فندم! عشان نضمن تنسيق الوقت وتواجد المالك أو المسؤول وفتح الشقة للمعاينة في التوقيت اللي يناسبك بالدقيقة، حجز وتأكيد المواعيد بيتم حصراً بالتنسيق المباشر مع فريقنا العقاري.
-       يسعدنا تواصلك فوراً مع الفريق عبر الواتساب على 01055937687 أو بالضغط على زر حجز معاينة بالكارت، وهيرتبوا ويثبتوا مع حضرتك الميعاد المناسب فوراً.'
-     * لا تأخذ ولا تؤكد أي موعد بنفسك نهائياً، وجّه العميل دائماً للفريق البشري على الواتساب لحسم وتثبيت الموعد.
-
-قواعد عامة وإلزامية:
-- تحدث بلهجة مصرية راقية وودودة ومقنعة (يا فندم، يا باشا، تحت أمرك).
-- تنبيه هام بشأن أصحاب العقارات: ليس كل بائع مطوراً! كثير من العقارات معروضة من 'المالك' أو 'صاحب الشقة' مباشرة. استخدم تعبيرات واقعية مثل (المالك / صاحب العقار / المالك أو المطور) ولا تكرر كلمة 'المطور' في كل سياق.
-- ممنوع منعاً باتاً أي مصطلحات إنجليزية مثل Core-Shell! استخدم: (عظم على الطوب الأحمر / نصف تشطيب / لوكس).
-- ممنوع منعاً باتاً الجمع المتناقض بين 'عظم' و 'جاهزة للسكن'! لا تصف شقة عظم أبداً بأنها جاهزة للسكن.
-- لا تشتت العميل بعرض عقارات جديدة إذا كان يسأل عن تفاصيل عقار سبق ذكره في المحادثة.
-- ممنوع منعاً باتاً أن تؤكد أي موعد معاينة للعميل بنفسك أو تدّعي أنك حجزت أو نسقت مع المالك أو المطور؛ حجز وتثبيت المواعيد يتم حصراً بالتنسيق المباشر مع الفريق العقاري على الواتساب.
-- ممنوع منعاً باتاً ذكر أو الترويج لأي 'باقات تشطيب' (القسم متوقف ومخفي مؤقتاً من الموقع)، وركز فقط على ميزة توفير سعر المتر وحرية العميل في تشطيب شقته على ذوقه الخاص.
-- قائمة العقارات المرفقة بالأسفل تحتوي حصراً على الوحدات المتاحة للبيع حالياً، وأي شقة مباعة تم استبعادها تماماً وممنوع ترشيحها أو ذكرها للعميل.
-- ردك يجب أن يكون مركزاً وسريعاً وجذاباً (في حدود 70 إلى 130 كلمة) لكي تكتمل رسالتك بدون انقطاع.
-- عند ترشيح أي عقار للعميل في ردك:
-  1. اعرض تفاصيل الوحدات والأسعار والمميزات أولاً.
-  2. ضع التاج الإلزامي للعقارات:
+قواعد السوق والعقارات بالمحلة الكبرى:
+1. (الشعبية = منشية البكري): هما نفس الحي والمنطقة تماماً ويُطلق الاسمان بالتبادل بالمحلة! إذا طلب العميل أحدهما فكافة العقارات تلبي طلبه مباشرة ولا تفرّق بينهما.
+2. (العمومي vs الجانبي): الشارع العمومي (المأمون، الصفوة، عمومي جمال عبد الناصر) أعلى سعراً وحركة تجارية وواجهة، أما الشارع الجانبي وثاني نمرة (جانبي جمال عبد الناصر محطة المنار، ثاني نمرة الفلل) فميزته الهدوء وتوفير ضخم بسعر المتر (~10 آلاف ج/م² مقابل 18-20 ألف على العمومي).
+3. (مرونة المساحات والوحدات المتعددة):
+   - في العرف العقاري المصري طلبات المساحة تكون تقريبية (مثلاً طلب 150م² ينطبق تماماً على شقة 147م² أو 145م² بفرق أمتار بسيطة، وطلب 100م² ينطبق على 95م² أو 105م²، وطلب 120م² ينطبق على 115م² و 117م²).
+   - انتبه بحرص: بعض العقارات تشتمل على أكثر من شقة بمساحات مختلفة بالدور نفسه (مثل عقار #16 في عمومي جمال عبد الناصر يتوفر بالدور 4 شقة 1 مساحة 117م² وشقة 2 مساحة 147م²). إذا سأل العميل عن مساحة 147م² أو حوالي 150م² بشارع جمال عبد الناصر فرشح له عقار #16 واذكر له تفاصيل شقة 2 (147م² بسعر 2.28 مليون بالدور الرابع).
+4. (حالة التشطيب):
+   - تتوفر شقة سوبر لوكس جاهزة للسكن فوراً (عقار #23: 130م² بسعر 2 مليون بالشعبية).
+   - تتوفر شقة نصف تشطيب (عقار #12: 135م² بسعر 1.755 مليون بشارع طلعت النجار).
+   - باقي الشقق عظم على الطوب الأحمر وتتميز بتوفير سعر المتر وحرية التشطيب على ذوق العميل. ممنوع وصف أي شقة عظم بأنها جاهزة للسكن!
+5. (البيوت والفلل): البيت يباع بالكامل كوحدة واحدة بالمبلغ الإجمالي المحدد وليس تسعيراً لكل دور.
+6. (التفاوض): لا تذكر أي نسب مئوية أبداً من عندك. التفاوض المعتاد في السوق حوالي 50 ألف لكل مليون. أكد له أن التفاوض متاح مع المالك لتقريب المسافات، واسأله عن ميزانيته، وادعه لحجز موعد للمعاينة والتفاوض عبر الواتساب.
+7. (المواعيد والمعاينات بالتنسيق مع الفريق): أنت ذكاء اصطناعي ولا تؤكد مواعيد ولا تحجز بنفسك! دائماً وجّه العميل للتواصل مع الفريق العقاري على الواتساب (01055937687 أو زر حجز معاينة) لترتيب وتأكيد الموعد فوراً.
+8. (الصياغة والترشيح):
+   - ردك مركز وجذاب وسريع (في حدود 60 إلى 120 كلمة).
+   - عند ترشيح أي عقار، اعرض تفاصيله ومميزاته أولاً ثم ضع التاج الإلزامي للعقارات:
 [PROPERTIES: id1, id2]
-  3. بعد التاج مباشرة، اكتب سؤال المتابعة الختامي الموجه للعميل (مثلاً: 'إيه رأي حضرتك في الخيارات دي؟ وهل ده مناسب لطلبك؟ يسعدنا تواصلك لحجز موعد معاينة بالتنسيق مع فريقنا 🤝') لكي يظهر للعميل كرسالة تالية مباشرة بعد كروت العقارات!
+   - بعد التاج مباشرة اكتب سؤال المتابعة الختامي (مثلاً: 'إيه رأي حضرتك في الخيارات دي؟ يسعدنا تواصلك لحجز موعد معاينة بالتنسيق مع فريقنا 🤝').
+   - اعتمد حصرياً على العقارات المذكورة أدناه ولا تخترع عقارات وهمية.
 
 {inventoryBuilder}";
 
-        // 4. Build Messages for Groq API
+        // 4. Build Messages for Groq API (Lean conversation memory)
         var groqMessages = new List<object>
         {
             new { role = "system", content = systemPrompt }
         };
 
-        // Take last 14 messages to maintain rich conversation memory and context
+        // Take last 6 messages to maintain conversational context while keeping token usage lean
         var recentMessages = (request.Messages ?? Array.Empty<ChatMessageDto>())
-            .TakeLast(14)
+            .TakeLast(6)
             .ToList();
 
         foreach (var msg in recentMessages)
@@ -184,27 +223,40 @@ public class AIBrokerService
             groqMessages.Add(new { role, content = msg.Content });
         }
 
-        // 5. Call Groq with Multi-Key Rotation
-        string replyText;
-        try
+        // 5. Multi-Model Cascade: Primary -> Fallback Models
+        var candidateModels = new List<string> { primaryModel, "openai/gpt-oss-120b", "allam-2-7b", "openai/gpt-oss-20b" }
+            .Where(m => !string.IsNullOrWhiteSpace(m))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        string replyText = string.Empty;
+        Exception? lastEx = null;
+
+        foreach (var tryModel in candidateModels)
         {
-            replyText = await ExecuteGroqWithKeyRotationAsync(apiKeys, model, groqMessages, maxTokens, temperature, ct);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "All Groq API keys failed for primary model {Model}. Attempting fallback model...", model);
             try
             {
-                replyText = await ExecuteGroqWithKeyRotationAsync(apiKeys, "openai/gpt-oss-20b", groqMessages, Math.Min(maxTokens, 450), temperature, ct);
+                replyText = await ExecuteGroqWithKeyRotationAsync(apiKeys, tryModel, groqMessages, maxTokens, temperature, ct);
+                if (!string.IsNullOrWhiteSpace(replyText))
+                {
+                    break;
+                }
             }
-            catch
+            catch (Exception ex)
             {
-                return new AIBrokerResponse(
-                    "أهلاً بحضرتك يا فندم! معلش حصل ضغط لحظي في الشبكة، بس أنا تحت أمرك دايماً. إيه الميزانية والمكان المناسب ليك في المحلة وأنا هساعدك في اختيار أنسب شقة فوراً؟",
-                    Array.Empty<int>(),
-                    Array.Empty<PropertyListItemDto>()
-                );
+                lastEx = ex;
+                _logger.LogWarning(ex, "Model candidate {Model} failed across all keys. Attempting next candidate in cascade...", tryModel);
             }
+        }
+
+        if (string.IsNullOrWhiteSpace(replyText))
+        {
+            _logger.LogError(lastEx, "All model candidates ({Models}) failed for AI Broker.", string.Join(", ", candidateModels));
+            return new AIBrokerResponse(
+                "أهلاً بحضرتك يا فندم! معلش حصل ضغط لحظي في الشبكة، بس أنا تحت أمرك دايماً. إيه الميزانية والمكان المناسب ليك في المحلة وأنا هساعدك في اختيار أنسب شقة فوراً؟",
+                Array.Empty<int>(),
+                Array.Empty<PropertyListItemDto>()
+            );
         }
 
         // 6. Parse [PROPERTIES: id1, id2] tag and separate followUpMessage
@@ -337,16 +389,29 @@ public class AIBrokerService
 
             try
             {
-                return await CallGroqApiAsync(key, model, messages, maxTokens, temperature, ct);
+                var result = await CallGroqApiAsync(key, model, messages, maxTokens, temperature, ct);
+                if (!string.IsNullOrWhiteSpace(result))
+                {
+                    return result;
+                }
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.TooManyRequests)
+            {
+                lastException = ex;
+                _logger.LogWarning("Groq rate limit 429 encountered for model {Model} on key #{Index} ({KeyMask}).", model, currentIndex + 1, keyMask);
+                if (i < keys.Count - 1)
+                {
+                    await Task.Delay(350, ct);
+                }
             }
             catch (Exception ex)
             {
                 lastException = ex;
-                _logger.LogWarning(ex, "Groq call with key #{Index} ({KeyMask}) failed for model {Model}. Rotating to next key in pool...", currentIndex + 1, keyMask, model);
+                _logger.LogWarning(ex, "Groq call with key #{Index} ({KeyMask}) failed for model {Model}. Rotating...", currentIndex + 1, keyMask, model);
             }
         }
 
-        throw lastException ?? new InvalidOperationException("All Groq API keys failed.");
+        throw lastException ?? new InvalidOperationException($"All Groq API keys failed for model {model}.");
     }
 
     private async Task<string> CallGroqApiAsync(
@@ -376,8 +441,8 @@ public class AIBrokerService
 
         if (!response.IsSuccessStatusCode)
         {
-            _logger.LogError("Groq API returned error status {StatusCode}: {ResponseBody}", response.StatusCode, responseBody);
-            throw new InvalidOperationException($"Groq API failed: {response.StatusCode} - {responseBody}");
+            _logger.LogWarning("Groq API returned error status {StatusCode} for model {Model}: {ResponseBody}", response.StatusCode, model, responseBody);
+            throw new HttpRequestException($"Groq API failed: {response.StatusCode} - {responseBody}", null, response.StatusCode);
         }
 
         using var doc = JsonDocument.Parse(responseBody);
@@ -388,44 +453,35 @@ public class AIBrokerService
             if (firstChoice.TryGetProperty("message", out var messageProp) &&
                 messageProp.TryGetProperty("content", out var contentProp))
             {
-                return contentProp.GetString() ?? string.Empty;
+                var content = contentProp.GetString()?.Trim();
+                if (!string.IsNullOrEmpty(content))
+                {
+                    return content;
+                }
             }
         }
 
         return string.Empty;
     }
 
-    private static string FormatFloorDisplay(PropertyFloor f)
+    private static string FormatFloorDisplayCompact(PropertyFloor f)
     {
-        var floorNumStr = f.FloorNumber switch
+        var num = f.FloorNumber switch
         {
-            71011 => "الأدوار (7 و 10 و 11)",
-            _ when f.FloorNumber.HasValue => $"الدور {f.FloorNumber.Value}",
-            _ => ""
+            71011 => "أدوار 7 و 10 و 11",
+            _ when f.FloorNumber.HasValue => $"دور {f.FloorNumber.Value}",
+            _ => !string.IsNullOrWhiteSpace(f.FloorName) ? f.FloorName : "دور غير محدد"
         };
-
-        if (!string.IsNullOrWhiteSpace(f.FloorName) && !string.IsNullOrWhiteSpace(floorNumStr))
-        {
-            return $"{floorNumStr} - {f.FloorName}";
-        }
-
-        if (!string.IsNullOrWhiteSpace(f.FloorName))
-        {
-            return f.FloorName;
-        }
-
-        return !string.IsNullOrWhiteSpace(floorNumStr) ? floorNumStr : "دور غير محدد";
+        var price = f.Price.HasValue ? $"{f.Price.Value:N0}ج" : "";
+        return string.IsNullOrEmpty(price) ? num : $"{num} ({price})";
     }
 
-    private static string FormatFinishingArabic(string? status) => status switch
+    private static string FormatFinishingCompact(string? status) => status switch
     {
-        "Core-Shell" => "عظم على الطوب الأحمر (غير مشطبة - تحتاج تشطيب بالكامل)",
-        "Semi-Finished" => "نصف تشطيب (محارة وحلوق ومرافق - أقرب للتشطيب النهائي)",
-        "Finished" => "تشطيب كامل (جاهزة للسكن)",
-        "Lux" => "لوكس (جاهزة للسكن)",
-        "Super-Lux" => "سوبر لوكس (جاهزة للسكن)",
-        "High-Lux" => "هاي لوكس (جاهزة للسكن)",
-        _ => status ?? "غير محدد"
+        "Core-Shell" => "عظم على الطوب الأحمر (يحتاج تشطيب)",
+        "Semi-Finished" => "نصف تشطيب (الأقرب للفينش والسكن)",
+        "Finished" or "Lux" or "Super-Lux" or "High-Lux" => "تشطيب كامل",
+        _ => status ?? "عظم"
     };
 
     private static string FormatPropertyTypeArabic(string? type) => type switch
@@ -444,28 +500,26 @@ public class AIBrokerService
         _ => type ?? ""
     };
 
-    private static string AnalyzeStreetLocation(string? title, string? address, string? detailedAddress, string? description, string? streetWidth)
+    private static string GetCompactStreet(string? title, string? address, string? detailed)
     {
-        var text = $"{title} {address} {detailedAddress} {description}".ToLowerInvariant();
+        var text = $"{title} {address} {detailed}".ToLowerInvariant();
+        string streetType;
+        if (text.Contains("ثاني نمرة") || text.Contains("تاني نمرة") || text.Contains("تاني نمره"))
+            streetType = "ثاني نمرة هادئ وموفر بالمتر";
+        else if (text.Contains("جانبي") || text.Contains("متفرع"))
+            streetType = "شارع جانبي هادئ";
+        else if (text.Contains("عمومي") || text.Contains("رئيسي"))
+            streetType = "شارع رئيسي عمومي";
+        else
+            streetType = "شارع سكني";
 
-        if (text.Contains("تاني نمرة") || text.Contains("ثاني نمرة") || text.Contains("تاني نمره"))
+        var specific = !string.IsNullOrWhiteSpace(address) ? address.Trim() : (title ?? "المحلة");
+        if (!string.IsNullOrWhiteSpace(detailed) && !specific.Contains(detailed, StringComparison.OrdinalIgnoreCase))
         {
-            return "موقع الشارع: ثاني نمرة من شارع رئيسي عمومي (يجمع بين السعر الموفر جداً والهدوء، والقرب لثواني من الرئيسي)";
+            specific += $" ({detailed.Trim()})";
         }
 
-        if (text.Contains("جانبي") || text.Contains("متفرع من") || text.Contains("شارع جانبي"))
-        {
-            return "موقع الشارع: شارع جانبي متفرع من رئيسي (يتميز بالهدوء السكني، والخصوصية، وسعر متر اقتصادي وموفر جداً مقارنة بالعمومي)";
-        }
-
-        if (text.Contains("المأمون") || text.Contains("الصفوة") || text.Contains("عمومي") || text.Contains("رئيسي"))
-        {
-            return "موقع الشارع: شارع رئيسي / حيوي (حركة تجارية، سهولة مواصلات، واجهة مميزة، وقيمة استثمارية أعلى)";
-        }
-
-        return !string.IsNullOrWhiteSpace(streetWidth)
-            ? $"عرض الشارع: {streetWidth}م"
-            : "موقع الشارع: شارع سكني هادئ";
+        return $"{specific} - {streetType}";
     }
 }
 

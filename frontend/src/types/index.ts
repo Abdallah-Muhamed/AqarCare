@@ -92,6 +92,8 @@ export interface PropertyQuery {
   electricityMeterAvailable?: boolean
   gasMeterAvailable?: boolean
   isUnderConstruction?: boolean
+  nearFloorOnly?: boolean
+  isFinished?: boolean
   search?: string
   sortBy?: string
   isFeatured?: boolean

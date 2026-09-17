@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { Link } from 'react-router-dom'
-import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw } from 'lucide-react'
+import { Link, useSearchParams } from 'react-router-dom'
+import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw, Sparkles } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
@@ -8,6 +8,54 @@ import { getTotalAvailableUnits } from '../utils/formatters'
 import PropertyCard from '../components/PropertyCard'
 import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
+
+export function isNearFloor(p: PropertyListItem): boolean {
+  if (p.propertyType === 'Land') return false
+
+  // If single-unit property with low floorNumber
+  if (p.floorNumber != null && p.floorNumber <= 3) return true
+
+  // If property has floors array
+  if (p.floors && p.floors.length > 0) {
+    const hasLow = p.floors.some(f => {
+      if (f.isAvailable === false) return false
+      if (f.floorNumber != null && f.floorNumber <= 3) return true
+      const name = (f.floorName || '').toLowerCase()
+      return (
+        name.includes('أرضي') ||
+        name.includes('ارضي') ||
+        name.includes('أول') ||
+        name.includes('اول') ||
+        name.includes('ثاني') ||
+        name.includes('تاني') ||
+        name.includes('ثالث') ||
+        name.includes('تالت') ||
+        name.includes('دور 1') ||
+        name.includes('دور 2') ||
+        name.includes('دور 3')
+      )
+    })
+    if (hasLow) return true
+  }
+
+  // Fallback text check in title or address
+  const text = `${p.title || ''} ${p.detailedAddress || ''} ${p.address || ''}`
+  return (
+    text.includes('أرضي') ||
+    text.includes('ارضي') ||
+    text.includes('دور أول') ||
+    text.includes('دور اول') ||
+    text.includes('دور ثاني') ||
+    text.includes('دور تاني') ||
+    text.includes('دور ثالث') ||
+    text.includes('دور تالت')
+  )
+}
+
+export function isFinished(p: PropertyListItem): boolean {
+  if (!p.finishingStatus) return false
+  return p.finishingStatus !== 'Core-Shell'
+}
 
 const CITIES = ['المحلة الكبرى', 'القاهرة', 'الجيزة', 'الإسكندرية', 'الشروق', 'مدينة نصر', 'التجمع الخامس', 'أكتوبر']
 const DISTRICTS = ['الشعبية', 'منشية البكري', 'الرجبي', 'شكري القوتلي', 'الجمهورية', 'الزهراء', 'الوابورات']
@@ -32,11 +80,49 @@ const SORT_OPTS = [
 const PAGE_SIZE = 12
 
 export default function PropertiesPage() {
+  const [searchParams] = useSearchParams()
   const [rawItems, setRawItems] = useState<PropertyListItem[]>([])
   const [loading, setLoading]   = useState(true)
   const [page, setPage]         = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [query, setQuery]       = useState<PropertyQuery>({ sortBy: 'newest' })
+
+  // Synchronize initial query with URL search params
+  useEffect(() => {
+    const filter = searchParams.get('filter')
+    const type = searchParams.get('type')
+    const maxP = searchParams.get('maxPrice')
+
+    if (filter || type || maxP) {
+      setQuery(q => {
+        const next = { ...q }
+        if (filter === 'core-shell') {
+          next.finishingStatus = 'Core-Shell'
+          next.isFinished = undefined
+        } else if (filter === 'finished') {
+          next.isFinished = true
+          next.finishingStatus = undefined
+        } else if (filter === 'under-construction') {
+          next.isUnderConstruction = true
+        } else if (filter === 'ready') {
+          next.isUnderConstruction = false
+        } else if (filter === 'near-floor') {
+          next.nearFloorOnly = true
+        } else if (filter === 'under-1.5m') {
+          next.maxPrice = 1500000
+          next.minPrice = undefined
+        } else if (filter === 'installment') {
+          next.installmentAvailable = true
+        } else if (filter === 'elevator') {
+          next.elevatorAvailable = true
+        }
+
+        if (type) next.propertyType = type
+        if (maxP) next.maxPrice = Number(maxP)
+        return next
+      })
+    }
+  }, [searchParams])
 
   useEffect(() => {
     setPageSeo({
@@ -85,6 +171,8 @@ export default function PropertiesPage() {
     if (query.propertyType) count++
     if (query.listingType) count++
     if (query.finishingStatus) count++
+    if (query.isFinished) count++
+    if (query.nearFloorOnly) count++
     if (query.minPrice) count++
     if (query.maxPrice) count++
     if (query.minArea) count++
@@ -133,6 +221,10 @@ export default function PropertiesPage() {
 
       // Finishing Status
       if (query.finishingStatus && p.finishingStatus !== query.finishingStatus) return false
+      if (query.isFinished && !isFinished(p)) return false
+
+      // Near Floor (ground to 3rd floor)
+      if (query.nearFloorOnly && !isNearFloor(p)) return false
 
       // Prices (checks property price and floor prices)
       const floorPrices = (p.floors || []).map(f => f.price).filter((pr): pr is number => pr != null && pr > 0)
@@ -224,6 +316,202 @@ export default function PropertiesPage() {
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const paginatedItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
+  // Pre-calculate counts for each filter suggestion based on raw dataset
+  const suggestionCounts = useMemo(() => {
+    return {
+      coreShell: rawItems.filter(p => p.finishingStatus === 'Core-Shell').length,
+      finished: rawItems.filter(isFinished).length,
+      underConstruction: rawItems.filter(p => p.isUnderConstruction === true).length,
+      readyToDeliver: rawItems.filter(p => p.isUnderConstruction === false).length,
+      nearFloor: rawItems.filter(isNearFloor).length,
+      under1500k: rawItems.filter(p => {
+        const floorPrices = (p.floors || []).map(f => f.price).filter((pr): pr is number => pr != null && pr > 0)
+        const minP = floorPrices.length > 0 ? Math.min(...floorPrices) : (p.price ?? 0)
+        return minP > 0 && minP <= 1500000
+      }).length,
+      installment: rawItems.filter(p => Boolean(p.installmentAvailable || (p.installmentPrice != null && p.installmentPrice > 0) || (p.floors || []).some(f => f.installmentPrice != null && f.installmentPrice > 0))).length,
+      elevator: rawItems.filter(p => p.elevatorAvailable).length,
+      apartment: rawItems.filter(p => p.propertyType === 'Apartment').length,
+      house: rawItems.filter(p => p.propertyType === 'House' || p.propertyType === 'Villa').length,
+      land: rawItems.filter(p => p.propertyType === 'Land').length,
+      shop: rawItems.filter(p => p.propertyType === 'Shop' || p.propertyType === 'Commercial').length,
+    }
+  }, [rawItems])
+
+  const suggestions = useMemo(() => [
+    {
+      id: 'coreShell',
+      label: 'عظم (طوب أحمر)',
+      emoji: '🧱',
+      count: suggestionCounts.coreShell,
+      isActive: query.finishingStatus === 'Core-Shell',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          finishingStatus: q.finishingStatus === 'Core-Shell' ? undefined : 'Core-Shell',
+          isFinished: undefined,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'finished',
+      label: 'متشطب',
+      emoji: '✨',
+      count: suggestionCounts.finished,
+      isActive: Boolean(query.isFinished),
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          isFinished: !q.isFinished ? true : undefined,
+          finishingStatus: undefined,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'underConstruction',
+      label: 'تحت الإنشاء',
+      emoji: '🏗️',
+      count: suggestionCounts.underConstruction,
+      isActive: query.isUnderConstruction === true,
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          isUnderConstruction: q.isUnderConstruction === true ? undefined : true,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'nearFloor',
+      label: 'دور قريب (أرضي - ثالث)',
+      emoji: '🪜',
+      count: suggestionCounts.nearFloor,
+      isActive: Boolean(query.nearFloorOnly),
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          nearFloorOnly: !q.nearFloorOnly ? true : undefined,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'under1500k',
+      label: 'أقل من 1.5 مليون',
+      emoji: '💰',
+      count: suggestionCounts.under1500k,
+      isActive: query.maxPrice === 1500000 && !query.minPrice,
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          minPrice: undefined,
+          maxPrice: q.maxPrice === 1500000 ? undefined : 1500000,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'installment',
+      label: 'متاح تقسيط',
+      emoji: '💳',
+      count: suggestionCounts.installment,
+      isActive: Boolean(query.installmentAvailable),
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          installmentAvailable: !q.installmentAvailable ? true : undefined,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'readyToDeliver',
+      label: 'استلام فوري',
+      emoji: '🔑',
+      count: suggestionCounts.readyToDeliver,
+      isActive: query.isUnderConstruction === false,
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          isUnderConstruction: q.isUnderConstruction === false ? undefined : false,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'elevator',
+      label: 'يوجد أسانسير',
+      emoji: '🛗',
+      count: suggestionCounts.elevator,
+      isActive: Boolean(query.elevatorAvailable),
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          elevatorAvailable: !q.elevatorAvailable ? true : undefined,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'apartment',
+      label: 'شقق سكنية',
+      emoji: '🏢',
+      count: suggestionCounts.apartment,
+      isActive: query.propertyType === 'Apartment',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'Apartment' ? undefined : 'Apartment',
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'house',
+      label: 'بيوت وفلل',
+      emoji: '🏠',
+      count: suggestionCounts.house,
+      isActive: query.propertyType === 'House',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'House' ? undefined : 'House',
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'land',
+      label: 'أراضي',
+      emoji: '🌿',
+      count: suggestionCounts.land,
+      isActive: query.propertyType === 'Land',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'Land' ? undefined : 'Land',
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'shop',
+      label: 'محلات تجارية',
+      emoji: '🏪',
+      count: suggestionCounts.shop,
+      isActive: query.propertyType === 'Shop',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'Shop' ? undefined : 'Shop',
+        }))
+        setPage(1)
+      }
+    },
+  ], [suggestionCounts, query])
+
   return (
     <div className="props-page">
       {/* Page header */}
@@ -275,6 +563,43 @@ export default function PropertiesPage() {
               >
                 <RotateCcw size={13} />
                 مسح الفلاتر
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Quick Suggestions Bar (Always Visible) */}
+      <div className="quick-suggestions-bar">
+        <div className="container quick-suggestions-inner">
+          <div className="quick-suggestions-label">
+            <Sparkles size={15} className="quick-suggestions-sparkle" />
+            <span>تصفية سريعة:</span>
+          </div>
+          <div className="quick-suggestions-scroll">
+            {suggestions.map(s => (
+              <button
+                key={s.id}
+                type="button"
+                className={`quick-chip ${s.isActive ? 'quick-chip--active' : ''}`}
+                onClick={s.toggle}
+                title={`تصفية حسب: ${s.label}`}
+              >
+                <span className="quick-chip__emoji">{s.emoji}</span>
+                <span className="quick-chip__text">{s.label}</span>
+                {s.count > 0 && <span className="quick-chip__count">{s.count}</span>}
+                {s.isActive && <Check size={12} className="quick-chip__check" />}
+              </button>
+            ))}
+            {hasFilters && (
+              <button
+                type="button"
+                className="quick-chip quick-chip--clear"
+                onClick={clearFilters}
+                title="إلغاء كافة شروط التصفية"
+              >
+                <RotateCcw size={12} />
+                <span>مسح الكل</span>
               </button>
             )}
           </div>

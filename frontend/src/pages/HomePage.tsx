@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield } from 'lucide-react'
+import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield, Sparkles } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem } from '../types'
 import { setPageSeo } from '../utils/seo'
@@ -57,6 +57,40 @@ export default function HomePage() {
               <Map size={18} />
               استكشف الخريطة
             </Link>
+          </div>
+
+          {/* Quick Filter Suggestions */}
+          <div className="hero__quick-filters">
+            <span className="hero__quick-filters-label">
+              <Sparkles size={14} style={{ color: 'var(--clr-gold)' }} />
+              اقتراحات سريعة:
+            </span>
+            <div className="hero__quick-filters-list">
+              <Link to="/properties?filter=core-shell" className="hero__quick-tag">
+                🧱 عظم (طوب أحمر)
+              </Link>
+              <Link to="/properties?filter=finished" className="hero__quick-tag">
+                ✨ شقق متشطبة
+              </Link>
+              <Link to="/properties?filter=under-construction" className="hero__quick-tag">
+                🏗️ تحت الإنشاء
+              </Link>
+              <Link to="/properties?filter=near-floor" className="hero__quick-tag">
+                🪜 دور قريب
+              </Link>
+              <Link to="/properties?filter=under-1.5m" className="hero__quick-tag">
+                💰 أقل من 1.5 مليون
+              </Link>
+              <Link to="/properties?filter=installment" className="hero__quick-tag">
+                💳 متاح تقسيط
+              </Link>
+              <Link to="/properties?type=House" className="hero__quick-tag">
+                🏠 بيوت وفلل
+              </Link>
+              <Link to="/properties?type=Land" className="hero__quick-tag">
+                🌿 أراضي
+              </Link>
+            </div>
           </div>
 
           {/* Stats */}
