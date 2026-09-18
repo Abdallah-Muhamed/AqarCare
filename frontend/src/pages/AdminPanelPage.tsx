@@ -175,7 +175,8 @@ export default function AdminPanelPage() {
 
   const fetchProperties = async (key = apiKey) => {
     try {
-      const res = await adminFetch('/api/admin/properties', {}, key);
+      // pageSize=1000 to load ALL properties (no pagination limit in admin)
+      const res = await adminFetch('/api/admin/properties?pageSize=1000', {}, key);
       if (res.ok) {
         const data = await res.json();
         setProperties(data.items ?? []);
