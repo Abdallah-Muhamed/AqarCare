@@ -34,6 +34,14 @@ export default function PropertyCard({ property: p }: Props) {
   const [imgError, setImgError] = useState(false)
   const placeholderImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
 
+  const optimizeCloudinaryUrl = (url?: string | null) => {
+    if (!url) return placeholderImage
+    if (url.includes('res.cloudinary.com') && url.includes('/upload/') && !url.includes('/upload/f_auto')) {
+      return url.replace('/upload/', '/upload/f_auto,q_auto,w_600,c_fill/')
+    }
+    return url
+  }
+
   // Full detailed location
   const detailedLoc = p.detailedAddress || p.address
   const generalLoc = [p.district, p.city].filter(Boolean).join('، ')
@@ -81,7 +89,7 @@ export default function PropertyCard({ property: p }: Props) {
           />
         ) : (
           <img 
-            src={imgError || !p.primaryImageUrl ? placeholderImage : p.primaryImageUrl} 
+            src={imgError || !p.primaryImageUrl ? placeholderImage : optimizeCloudinaryUrl(p.primaryImageUrl)} 
             alt={p.title ?? ''} 
             className="prop-card__img" 
             loading="lazy" 

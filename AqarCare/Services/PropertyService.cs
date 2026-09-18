@@ -2,16 +2,25 @@ using AqarCare.Data;
 using AqarCare.Data.Entities;
 using AqarCare.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 
 namespace AqarCare.Services;
 
 public class PropertyService
 {
     private readonly AqarCareDbContext _db;
+    private readonly IMemoryCache _cache;
+    private static long _cacheVersion = 1;
 
-    public PropertyService(AqarCareDbContext db)
+    public PropertyService(AqarCareDbContext db, IMemoryCache cache)
     {
         _db = db;
+        _cache = cache;
+    }
+
+    public static void InvalidateCache()
+    {
+        Interlocked.Increment(ref _cacheVersion);
     }
 
     public async Task<PagedResult<PropertyListItemDto>> GetPublishedAsync(PropertyQuery query, CancellationToken ct = default)
@@ -19,8 +28,16 @@ public class PropertyService
         var page = query.Page < 1 ? 1 : query.Page;
         var pageSize = query.PageSize is < 1 or > 10000 ? 12 : query.PageSize;
 
+        string cacheKey = $"pub_v{Interlocked.Read(ref _cacheVersion)}_{query.City}_{query.District}_{query.PropertyType}_{query.ListingType}_{query.FinishingStatus}_{query.MinPrice}_{query.MaxPrice}_{query.MinArea}_{query.MaxArea}_{query.Bedrooms}_{query.Bathrooms}_{query.ElevatorAvailable}_{query.InstallmentAvailable}_{query.IsUnderConstruction}_{query.IsFeatured}_{query.Search}_{query.SortBy}_{page}_{pageSize}";
+
+        if (_cache.TryGetValue(cacheKey, out PagedResult<PropertyListItemDto>? cachedResult) && cachedResult != null)
+        {
+            return cachedResult;
+        }
+
         IQueryable<PropertyUnit> q = _db.PropertyUnits
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(x => x.Media)
             .Include(x => x.Floors.OrderBy(f => f.SortOrder))
             .Where(x => x.IsPublished);
@@ -82,7 +99,9 @@ public class PropertyService
             .ToListAsync(ct);
 
         var items = entities.Select(ToListItem).ToList();
-        return new PagedResult<PropertyListItemDto>(items, total, page, pageSize);
+        var result = new PagedResult<PropertyListItemDto>(items, total, page, pageSize);
+        _cache.Set(cacheKey, result, TimeSpan.FromSeconds(60));
+        return result;
     }
 
     public async Task<PropertyDetailDto?> GetPublishedByIdAsync(int id, CancellationToken ct = default)
@@ -104,6 +123,7 @@ public class PropertyService
 
         IQueryable<PropertyUnit> q = _db.PropertyUnits
             .AsNoTracking()
+            .AsSplitQuery()
             .Include(x => x.Media)
             .Include(x => x.Floors.OrderBy(f => f.SortOrder));
 
@@ -315,6 +335,7 @@ public class PropertyService
 
         _db.PropertyUnits.Add(entity);
         await _db.SaveChangesAsync(ct);
+        InvalidateCache();
 
         // Reload with all navigations so the response is complete
         var created = await _db.PropertyUnits
@@ -497,6 +518,7 @@ public class PropertyService
         }
 
         await _db.SaveChangesAsync(ct);
+        InvalidateCache();
 
         // Reload with all navigations so the response is complete
         var updated = await _db.PropertyUnits
@@ -515,6 +537,7 @@ public class PropertyService
 
         _db.PropertyUnits.Remove(entity);
         await _db.SaveChangesAsync(ct);
+        InvalidateCache();
         return true;
     }
 
@@ -534,6 +557,7 @@ public class PropertyService
 
         _db.PropertyMedia.Add(media);
         await _db.SaveChangesAsync(ct);
+        InvalidateCache();
         return new PropertyMediaDto(media.Id, media.MediaType, media.Url, media.SortOrder);
     }
 
@@ -544,6 +568,7 @@ public class PropertyService
 
         _db.PropertyMedia.Remove(media);
         await _db.SaveChangesAsync(ct);
+        InvalidateCache();
         return true;
     }
 

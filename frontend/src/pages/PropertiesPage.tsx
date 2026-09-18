@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw, Sparkles } from 'lucide-react'
 import { api } from '../api'
@@ -100,6 +100,9 @@ export default function PropertiesPage() {
   const [showFilters, setShowFilters] = useState(false)
   const [query, setQuery]       = useState<PropertyQuery>({ sortBy: 'newest' })
   const setPage = (_?: number) => {}
+
+  const [displayLimit, setDisplayLimit] = useState(24)
+  const sentinelRef = useRef<HTMLDivElement | null>(null)
 
   // Synchronize initial query with URL search params
   useEffect(() => {
@@ -337,6 +340,32 @@ export default function PropertiesPage() {
   }, [rawItems, query])
 
   const totalAvailableUnits = useMemo(() => getTotalAvailableUnits(filteredItems), [filteredItems])
+
+  useEffect(() => {
+    setDisplayLimit(24)
+  }, [query])
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) {
+          setDisplayLimit(prev => Math.min(prev + 24, filteredItems.length))
+        }
+      },
+      { rootMargin: '300px' }
+    )
+
+    const el = sentinelRef.current
+    if (el) observer.observe(el)
+
+    return () => {
+      if (el) observer.unobserve(el)
+    }
+  }, [filteredItems.length])
+
+  const visibleItems = useMemo(() => {
+    return filteredItems.slice(0, displayLimit)
+  }, [filteredItems, displayLimit])
 
   // Pre-calculate counts for each filter suggestion based on raw dataset
   const suggestionCounts = useMemo(() => {
@@ -915,8 +944,15 @@ export default function PropertiesPage() {
         ) : (
           <>
             <div className="grid-3">
-              {filteredItems.map(p => <PropertyCard key={p.id} property={p} />)}
+              {visibleItems.map(p => <PropertyCard key={p.id} property={p} />)}
             </div>
+            {visibleItems.length < filteredItems.length && (
+              <div ref={sentinelRef} style={{ height: '60px', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '20px 0' }}>
+                <span style={{ fontSize: '0.85rem', color: 'var(--clr-text-muted)', fontWeight: 700 }}>
+                  جاري عرض المزيد من العقارات ({visibleItems.length} من {filteredItems.length})...
+                </span>
+              </div>
+            )}
           </>
         )}
       </div>

@@ -13,6 +13,11 @@ namespace AqarCare
             var builder = WebApplication.CreateBuilder(args);
 
             builder.Services.AddControllers();
+            builder.Services.AddMemoryCache();
+            builder.Services.AddResponseCompression(options =>
+            {
+                options.EnableForHttps = true;
+            });
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
@@ -211,6 +216,7 @@ namespace AqarCare
                 app.UseCors("ProductionCors");
             }
 
+            app.UseResponseCompression();
             app.UseHttpsRedirection();
             app.UseMiddleware<ApiKeyAuthMiddleware>();
             app.UseAuthorization();
