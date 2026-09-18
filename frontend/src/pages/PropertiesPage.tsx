@@ -10,7 +10,8 @@ import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
 
 export function isNearFloor(p: PropertyListItem): boolean {
-  if (p.propertyType === 'Land') return false
+  // Only applies to apartments — not houses, shops, or land
+  if (p.propertyType !== 'Apartment') return false
 
   const MAX_FLOOR = 7 // floors 0–7 are "below 8th floor"
 
