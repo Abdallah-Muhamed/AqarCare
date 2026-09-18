@@ -4,6 +4,7 @@ using AqarCare.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace AqarCare.Migrations
 {
     [DbContext(typeof(AqarCareDbContext))]
-    partial class AqarCareDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260918135850_AddFinishingStatusToPropertyFloor")]
+    partial class AddFinishingStatusToPropertyFloor
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -2841,9 +2844,6 @@ namespace AqarCare.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<int?>("CoreShellApartments")
-                        .HasColumnType("int");
-
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
@@ -2862,9 +2862,6 @@ namespace AqarCare.Migrations
 
                     b.Property<bool>("ElevatorAvailable")
                         .HasColumnType("bit");
-
-                    b.Property<int?>("FinishedApartments")
-                        .HasColumnType("int");
 
                     b.Property<int?>("FinishingPackageId")
                         .HasColumnType("int");
@@ -2933,9 +2930,6 @@ namespace AqarCare.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
-
-                    b.Property<int?>("SemiFinishedApartments")
-                        .HasColumnType("int");
 
                     b.Property<decimal?>("SoldPrice")
                         .HasPrecision(18, 2)

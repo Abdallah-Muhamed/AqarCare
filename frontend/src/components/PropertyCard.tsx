@@ -10,12 +10,14 @@ interface Props { property: PropertyListItem }
 const listingLabel: Record<string, string> = { Sale: 'للبيع', Rent: 'للإيجار' }
 const typeLabel: Record<string, string>    = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
 const finishingLabel: Record<string, string> = {
-  'Core-Shell':    'عظم',
-  'Semi-Finished': 'نصف تشطيب',
-  'Finished':      'تشطيب كامل',
-  'Lux':           'لوكس',
-  'Super-Lux':     'سوبر لوكس',
-  'High-Lux':      'هاي لوكس',
+  'Core-Shell':      'عظم',
+  'Semi-Finished':   'نصف تشطيب',
+  'Finished':        'تشطيب كامل',
+  'Lux':             'لوكس',
+  'Super-Lux':       'سوبر لوكس',
+  'Ultra-Super-Lux': 'ألترا سوبر لوكس',
+  'High-Lux':        'هاي لوكس',
+  'Mixed':           'تشطيب متعدد',
 }
 const statusBadge: Record<string, { label: string; cls: string }> = {
   Available:  { label: 'متاح', cls: 'badge-green' },
@@ -120,9 +122,9 @@ export default function PropertyCard({ property: p }: Props) {
       <div className="prop-card__body">
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px', flexWrap: 'wrap', gap: '4px' }}>
           {p.propertyType && <span className="prop-card__type">{typeLabel[p.propertyType] ?? p.propertyType}</span>}
-          {p.finishingStatus && (
+          {!isLand && !isHouse && (p.finishingStatus || p.floorsFinishing || (p.floors && p.floors.some(f => f.finishingStatus))) && (
             <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#2d4a3e', background: 'rgba(45,74,62,0.08)', border: '1px solid rgba(45,74,62,0.18)', padding: '1px 8px', borderRadius: '99px' }}>
-              🎨 {finishingLabel[p.finishingStatus] ?? p.finishingStatus}
+              🎨 {finishingLabel[p.finishingStatus ?? ''] ?? p.finishingStatus}
             </span>
           )}
         </div>
@@ -134,63 +136,99 @@ export default function PropertyCard({ property: p }: Props) {
 
         {/* Specs */}
         <div className="prop-card__specs">
-          {!isLand && (p.floors && p.floors.length > 0 ? (
-            <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title={isHouse ? "عدد الأدوار" : "الأدوار المتاحة"}>
-              🏢 {formatFloorsText(p.floors, p.propertyType)}
-            </div>
-          ) : p.floorNumber != null ? (
-            <div className="prop-card__spec">
-              🏢 {p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}
-            </div>
-          ) : null)}
+          {isHouse ? (
+            <>
+              {(p.numberOfFloors != null || (p.floors && p.floors.length > 0)) && (
+                <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title="عدد الأدوار">
+                  🏢 {p.numberOfFloors ?? p.floors?.length} أدوار
+                </div>
+              )}
+              {p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
+                <div className="prop-card__spec" style={{ fontWeight: 700, color: '#1e3a8a' }}>
+                  🚪 {p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}
+                </div>
+              )}
+              {p.finishedApartments != null && p.finishedApartments > 0 && (
+                <div className="prop-card__spec" style={{ color: '#047857', fontWeight: 700 }}>
+                  ✨ {p.finishedApartments} متشطب
+                </div>
+              )}
+              {p.semiFinishedApartments != null && p.semiFinishedApartments > 0 && (
+                <div className="prop-card__spec" style={{ color: '#b45309', fontWeight: 700 }}>
+                  🧱 {p.semiFinishedApartments} نص تشطيب
+                </div>
+              )}
+              {p.coreShellApartments != null && p.coreShellApartments > 0 && (
+                <div className="prop-card__spec" style={{ color: '#475569', fontWeight: 700 }}>
+                  🏗️ {p.coreShellApartments} عظم
+                </div>
+              )}
+              <div className="prop-card__spec">
+                <Maximize2 size={15} />
+                {p.areaSqm ?? '—'} م²
+              </div>
+            </>
+          ) : (
+            <>
+              {!isLand && (p.floors && p.floors.length > 0 ? (
+                <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title="الأدوار المتاحة">
+                  🏢 {formatFloorsText(p.floors, p.propertyType)}
+                </div>
+              ) : p.floorNumber != null ? (
+                <div className="prop-card__spec">
+                  🏢 {p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}
+                </div>
+              ) : null)}
 
-          {!isLand && !isShop && (
-            <div className="prop-card__spec">
-              <BedDouble size={15} />
-              {(() => {
-                const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
-                const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
-                  Math.min(...floorBeds) === Math.max(...floorBeds)
-                    ? Math.min(...floorBeds)
-                    : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
-                ) : null);
-                return `${bedVal ?? '—'} غرف`;
-              })()}
-            </div>
-          )}
+              {!isLand && !isShop && (
+                <div className="prop-card__spec">
+                  <BedDouble size={15} />
+                  {(() => {
+                    const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0);
+                    const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
+                      Math.min(...floorBeds) === Math.max(...floorBeds)
+                        ? Math.min(...floorBeds)
+                        : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+                    ) : null);
+                    return `${bedVal ?? '—'} غرف`;
+                  })()}
+                </div>
+              )}
 
-          {!isLand && (
-            <div className="prop-card__spec">
-              <Bath size={15} />
-              {(() => {
-                const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
-                const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
-                  Math.min(...floorBaths) === Math.max(...floorBaths)
-                    ? Math.min(...floorBaths)
-                    : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
-                ) : null);
-                return `${bathVal ?? '—'} حمام`;
-              })()}
-            </div>
-          )}
+              {!isLand && (
+                <div className="prop-card__spec">
+                  <Bath size={15} />
+                  {(() => {
+                    const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0);
+                    const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
+                      Math.min(...floorBaths) === Math.max(...floorBaths)
+                        ? Math.min(...floorBaths)
+                        : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+                    ) : null);
+                    return `${bathVal ?? '—'} حمام`;
+                  })()}
+                </div>
+              )}
 
-          <div className="prop-card__spec">
-            <Maximize2 size={15} />
-            {(() => {
-              const floorAreas = (p.floors || []).map(f => f.areaSqm).filter((a): a is number => a != null && a > 0);
-              const areaVal = p.areaSqm ?? (floorAreas.length > 0 ? (
-                Math.min(...floorAreas) === Math.max(...floorAreas)
-                  ? Math.min(...floorAreas)
-                  : `${Math.min(...floorAreas)} - ${Math.max(...floorAreas)}`
-              ) : null);
-              return `${areaVal ?? '—'} م²`;
-            })()}
-          </div>
+              <div className="prop-card__spec">
+                <Maximize2 size={15} />
+                {(() => {
+                  const floorAreas = (p.floors || []).map(f => f.areaSqm).filter((a): a is number => a != null && a > 0);
+                  const areaVal = p.areaSqm ?? (floorAreas.length > 0 ? (
+                    Math.min(...floorAreas) === Math.max(...floorAreas)
+                      ? Math.min(...floorAreas)
+                      : `${Math.min(...floorAreas)} - ${Math.max(...floorAreas)}`
+                  ) : null);
+                  return `${areaVal ?? '—'} م²`;
+                })()}
+              </div>
 
-          {!isLand && p.finishingStatus && (
-            <div className="prop-card__spec" title="نوع التشطيب">
-              🎨 {finishingLabel[p.finishingStatus] ?? p.finishingStatus}
-            </div>
+              {!isLand && (p.finishingStatus || p.floorsFinishing || (p.floors && p.floors.some(f => f.finishingStatus))) && (
+                <div className="prop-card__spec" title="نوع التشطيب">
+                  🎨 {finishingLabel[p.finishingStatus ?? ''] ?? p.finishingStatus}
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -247,3 +247,46 @@ export function getTotalAvailableUnits(
 export const getPropertyAvailableUnits = getPropertyUnitsCount
 export const getTotalUnitsCount = getTotalAvailableUnits
 
+export const FINISHING_LABELS: Record<string, string> = {
+  'Core-Shell': 'عظم',
+  'Semi-Finished': 'نصف تشطيب',
+  'Finished': 'تشطيب كامل',
+  'Lux': 'لوكس',
+  'Super-Lux': 'سوبر لوكس',
+  'Ultra-Super-Lux': 'ألترا سوبر لوكس',
+  'High-Lux': 'هاي لوكس',
+  'Mixed': 'تشطيب متعدد',
+}
+
+export function formatFinishingLabel(status?: string | null): string {
+  if (!status) return ''
+  return FINISHING_LABELS[status] ?? status
+}
+
+/**
+ * Summarizes floor finishings for houses or buildings:
+ * e.g. "3 أدوار ألترا سوبر لوكس • 3 أدوار نصف تشطيب"
+ */
+export function formatFloorsFinishingSummary(
+  floors?: (PropertyFloor | { finishingStatus?: string | null })[]
+): string {
+  if (!floors || floors.length === 0) return ''
+  const validFloors = floors.filter(f => Boolean(f.finishingStatus))
+  if (validFloors.length === 0) return ''
+
+  const counts = new Map<string, number>()
+  for (const f of validFloors) {
+    const s = f.finishingStatus!
+    counts.set(s, (counts.get(s) || 0) + 1)
+  }
+
+  const parts: string[] = []
+  for (const [finish, count] of counts.entries()) {
+    const label = formatFinishingLabel(finish)
+    const adwarWord = count === 1 ? 'دور واحد' : count === 2 ? 'دورين' : count <= 10 ? `${count} أدوار` : `${count} دور`
+    parts.push(`${adwarWord} ${label}`)
+  }
+
+  return parts.join(' • ')
+}
+

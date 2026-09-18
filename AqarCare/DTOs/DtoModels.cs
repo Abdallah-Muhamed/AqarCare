@@ -16,7 +16,8 @@ public record PropertyFloorDto(
     decimal? SoldPrice,
     decimal? AreaSqm,
     bool IsAvailable,
-    int SortOrder);
+    int SortOrder,
+    string? FinishingStatus = null);
 
 public record PropertyFloorInput(
     int? Id,
@@ -28,7 +29,8 @@ public record PropertyFloorInput(
     decimal? SoldPrice = null,
     decimal? AreaSqm = null,
     bool IsAvailable = true,
-    int SortOrder = 0);
+    int SortOrder = 0,
+    string? FinishingStatus = null);
 
 public record PropertyListItemDto(
     int Id,
@@ -57,14 +59,17 @@ public record PropertyListItemDto(
     // House-specific fields
     int? NumberOfFloors,
     string? FloorsFinishing,
+    int? FinishedApartments = null,
+    int? SemiFinishedApartments = null,
+    int? CoreShellApartments = null,
     // Land-specific fields
-    decimal? FrontageWidth,
-    decimal? FrontageLength,
-    string? StreetWidth,
-    bool HasElectricity,
-    bool HasWater,
-    bool HasSewerage,
-    bool HasGas,
+    decimal? FrontageWidth = null,
+    decimal? FrontageLength = null,
+    string? StreetWidth = null,
+    bool HasElectricity = false,
+    bool HasWater = false,
+    bool HasSewerage = false,
+    bool HasGas = false,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorDto>? Floors = null,
@@ -103,15 +108,18 @@ public record PropertyDetailDto(
     // House-specific fields
     int? NumberOfFloors,
     string? FloorsFinishing,
+    int? FinishedApartments = null,
+    int? SemiFinishedApartments = null,
+    int? CoreShellApartments = null,
     // Land-specific fields
-    decimal? FrontageWidth,
-    decimal? FrontageLength,
-    string? StreetWidth,
-    bool HasElectricity,
-    bool HasWater,
-    bool HasSewerage,
-    bool HasGas,
-    IReadOnlyList<PropertyMediaDto> Media,
+    decimal? FrontageWidth = null,
+    decimal? FrontageLength = null,
+    string? StreetWidth = null,
+    bool HasElectricity = false,
+    bool HasWater = false,
+    bool HasSewerage = false,
+    bool HasGas = false,
+    IReadOnlyList<PropertyMediaDto> Media = null!,
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorDto>? Floors = null,
@@ -141,13 +149,13 @@ public record CreatePropertyRequest(
     int? NumberOfFloors,
     [MaxLength(1000)] string? FloorsFinishing,
     // Land-specific fields
-    decimal? FrontageWidth,
-    decimal? FrontageLength,
-    [MaxLength(50)] string? StreetWidth,
-    bool HasElectricity,
-    bool HasWater,
-    bool HasSewerage,
-    bool HasGas,
+    decimal? FrontageWidth = null,
+    decimal? FrontageLength = null,
+    [MaxLength(50)] string? StreetWidth = null,
+    bool HasElectricity = false,
+    bool HasWater = false,
+    bool HasSewerage = false,
+    bool HasGas = false,
     // Utility meters - optional parameters at the end
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
@@ -156,7 +164,10 @@ public record CreatePropertyRequest(
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorInput>? Floors = null,
-    int? ApartmentsPerFloor = null);
+    int? ApartmentsPerFloor = null,
+    int? FinishedApartments = null,
+    int? SemiFinishedApartments = null,
+    int? CoreShellApartments = null);
 
 public record UpdatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -183,13 +194,13 @@ public record UpdatePropertyRequest(
     int? NumberOfFloors,
     [MaxLength(1000)] string? FloorsFinishing,
     // Land-specific fields
-    decimal? FrontageWidth,
-    decimal? FrontageLength,
-    [MaxLength(50)] string? StreetWidth,
-    bool HasElectricity,
-    bool HasWater,
-    bool HasSewerage,
-    bool HasGas,
+    decimal? FrontageWidth = null,
+    decimal? FrontageLength = null,
+    [MaxLength(50)] string? StreetWidth = null,
+    bool HasElectricity = false,
+    bool HasWater = false,
+    bool HasSewerage = false,
+    bool HasGas = false,
     // Utility meters - optional parameters at the end
     bool WaterMeterAvailable = false,
     bool ElectricityMeterAvailable = false,
@@ -198,7 +209,10 @@ public record UpdatePropertyRequest(
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorInput>? Floors = null,
-    int? ApartmentsPerFloor = null);
+    int? ApartmentsPerFloor = null,
+    int? FinishedApartments = null,
+    int? SemiFinishedApartments = null,
+    int? CoreShellApartments = null);
 
 public record AddPropertyMediaRequest(
     string MediaType,

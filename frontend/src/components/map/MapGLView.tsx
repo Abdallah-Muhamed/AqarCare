@@ -141,34 +141,51 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     ) : null)
     if (areaVal != null) specs.push(`<div class="mapgl-popup__spec">📐 <span>${areaVal} م²</span></div>`)
 
-    if (!isLand && !isShop) {
-      const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0)
-      const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
-        Math.min(...floorBeds) === Math.max(...floorBeds)
-          ? Math.min(...floorBeds)
-          : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
-      ) : null)
-      if (bedVal != null) specs.push(`<div class="mapgl-popup__spec">🛏️ <span>${bedVal} غرف</span></div>`)
-    }
-
-    if (!isLand) {
-      const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0)
-      const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
-        Math.min(...floorBaths) === Math.max(...floorBaths)
-          ? Math.min(...floorBaths)
-          : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
-      ) : null)
-      if (bathVal != null) specs.push(`<div class="mapgl-popup__spec">🚿 <span>${bathVal} حمام</span></div>`)
-    }
-
-    if (!isLand) {
-      if (p.floorNumber != null) {
-        specs.push(`<div class="mapgl-popup__spec">🏢 <span>${p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}</span></div>`)
-      } else if (p.floors && p.floors.length > 0) {
-        specs.push(`<div class="mapgl-popup__spec">🏢 <span>${formatFloorsText(p.floors, p.propertyType)}</span></div>`)
+    if (isHouse) {
+      const floorsNum = p.numberOfFloors ?? (p.floors && p.floors.length > 0 ? p.floors.length : null)
+      if (floorsNum != null) specs.push(`<div class="mapgl-popup__spec">🏢 <span>${floorsNum} أدوار</span></div>`)
+      if (p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0) {
+        specs.push(`<div class="mapgl-popup__spec">🚪 <span>${p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}</span></div>`)
       }
+      if (p.finishedApartments != null && p.finishedApartments > 0) {
+        specs.push(`<div class="mapgl-popup__spec" style="color:#047857;font-weight:700;">✨ <span>${p.finishedApartments} متشطب</span></div>`)
+      }
+      if (p.semiFinishedApartments != null && p.semiFinishedApartments > 0) {
+        specs.push(`<div class="mapgl-popup__spec" style="color:#b45309;font-weight:700;">🧱 <span>${p.semiFinishedApartments} نص تشطيب</span></div>`)
+      }
+      if (p.coreShellApartments != null && p.coreShellApartments > 0) {
+        specs.push(`<div class="mapgl-popup__spec" style="color:#475569;font-weight:700;">🏗️ <span>${p.coreShellApartments} عظم</span></div>`)
+      }
+    } else {
+      if (!isLand && !isShop) {
+        const floorBeds = (p.floors || []).map(f => f.bedrooms).filter((b): b is number => b != null && b > 0)
+        const bedVal = p.bedrooms ?? (floorBeds.length > 0 ? (
+          Math.min(...floorBeds) === Math.max(...floorBeds)
+            ? Math.min(...floorBeds)
+            : `${Math.min(...floorBeds)} - ${Math.max(...floorBeds)}`
+        ) : null)
+        if (bedVal != null) specs.push(`<div class="mapgl-popup__spec">🛏️ <span>${bedVal} غرف</span></div>`)
+      }
+
+      if (!isLand) {
+        const floorBaths = (p.floors || []).map(f => f.bathrooms).filter((b): b is number => b != null && b > 0)
+        const bathVal = p.bathrooms ?? (floorBaths.length > 0 ? (
+          Math.min(...floorBaths) === Math.max(...floorBaths)
+            ? Math.min(...floorBaths)
+            : `${Math.min(...floorBaths)} - ${Math.max(...floorBaths)}`
+        ) : null)
+        if (bathVal != null) specs.push(`<div class="mapgl-popup__spec">🚿 <span>${bathVal} حمام</span></div>`)
+      }
+
+      if (!isLand) {
+        if (p.floorNumber != null) {
+          specs.push(`<div class="mapgl-popup__spec">🏢 <span>${p.floorNumber === 0 ? 'الدور الأرضي' : `الدور ${p.floorNumber}`}</span></div>`)
+        } else if (p.floors && p.floors.length > 0) {
+          specs.push(`<div class="mapgl-popup__spec">🏢 <span>${formatFloorsText(p.floors, p.propertyType)}</span></div>`)
+        }
+      }
+      if (!isLand && finishing) specs.push(`<div class="mapgl-popup__spec">🎨 <span>${finishing}</span></div>`)
     }
-    if (!isLand && finishing) specs.push(`<div class="mapgl-popup__spec">🎨 <span>${finishing}</span></div>`)
 
     // Services tags
     const services: string[] = []

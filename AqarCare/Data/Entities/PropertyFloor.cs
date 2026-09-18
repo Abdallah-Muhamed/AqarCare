@@ -12,6 +12,7 @@ public class PropertyFloor
     public decimal? InstallmentPrice { get; set; }
     public decimal? SoldPrice { get; set; }
     public decimal? AreaSqm { get; set; }
+    public string? FinishingStatus { get; set; }
     public bool IsAvailable { get; set; } = true;
     public int SortOrder { get; set; }
 }

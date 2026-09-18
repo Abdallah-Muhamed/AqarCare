@@ -3,7 +3,7 @@ import './AdminPanelPage.css';
 import { API_BASE_URL } from '../constants/api';
 import MapPickerModal from '../components/admin/MapPickerModal';
 import type { PropertyFloor } from '../types';
-import { formatFloorsText, parseMultiFloorNumbers } from '../utils/formatters';
+import { formatFloorsText, parseMultiFloorNumbers, formatFloorsFinishingSummary } from '../utils/formatters';
 
 interface Property {
   id: number;
@@ -18,6 +18,11 @@ interface Property {
   propertyType: string | null;
   listingType: string | null;
   finishingStatus: string | null;
+  numberOfFloors?: number | null;
+  floorsFinishing?: string | null;
+  finishedApartments?: number | null;
+  semiFinishedApartments?: number | null;
+  coreShellApartments?: number | null;
   finishingPackageId?: number | null;
   installmentAvailable: boolean;
   floorNumber?: number | null;
@@ -48,11 +53,13 @@ interface Property {
 
 // Map English finishingStatus values → Arabic display labels
 const FINISHING_OPTIONS = [
-  { value: 'Core-Shell',   label: 'عظم' },
-  { value: 'Semi-Finished',label: 'نص تشطيب' },
-  { value: 'Lux',          label: 'لوكس' },
-  { value: 'Super-Lux',    label: 'سوبر لوكس' },
-  { value: 'High-Lux',     label: 'هاي لوكس' },
+  { value: 'Core-Shell',      label: 'عظم' },
+  { value: 'Semi-Finished',   label: 'نص تشطيب' },
+  { value: 'Lux',             label: 'لوكس' },
+  { value: 'Super-Lux',       label: 'سوبر لوكس' },
+  { value: 'Ultra-Super-Lux', label: 'ألترا سوبر لوكس' },
+  { value: 'High-Lux',        label: 'هاي لوكس' },
+  { value: 'Mixed',           label: 'تشطيب متعدد' },
 ];
 
 const finishingLabel = (val: string) =>
@@ -99,9 +106,21 @@ export default function AdminPanelPage() {
     gasMeterAvailable: false,
     elevatorAvailable: false,
     apartmentsPerFloor: '',
+    numberOfFloors: '',
+    finishedApartments: '',
+    semiFinishedApartments: '',
+    coreShellApartments: '',
   });
 
   const [floors, setFloors] = useState<PropertyFloor[]>([]);
+
+  // Bulk floor generator state (for adding multiple floors at once with finishing)
+  const [bulkFromFloor, setBulkFromFloor] = useState<number | string>(1);
+  const [bulkToFloor, setBulkToFloor] = useState<number | string>(3);
+  const [bulkFinishing, setBulkFinishing] = useState<string>('Ultra-Super-Lux');
+  const [bulkArea, setBulkArea] = useState<string>('');
+  const [bulkBedrooms, setBulkBedrooms] = useState<string>('');
+  const [bulkBathrooms, setBulkBathrooms] = useState<string>('');
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
@@ -207,11 +226,86 @@ export default function AdminPanelPage() {
 
   // ── floor helpers ─────────────────────────────────────────────────────────────
 
+  const syncHouseApartmentCounts = (floorsList: PropertyFloor[], aptsPerFloorVal?: number | string) => {
+    const aptPerFloor = Math.max(1, parseInt(String(aptsPerFloorVal !== undefined ? aptsPerFloorVal : formData.apartmentsPerFloor || 1), 10) || 1);
+    let finishedFloors = 0;
+    let semiFinishedFloors = 0;
+    let coreShellFloors = 0;
+
+    for (const f of floorsList) {
+      const status = f.finishingStatus;
+      if (status === 'Ultra-Super-Lux' || status === 'Super-Lux' || status === 'Finished' || status === 'Lux' || status === 'High-Lux') {
+        finishedFloors++;
+      } else if (status === 'Semi-Finished') {
+        semiFinishedFloors++;
+      } else if (status === 'Core-Shell') {
+        coreShellFloors++;
+      }
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      numberOfFloors: floorsList.length > 0 ? String(floorsList.length) : prev.numberOfFloors,
+      finishedApartments: floorsList.length > 0 ? String(finishedFloors * aptPerFloor) : prev.finishedApartments,
+      semiFinishedApartments: floorsList.length > 0 ? String(semiFinishedFloors * aptPerFloor) : prev.semiFinishedApartments,
+      coreShellApartments: floorsList.length > 0 ? String(coreShellFloors * aptPerFloor) : prev.coreShellApartments,
+    }));
+  };
+
+  const handleAddBulkFloors = () => {
+    const from = typeof bulkFromFloor === 'string' ? parseInt(bulkFromFloor, 10) : bulkFromFloor;
+    const to = typeof bulkToFloor === 'string' ? parseInt(bulkToFloor, 10) : bulkToFloor;
+    if (isNaN(from) || isNaN(to) || from > to) {
+      setError('يرجى إدخال نطاق أدوار صحيح (مثال: من 1 إلى 3)');
+      return;
+    }
+    const count = to - from + 1;
+    if (count > 50) {
+      setError('أقصى عدد للأدوار المضافة دفعة واحدة هو 50 دور');
+      return;
+    }
+
+    const defaultArea = bulkArea ? parseFloat(bulkArea) : (formData.areaSqm ? parseFloat(formData.areaSqm) : null);
+    const defaultBedrooms = bulkBedrooms ? parseInt(bulkBedrooms, 10) : (formData.bedrooms ? parseInt(formData.bedrooms) : null);
+    const defaultBathrooms = bulkBathrooms ? parseInt(bulkBathrooms, 10) : (formData.bathrooms ? parseInt(formData.bathrooms) : null);
+
+    const generated: PropertyFloor[] = [];
+    for (let n = from; n <= to; n++) {
+      generated.push({
+        floorNumber: n,
+        floorName: n === 0 ? 'الدور الأرضي' : `الدور ${n}`,
+        finishingStatus: bulkFinishing,
+        areaSqm: defaultArea,
+        bedrooms: defaultBedrooms,
+        bathrooms: defaultBathrooms,
+        price: null,
+        pricePerMeter: null,
+        installmentPrice: null,
+        soldPrice: null,
+        isAvailable: true,
+        sortOrder: floors.length + (n - from),
+      });
+    }
+
+    const nextFloors = [...floors, ...generated];
+    setFloors(nextFloors);
+    if (formData.propertyType === 'House') {
+      syncHouseApartmentCounts(nextFloors);
+    }
+    setSuccessMsg(`تمت إضافة ${count} أدوار (${from} إلى ${to}) دفعة واحدة بنجاح!`);
+
+    // Auto-advance for convenient sequential bulk entry (e.g. 1-3 Ultra-Super-Lux -> next 4-6 Semi-Finished)
+    setBulkFromFloor(to + 1);
+    setBulkToFloor(to + count);
+    setBulkFinishing(bulkFinishing === 'Ultra-Super-Lux' ? 'Semi-Finished' : 'Ultra-Super-Lux');
+  };
+
   const addFloor = () => {
     const lastFloor = floors.length > 0 ? floors[floors.length - 1] : null;
     const defaultArea = lastFloor?.areaSqm ?? (formData.areaSqm ? parseFloat(formData.areaSqm) : null);
     const defaultBedrooms = lastFloor?.bedrooms ?? (formData.bedrooms ? parseInt(formData.bedrooms) : null);
     const defaultBathrooms = lastFloor?.bathrooms ?? (formData.bathrooms ? parseInt(formData.bathrooms) : null);
+    const defaultFinishing = lastFloor?.finishingStatus ?? (formData.propertyType === 'House' ? 'Ultra-Super-Lux' : (formData.finishingStatus || 'Semi-Finished'));
 
     setFloors(prev => [
       ...prev,
@@ -224,6 +318,7 @@ export default function AdminPanelPage() {
         areaSqm: defaultArea,
         bedrooms: defaultBedrooms,
         bathrooms: defaultBathrooms,
+        finishingStatus: defaultFinishing,
         isAvailable: true,
         sortOrder: prev.length,
       }
@@ -248,6 +343,7 @@ export default function AdminPanelPage() {
         areaSqm: last.areaSqm,
         bedrooms: last.bedrooms,
         bathrooms: last.bathrooms,
+        finishingStatus: last.finishingStatus,
         isAvailable: true,
         sortOrder: prev.length,
       }
@@ -270,6 +366,7 @@ export default function AdminPanelPage() {
         areaSqm: target.areaSqm,
         bedrooms: target.bedrooms,
         bathrooms: target.bathrooms,
+        finishingStatus: target.finishingStatus,
         isAvailable: true,
         sortOrder: nextNum,
       },
@@ -346,7 +443,13 @@ export default function AdminPanelPage() {
   };
 
   const removeFloor = (index: number) => {
-    setFloors(prev => prev.filter((_, i) => i !== index));
+    setFloors(prev => {
+      const nextFloors = prev.filter((_, i) => i !== index);
+      if (formData.propertyType === 'House') {
+        syncHouseApartmentCounts(nextFloors);
+      }
+      return nextFloors;
+    });
   };
 
   const expandFloorIfMultiple = (index: number) => {
@@ -440,7 +543,7 @@ export default function AdminPanelPage() {
           : (formData.installmentPrice ? parseFloat(formData.installmentPrice) : null);
       }
 
-      const processedFloors = (isLandType || isShopType)
+      const processedFloors = (isHouseType || isLandType || isShopType)
         ? []
         : finalFloors.map((f, i) => ({
             id: f.id,
@@ -453,9 +556,20 @@ export default function AdminPanelPage() {
             areaSqm: f.areaSqm,
             bedrooms: isShopType ? null : f.bedrooms,
             bathrooms: f.bathrooms,
+            finishingStatus: f.finishingStatus,
             isAvailable: isHouseType ? true : f.isAvailable,
             sortOrder: f.sortOrder ?? i,
           }));
+
+      let resolvedFinishingStatus: string | null = null;
+      let resolvedFloorsFinishing: string | null = null;
+
+      if (isHouseType) {
+        resolvedFinishingStatus = null;
+        resolvedFloorsFinishing = null;
+      } else if (!isLandType) {
+        resolvedFinishingStatus = formData.finishingStatus;
+      }
 
       const res = await adminFetch(url, {
         method,
@@ -475,12 +589,22 @@ export default function AdminPanelPage() {
           bathrooms: isLandType
             ? null
             : (formData.bathrooms ? parseInt(formData.bathrooms) : ((processedFloors.find(f => f.bathrooms != null)?.bathrooms) ?? null)),
-          finishingStatus: isLandType ? null : formData.finishingStatus,
+          finishingStatus: resolvedFinishingStatus,
+          numberOfFloors: isHouseType
+            ? (formData.numberOfFloors ? parseInt(formData.numberOfFloors, 10) : (processedFloors.length || null))
+            : null,
+          floorsFinishing: resolvedFloorsFinishing,
           finishingPackageId: formData.finishingPackageId
             ? parseInt(formData.finishingPackageId) : null,
-          apartmentsPerFloor: (isHouseType || isLandType || isShopType)
+          apartmentsPerFloor: (isLandType || isShopType)
             ? null
-            : (formData.apartmentsPerFloor ? parseInt(formData.apartmentsPerFloor) : null),
+            : (formData.apartmentsPerFloor ? parseInt(formData.apartmentsPerFloor, 10) : null),
+          finishedApartments: isHouseType && formData.finishedApartments !== ''
+            ? parseInt(formData.finishedApartments, 10) : null,
+          semiFinishedApartments: isHouseType && formData.semiFinishedApartments !== ''
+            ? parseInt(formData.semiFinishedApartments, 10) : null,
+          coreShellApartments: isHouseType && formData.coreShellApartments !== ''
+            ? parseInt(formData.coreShellApartments, 10) : null,
           elevatorAvailable: isLandType ? false : formData.elevatorAvailable,
           isUnderConstruction: formData.isUnderConstruction,
           floors: processedFloors,
@@ -574,6 +698,10 @@ export default function AdminPanelPage() {
       gasMeterAvailable: property.gasMeterAvailable ?? false,
       elevatorAvailable: property.elevatorAvailable ?? false,
       apartmentsPerFloor: property.apartmentsPerFloor?.toString() ?? '',
+      numberOfFloors: property.numberOfFloors?.toString() ?? (property.floors?.length ? property.floors.length.toString() : ''),
+      finishedApartments: property.finishedApartments?.toString() ?? '',
+      semiFinishedApartments: property.semiFinishedApartments?.toString() ?? '',
+      coreShellApartments: property.coreShellApartments?.toString() ?? '',
     });
 
     const propArea = property.areaSqm ? parseFloat(property.areaSqm.toString()) : null;
@@ -589,6 +717,7 @@ export default function AdminPanelPage() {
       areaSqm: f.areaSqm ?? propArea,
       bedrooms: isShopProp ? null : (f.bedrooms ?? propBedrooms),
       bathrooms: f.bathrooms ?? propBathrooms,
+      finishingStatus: f.finishingStatus ?? (isHouseProp ? 'Ultra-Super-Lux' : property.finishingStatus),
       floorNumber: f.floorNumber ?? (property.floorNumber ?? index + 1),
       floorName: f.floorName || (f.floorNumber ? `الدور ${f.floorNumber}` : (property.floorNumber ? `الدور ${property.floorNumber}` : `الدور ${index + 1}`)),
       price: isHouseProp ? null : (f.price ?? property.price),
@@ -602,24 +731,10 @@ export default function AdminPanelPage() {
       sortOrder: f.sortOrder ?? index,
     });
 
-    if (isLandProp || isShopProp) {
+    if (isHouseProp || isLandProp || isShopProp) {
       setFloors([]);
     } else if (property.floors && property.floors.length > 0) {
       setFloors(property.floors.map(mapFloorData));
-    } else if (isHouseProp) {
-      setFloors([{
-        floorNumber: 1,
-        floorName: 'الدور الأرضي',
-        price: null,
-        pricePerMeter: null,
-        installmentPrice: null,
-        soldPrice: null,
-        areaSqm: property.areaSqm,
-        bedrooms: property.bedrooms,
-        bathrooms: property.bathrooms,
-        isAvailable: true,
-        sortOrder: 0,
-      }]);
     } else {
       setFloors([{
         floorNumber: property.floorNumber ?? 1,
@@ -643,8 +758,20 @@ export default function AdminPanelPage() {
       .then(async (r) => {
         if (!r.ok) return;
         const d = await r.json();
-        if (d && d.floors && d.floors.length > 0) {
-          setFloors(d.floors.map(mapFloorData));
+        if (d) {
+          if (d.floors && d.floors.length > 0) {
+            setFloors(d.floors.map(mapFloorData));
+          }
+          if (isHouseProp) {
+            setFormData(prev => ({
+              ...prev,
+              numberOfFloors: d.numberOfFloors?.toString() ?? prev.numberOfFloors,
+              apartmentsPerFloor: d.apartmentsPerFloor?.toString() ?? prev.apartmentsPerFloor,
+              finishedApartments: d.finishedApartments?.toString() ?? prev.finishedApartments,
+              semiFinishedApartments: d.semiFinishedApartments?.toString() ?? prev.semiFinishedApartments,
+              coreShellApartments: d.coreShellApartments?.toString() ?? prev.coreShellApartments,
+            }));
+          }
         }
       })
       .catch(() => {});
@@ -682,6 +809,10 @@ export default function AdminPanelPage() {
       gasMeterAvailable: false,
       elevatorAvailable: false,
       apartmentsPerFloor: '',
+      numberOfFloors: '',
+      finishedApartments: '',
+      semiFinishedApartments: '',
+      coreShellApartments: '',
     });
     setFloors([]);
   };
@@ -849,12 +980,12 @@ export default function AdminPanelPage() {
                         onChange={(e) => {
                           const newType = e.target.value;
                           setFormData({ ...formData, propertyType: newType });
-                          if (newType === 'Land' || newType === 'Shop') {
+                          if (newType === 'Land' || newType === 'Shop' || newType === 'House') {
                             setFloors([]);
-                          } else if (newType === 'House' && floors.length === 0) {
+                          } else if (floors.length === 0) {
                             setFloors([{
                               floorNumber: 1,
-                              floorName: 'الدور الأرضي',
+                              floorName: 'الدور 1',
                               price: null,
                               pricePerMeter: null,
                               installmentPrice: null,
@@ -886,7 +1017,7 @@ export default function AdminPanelPage() {
                       </select>
                     </div>
 
-                    {formData.propertyType !== 'Land' && (
+                    {formData.propertyType !== 'House' && formData.propertyType !== 'Land' && (
                       <div className="form-group">
                         <label>حالة التشطيب</label>
                         <select
@@ -922,6 +1053,96 @@ export default function AdminPanelPage() {
                           placeholder="مثال: 3"
                           min="1"
                         />
+                      </div>
+                    )}
+
+                    {formData.propertyType === 'House' && (
+                      <div className="house-breakdown-box" style={{
+                        gridColumn: 'span 2',
+                        background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+                        border: '1.5px solid #10b981',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        margin: '6px 0 10px',
+                        boxShadow: '0 2px 8px rgba(16,185,129,0.08)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid #a7f3d0', paddingBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.25rem' }}>🏠</span>
+                            <strong style={{ color: '#065f46', fontSize: '0.98rem' }}>مواصفات وتقسيم البيت:</strong>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: '#047857', background: '#d1fae5', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            لا يوجد تشطيب عام — يتم تحديد عدد الشقق حسب نوع التشطيب
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#065f46', fontSize: '0.82rem' }}>🏢 عدد الأدوار *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={formData.numberOfFloors}
+                              onChange={(e) => setFormData({ ...formData, numberOfFloors: e.target.value })}
+                              placeholder="مثال: 6"
+                              style={{ background: '#fff', borderColor: '#6ee7b7', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#065f46', fontSize: '0.82rem' }}>🚪 كم شقة في الدور</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={formData.apartmentsPerFloor}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormData({ ...formData, apartmentsPerFloor: val });
+                                if (floors.length > 0) {
+                                  syncHouseApartmentCounts(floors, val);
+                                }
+                              }}
+                              placeholder="مثال: 1"
+                              style={{ background: '#fff', borderColor: '#6ee7b7', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#047857', fontSize: '0.82rem' }}>✨ عدد الشقق المتشطبة</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.finishedApartments}
+                              onChange={(e) => setFormData({ ...formData, finishedApartments: e.target.value })}
+                              placeholder="مثال: 3"
+                              style={{ background: '#fff', borderColor: '#6ee7b7', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#b45309', fontSize: '0.82rem' }}>🧱 عدد الشقق النص تشطيب</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.semiFinishedApartments}
+                              onChange={(e) => setFormData({ ...formData, semiFinishedApartments: e.target.value })}
+                              placeholder="مثال: 3"
+                              style={{ background: '#fff', borderColor: '#fcd34d', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#475569', fontSize: '0.82rem' }}>🏗️ عدد الشقق العظم</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.coreShellApartments}
+                              onChange={(e) => setFormData({ ...formData, coreShellApartments: e.target.value })}
+                              placeholder="مثال: 0"
+                              style={{ background: '#fff', borderColor: '#cbd5e1', fontWeight: 700 }}
+                            />
+                          </div>
+                        </div>
                       </div>
                     )}
 
@@ -996,7 +1217,7 @@ export default function AdminPanelPage() {
                 </div>
 
                 {/* Section: Floors & Pricing */}
-                {formData.propertyType !== 'Land' && formData.propertyType !== 'Shop' && (
+                {formData.propertyType !== 'House' && formData.propertyType !== 'Land' && formData.propertyType !== 'Shop' && (
                   <div className="form-section">
                     <div className="form-section__header-row">
                       <div>
@@ -1090,6 +1311,163 @@ export default function AdminPanelPage() {
                           </div>
                         );
                       })()
+                    )}
+
+                    {/* ── Bulk Multi-Floor Generator (One-Shot Entry) ── */}
+                    <div className="bulk-floor-generator" style={{
+                      background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+                      border: '1.5px dashed #059669',
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      margin: '10px 0 16px',
+                      boxShadow: '0 2px 8px rgba(5,150,105,0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1.25rem' }}>⚡</span>
+                          <strong style={{ color: '#065f46', fontSize: '0.96rem' }}>إضافة مجموعة أدوار دفعة واحدة (إدخال سريع):</strong>
+                          <span style={{ fontSize: '0.8rem', color: '#047857', background: '#d1fae5', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            {formData.propertyType === 'House'
+                              ? 'مثال: من 1 إلى 3 ألترا سوبر لوكس، ثم من 4 إلى 6 نصف تشطيب'
+                              : 'أدخل نطاق الأدوار والتشطيب لإضافتهم دفعة واحدة بضغطة زر'}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: '10px', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>من الدور</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkFromFloor}
+                            onChange={(e) => setBulkFromFloor(e.target.value)}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0', fontWeight: 700 }}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>إلى الدور</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkToFloor}
+                            onChange={(e) => setBulkToFloor(e.target.value)}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0', fontWeight: 700 }}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0, minWidth: '145px' }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>تشطيب هذه الأدوار</label>
+                          <select
+                            value={bulkFinishing}
+                            onChange={(e) => setBulkFinishing(e.target.value)}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0', fontWeight: 700, color: '#065f46' }}
+                          >
+                            {FINISHING_OPTIONS.filter(o => o.value !== 'Mixed').map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
+                            ))}
+                          </select>
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>المساحة (م²)</label>
+                          <input
+                            type="number"
+                            value={bulkArea}
+                            placeholder={formData.areaSqm || '0'}
+                            onChange={(e) => setBulkArea(e.target.value)}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0' }}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>غرف النوم</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkBedrooms}
+                            placeholder={formData.bedrooms || '0'}
+                            onChange={(e) => setBulkBedrooms(e.target.value)}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0' }}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>الحمامات</label>
+                          <input
+                            type="number"
+                            min="0"
+                            value={bulkBathrooms}
+                            placeholder={formData.bathrooms || '0'}
+                            onChange={(e) => setBulkBathrooms(e.target.value)}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0' }}
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={handleAddBulkFloors}
+                          style={{
+                            background: '#059669',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '8px',
+                            padding: '10px 14px',
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            height: '38px',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 4px rgba(5,150,105,0.2)'
+                          }}
+                        >
+                          <span>⚡</span> إضافة دفعة واحدة
+                        </button>
+                      </div>
+                    </div>
+
+                    {formData.propertyType === 'House' ? (
+                      <div style={{ margin: '6px 0 14px', padding: '10px 14px', background: 'rgba(5,150,105,0.06)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: '8px', fontSize: '0.88rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800 }}>🏠 تقسيم الشقق بالبيت:</span>
+                        <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 700, color: '#1e3a8a' }}>
+                          🏢 {formData.numberOfFloors || floors.length || '—'} أدوار
+                        </span>
+                        <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 700, color: '#1e3a8a' }}>
+                          🚪 {formData.apartmentsPerFloor || 1} شقة/دور
+                        </span>
+                        <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 700, color: '#047857' }}>
+                          ✨ {formData.finishedApartments || 0} شقق متشطبة
+                        </span>
+                        <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 700, color: '#b45309' }}>
+                          🧱 {formData.semiFinishedApartments || 0} نص تشطيب
+                        </span>
+                        <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 700, color: '#475569' }}>
+                          🏗️ {formData.coreShellApartments || 0} عظم
+                        </span>
+                      </div>
+                    ) : (
+                      floors.some(f => Boolean(f.finishingStatus)) && (
+                        <div style={{ margin: '6px 0 14px', padding: '9px 14px', background: 'rgba(5,150,105,0.06)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: '8px', fontSize: '0.88rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: 800 }}>🎨 ملخص تشطيب الأدوار المحسوب:</span>
+                          <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 800, color: '#047857' }}>
+                            {formatFloorsFinishingSummary(floors)}
+                          </span>
+                          <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                            (إجمالي {floors.length} أدوار)
+                          </span>
+                        </div>
+                      )
                     )}
 
                     {floors.length === 0 ? (
@@ -1223,6 +1601,23 @@ export default function AdminPanelPage() {
                                 />
                               </div>
 
+                              <div className="floor-card__field">
+                                <label>تشطيب الدور</label>
+                                <select
+                                  value={floor.finishingStatus ?? ''}
+                                  onChange={(e) => updateFloor(index, { finishingStatus: e.target.value || null })}
+                                  className="floor-input"
+                                  style={{ fontWeight: floor.finishingStatus ? 600 : 400 }}
+                                >
+                                  <option value="">-- اختياري --</option>
+                                  {FINISHING_OPTIONS.filter(o => o.value && o.value !== 'Mixed').map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
+                                  ))}
+                                </select>
+                              </div>
+
                               {formData.propertyType !== 'House' && (
                                 <>
                                   <div className="floor-card__field">
@@ -1291,6 +1686,7 @@ export default function AdminPanelPage() {
                               <th>المساحة (م²)</th>
                               <th>غرف النوم</th>
                               <th>الحمامات</th>
+                              <th>التشطيب</th>
                               {formData.propertyType !== 'House' && (
                                 <>
                                   <th>سعر المتر (جنيه)</th>
@@ -1356,6 +1752,21 @@ export default function AdminPanelPage() {
                                     className="floor-input"
                                     style={{ width: '65px' }}
                                   />
+                                </td>
+                                <td>
+                                  <select
+                                    value={floor.finishingStatus ?? ''}
+                                    onChange={(e) => updateFloor(index, { finishingStatus: e.target.value || null })}
+                                    className="floor-input"
+                                    style={{ minWidth: '110px', fontSize: '12px' }}
+                                  >
+                                    <option value="">-- اختياري --</option>
+                                    {FINISHING_OPTIONS.filter(o => o.value && o.value !== 'Mixed').map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
                                 </td>
                                 {formData.propertyType !== 'House' && (
                                   <>
@@ -1751,15 +2162,32 @@ export default function AdminPanelPage() {
                         <p className="location">
                           📍 {[property.city, property.district].filter(Boolean).join('، ') || 'غير محدد'}
                         </p>
-                        <p className="details">
-                          🛏 {property.bedrooms ?? '—'} غرف &nbsp;•&nbsp;
-                          🚿 {property.bathrooms ?? '—'} حمام &nbsp;•&nbsp;
-                          📐 {property.areaSqm ?? '—'} م²
-                        </p>
-                        {property.finishingStatus && (
-                          <p className="finishing">
-                            🎨 {finishingLabel(property.finishingStatus)}
-                          </p>
+                        {(property.propertyType === 'House' || property.propertyType === 'Villa') ? (
+                          <div style={{ fontSize: '0.82rem', color: '#1e3a8a', background: 'rgba(37,99,235,0.06)', padding: '6px 10px', borderRadius: '6px', margin: '6px 0', lineHeight: 1.6 }}>
+                            <div style={{ fontWeight: 700 }}>
+                              🏢 {property.numberOfFloors ?? (property.floors?.length || '—')} أدوار 
+                              {property.apartmentsPerFloor ? ` • 🚪 ${property.apartmentsPerFloor === 1 ? 'شقة بالدور' : `${property.apartmentsPerFloor} شقق بالدور`}` : ''}
+                              {property.areaSqm ? ` • 📐 ${property.areaSqm} م²` : ''}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '3px', fontWeight: 700, fontSize: '0.78rem' }}>
+                              {(property.finishedApartments ?? 0) > 0 && <span style={{ color: '#047857' }}>✨ {property.finishedApartments} متشطب</span>}
+                              {(property.semiFinishedApartments ?? 0) > 0 && <span style={{ color: '#b45309' }}>🧱 {property.semiFinishedApartments} نص تشطيب</span>}
+                              {(property.coreShellApartments ?? 0) > 0 && <span style={{ color: '#475569' }}>🏗️ {property.coreShellApartments} عظم</span>}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="details">
+                              🛏 {property.bedrooms ?? '—'} غرف &nbsp;•&nbsp;
+                              🚿 {property.bathrooms ?? '—'} حمام &nbsp;•&nbsp;
+                              📐 {property.areaSqm ?? '—'} م²
+                            </p>
+                            {property.finishingStatus && (
+                              <p className="finishing">
+                                🎨 {finishingLabel(property.finishingStatus)}
+                              </p>
+                            )}
+                          </>
                         )}
 
                         {/* Available meters */}

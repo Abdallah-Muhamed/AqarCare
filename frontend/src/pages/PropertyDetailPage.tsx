@@ -11,12 +11,14 @@ import './PropertyDetailPage.css'
 const typeLabel: Record<string, string>     = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
 const listingLabel: Record<string, string>  = { Sale: 'للبيع', Rent: 'للإيجار' }
 const finishingLabel: Record<string, string> = {
-  'Core-Shell':   'عظم',
-  'Semi-Finished': 'نص تشطيب',
-  'Finished':     'تشطيب',
-  'Lux':          'لوكس',
-  'Super-Lux':    'سوبر لوكس',
-  'High-Lux':     'هاي لوكس',
+  'Core-Shell':      'عظم',
+  'Semi-Finished':   'نص تشطيب',
+  'Finished':        'تشطيب',
+  'Lux':             'لوكس',
+  'Super-Lux':       'سوبر لوكس',
+  'Ultra-Super-Lux': 'ألترا سوبر لوكس',
+  'High-Lux':        'هاي لوكس',
+  'Mixed':           'تشطيب متعدد',
 }
 const statusLabel: Record<string, { label: string; cls: string }> = {
   Available: { label: 'متاح', cls: 'badge-green' },
@@ -149,8 +151,8 @@ export default function PropertyDetailPage() {
               </div>
 
               <div className="detail-specs">
-                {/* Bedrooms: only for residential (not Land or Shop) */}
-                {!isLand && !isShop && (
+                {/* Bedrooms: only for residential (not Land, Shop, or House) */}
+                {!isHouse && !isLand && !isShop && (
                   <div className="detail-spec">
                     <BedDouble size={18} />
                     <div>
@@ -170,8 +172,8 @@ export default function PropertyDetailPage() {
                   </div>
                 )}
 
-                {/* Bathrooms: only for residential and commercial (not Land) */}
-                {!isLand && (
+                {/* Bathrooms: only for residential and commercial (not Land or House) */}
+                {!isHouse && !isLand && (
                   <div className="detail-spec">
                     <Bath size={18} />
                     <div>
@@ -206,7 +208,7 @@ export default function PropertyDetailPage() {
                         return areaVal ?? '—';
                       })()}
                     </strong>
-                    <small>م²</small>
+                    <small>{isHouse ? 'المساحة الإجمالية م²' : 'م²'}</small>
                   </div>
                 </div>
 
@@ -214,11 +216,80 @@ export default function PropertyDetailPage() {
                   <div className="detail-spec"><Tag size={18} /><div><strong>{typeLabel[prop.propertyType] ?? prop.propertyType}</strong><small>النوع</small></div></div>
                 )}
 
-                {/* Finishing: not applicable to Land */}
-                {!isLand && prop.finishingStatus && (
-                  <div className="detail-spec"><span style={{fontSize:'1.1rem'}}>🎨</span><div><strong>{finishingLabel[prop.finishingStatus] ?? prop.finishingStatus}</strong><small>التشطيب</small></div></div>
+                {/* Finishing: not applicable to Land or House */}
+                {!isLand && !isHouse && (prop.finishingStatus || prop.floorsFinishing || (prop.floors && prop.floors.some(f => f.finishingStatus))) && (
+                  <div className="detail-spec">
+                    <span style={{fontSize:'1.1rem'}}>🎨</span>
+                    <div>
+                      <strong>
+                        {finishingLabel[prop.finishingStatus ?? ''] ?? prop.finishingStatus}
+                      </strong>
+                      <small>التشطيب</small>
+                    </div>
+                  </div>
                 )}
               </div>
+
+              {/* House breakdown specs */}
+              {isHouse && (
+                <div className="detail-specs" style={{ marginTop: 'var(--space-md)' }}>
+                  {(prop.numberOfFloors != null || (prop.floors && prop.floors.length > 0)) && (
+                    <div className="detail-spec">
+                      <Building2 size={18} />
+                      <div>
+                        <strong>{prop.numberOfFloors ?? prop.floors?.length} أدوار</strong>
+                        <small>عدد الأدوار</small>
+                      </div>
+                    </div>
+                  )}
+
+                  {prop.apartmentsPerFloor != null && prop.apartmentsPerFloor > 0 && (
+                    <div className="detail-spec">
+                      <Building2 size={18} />
+                      <div>
+                        <strong>
+                          {prop.apartmentsPerFloor === 1
+                            ? 'شقة واحدة'
+                            : prop.apartmentsPerFloor === 2
+                              ? 'شقتين'
+                              : `${prop.apartmentsPerFloor} شقق`}
+                        </strong>
+                        <small>كم شقة في الدور</small>
+                      </div>
+                    </div>
+                  )}
+
+                  {prop.finishedApartments != null && prop.finishedApartments > 0 && (
+                    <div className="detail-spec" style={{ borderColor: 'rgba(5,150,105,0.3)', background: 'rgba(5,150,105,0.04)' }}>
+                      <span style={{ fontSize: '1.1rem' }}>✨</span>
+                      <div>
+                        <strong style={{ color: '#047857' }}>{prop.finishedApartments} شقق</strong>
+                        <small style={{ color: '#065f46' }}>شقق متشطبة</small>
+                      </div>
+                    </div>
+                  )}
+
+                  {prop.semiFinishedApartments != null && prop.semiFinishedApartments > 0 && (
+                    <div className="detail-spec" style={{ borderColor: 'rgba(217,119,6,0.3)', background: 'rgba(217,119,6,0.04)' }}>
+                      <span style={{ fontSize: '1.1rem' }}>🧱</span>
+                      <div>
+                        <strong style={{ color: '#b45309' }}>{prop.semiFinishedApartments} شقق</strong>
+                        <small style={{ color: '#92400e' }}>نص تشطيب</small>
+                      </div>
+                    </div>
+                  )}
+
+                  {prop.coreShellApartments != null && prop.coreShellApartments > 0 && (
+                    <div className="detail-spec" style={{ borderColor: 'rgba(71,85,105,0.3)', background: 'rgba(71,85,105,0.04)' }}>
+                      <span style={{ fontSize: '1.1rem' }}>🏗️</span>
+                      <div>
+                        <strong style={{ color: '#475569' }}>{prop.coreShellApartments} شقق</strong>
+                        <small style={{ color: '#334155' }}>عظم (بدون تشطيب)</small>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div className="detail-specs" style={{ marginTop: 'var(--space-md)' }}>
                 {/* Apartments per floor: only for Apartment buildings */}
@@ -294,8 +365,8 @@ export default function PropertyDetailPage() {
                 })()}
               </div>
 
-              {/* Multiple Floors / Units Section: not applicable to Land */}
-              {!isLand && prop.floors && prop.floors.length > 0 && (() => {
+              {/* Multiple Floors / Units Section: not applicable to Land and House */}
+              {!isLand && !isHouse && prop.floors && prop.floors.length > 0 && (() => {
                 const groups = groupFloors(prop.floors)
                 const availableUnits = prop.floors.filter(f => f.isAvailable).length
                 const soldUnits = prop.floors.filter(f => !f.isAvailable).length
@@ -356,6 +427,11 @@ export default function PropertyDetailPage() {
                                   <div key={item.id ?? idx} className={`floor-spec-card ${!isHouse && !item.isAvailable ? 'floor-spec-card--sold' : ''}`}>
                                     <div className="floor-spec-card__header">
                                       <span style={{ fontWeight: 800, color: (isHouse || item.isAvailable) ? 'var(--clr-text)' : '#64748b' }}>{aptName}</span>
+                                      {item.finishingStatus && (
+                                        <span className="badge" style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', fontWeight: 800, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0' }}>
+                                          🎨 {finishingLabel[item.finishingStatus] ?? item.finishingStatus}
+                                        </span>
+                                      )}
                                       {!isHouse && (
                                         <span className={`badge ${item.isAvailable ? 'badge-green' : 'badge-sold'}`} style={{ fontSize: '0.72rem', padding: '0.2rem 0.6rem', fontWeight: 800 }}>
                                           {item.isAvailable ? '🟢 متاح' : '🔴 تم البيع'}

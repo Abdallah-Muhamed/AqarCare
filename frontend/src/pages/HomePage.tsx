@@ -66,14 +66,20 @@ export default function HomePage() {
               اقتراحات سريعة:
             </span>
             <div className="hero__quick-filters-list">
-              <Link to="/properties?filter=core-shell" className="hero__quick-tag">
-                🧱 عظم (طوب أحمر)
+              <Link to="/properties?type=House" className="hero__quick-tag">
+                🏠 منازل
+              </Link>
+              <Link to="/properties?type=Apartment" className="hero__quick-tag">
+                🏢 شقق سكنية
               </Link>
               <Link to="/properties?filter=finished" className="hero__quick-tag">
                 ✨ شقق متشطبة
               </Link>
-              <Link to="/properties?filter=under-construction" className="hero__quick-tag">
-                🏗️ تحت الإنشاء
+              <Link to="/properties?filter=core-shell" className="hero__quick-tag">
+                🧱 عظم (طوب أحمر)
+              </Link>
+              <Link to="/properties?filter=installment" className="hero__quick-tag">
+                💳 متاح تقسيط
               </Link>
               <Link to="/properties?filter=near-floor" className="hero__quick-tag">
                 🪜 دور قريب
@@ -81,14 +87,14 @@ export default function HomePage() {
               <Link to="/properties?filter=under-1.5m" className="hero__quick-tag">
                 💰 أقل من 1.5 مليون
               </Link>
-              <Link to="/properties?filter=installment" className="hero__quick-tag">
-                💳 متاح تقسيط
-              </Link>
-              <Link to="/properties?type=House" className="hero__quick-tag">
-                🏠 بيوت وفلل
+              <Link to="/properties?filter=under-construction" className="hero__quick-tag">
+                🏗️ تحت الإنشاء
               </Link>
               <Link to="/properties?type=Land" className="hero__quick-tag">
                 🌿 أراضي
+              </Link>
+              <Link to="/properties?type=Shop" className="hero__quick-tag">
+                🏪 محلات
               </Link>
             </div>
           </div>

@@ -23,6 +23,9 @@ public class PropertyUnit
     // House-specific fields
     public int? NumberOfFloors { get; set; }
     public string? FloorsFinishing { get; set; } // JSON or text describing each floor's finishing
+    public int? FinishedApartments { get; set; } // Number of finished apartments (متشطبة)
+    public int? SemiFinishedApartments { get; set; } // Number of semi-finished apartments (نص تشطيب)
+    public int? CoreShellApartments { get; set; } // Number of core & shell apartments (عظم)
     
     // Land-specific fields
     public decimal? FrontageWidth { get; set; } // in meters

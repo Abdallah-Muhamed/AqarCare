@@ -53,6 +53,9 @@ export function isNearFloor(p: PropertyListItem): boolean {
 }
 
 export function isFinished(p: PropertyListItem): boolean {
+  if (p.propertyType === 'House' || p.propertyType === 'Villa') {
+    return (p.finishedApartments ?? 0) > 0
+  }
   if (!p.finishingStatus) return false
   return p.finishingStatus !== 'Core-Shell'
 }
@@ -60,14 +63,16 @@ export function isFinished(p: PropertyListItem): boolean {
 const CITIES = ['المحلة الكبرى', 'القاهرة', 'الجيزة', 'الإسكندرية', 'الشروق', 'مدينة نصر', 'التجمع الخامس', 'أكتوبر']
 const DISTRICTS = ['الشعبية', 'منشية البكري', 'الرجبي', 'شكري القوتلي', 'الجمهورية', 'الزهراء', 'الوابورات']
 const PROP_TYPES = ['Apartment', 'House', 'Land', 'Shop']
-const PROP_LABELS: Record<string, string> = { Apartment: 'شقة', House: 'بيت / فيلا', Land: 'أرض', Shop: 'محل / تجاري' }
+const PROP_LABELS: Record<string, string> = { Apartment: 'شقة', House: 'منازل', Land: 'أرض', Shop: 'محل / تجاري' }
 const LISTING_TYPES = [{ val: 'Sale', label: 'للبيع' }, { val: 'Rent', label: 'للإيجار' }]
 const FINISHING_OPTS = [
-  { val: 'Core-Shell',    label: 'بدون تشطيب (عظم)' },
-  { val: 'Semi-Finished', label: 'نصف تشطيب' },
-  { val: 'Lux',           label: 'لوكس' },
-  { val: 'Super-Lux',     label: 'سوبر لوكس' },
-  { val: 'High-Lux',      label: 'هاي لوكس' },
+  { val: 'Core-Shell',      label: 'بدون تشطيب (عظم)' },
+  { val: 'Semi-Finished',   label: 'نصف تشطيب' },
+  { val: 'Lux',             label: 'لوكس' },
+  { val: 'Super-Lux',       label: 'سوبر لوكس' },
+  { val: 'Ultra-Super-Lux', label: 'ألترا سوبر لوكس' },
+  { val: 'High-Lux',        label: 'هاي لوكس' },
+  { val: 'Mixed',           label: 'تشطيب متعدد' },
 ]
 const SORT_OPTS = [
   { val: 'newest',     label: 'الأحدث أولاً' },
@@ -119,6 +124,9 @@ export default function PropertiesPage() {
 
         if (type) next.propertyType = type
         if (maxP) next.maxPrice = Number(maxP)
+        if (filter === 'house' || filter === 'houses' || filter === 'manazel') {
+          next.propertyType = 'House'
+        }
         return next
       })
     }
@@ -220,7 +228,15 @@ export default function PropertiesPage() {
       if (query.listingType && p.listingType !== query.listingType) return false
 
       // Finishing Status
-      if (query.finishingStatus && p.finishingStatus !== query.finishingStatus) return false
+      if (query.finishingStatus) {
+        if (p.propertyType === 'House' || p.propertyType === 'Villa') {
+          if (query.finishingStatus === 'Core-Shell' && (p.coreShellApartments ?? 0) === 0) return false
+          if (query.finishingStatus === 'Semi-Finished' && (p.semiFinishedApartments ?? 0) === 0) return false
+          if ((query.finishingStatus === 'Ultra-Super-Lux' || query.finishingStatus === 'Super-Lux' || query.finishingStatus === 'Lux' || query.finishingStatus === 'Finished') && (p.finishedApartments ?? 0) === 0) return false
+        } else if (p.finishingStatus !== query.finishingStatus) {
+          return false
+        }
+      }
       if (query.isFinished && !isFinished(p)) return false
 
       // Near Floor (ground to 3rd floor)
@@ -340,16 +356,29 @@ export default function PropertiesPage() {
 
   const suggestions = useMemo(() => [
     {
-      id: 'coreShell',
-      label: 'عظم (طوب أحمر)',
-      emoji: '🧱',
-      count: suggestionCounts.coreShell,
-      isActive: query.finishingStatus === 'Core-Shell',
+      id: 'house',
+      label: 'منازل',
+      emoji: '🏠',
+      count: suggestionCounts.house,
+      isActive: query.propertyType === 'House',
       toggle: () => {
         setQuery(q => ({
           ...q,
-          finishingStatus: q.finishingStatus === 'Core-Shell' ? undefined : 'Core-Shell',
-          isFinished: undefined,
+          propertyType: q.propertyType === 'House' ? undefined : 'House',
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'apartment',
+      label: 'شقق سكنية',
+      emoji: '🏢',
+      count: suggestionCounts.apartment,
+      isActive: query.propertyType === 'Apartment',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'Apartment' ? undefined : 'Apartment',
         }))
         setPage(1)
       }
@@ -370,15 +399,30 @@ export default function PropertiesPage() {
       }
     },
     {
-      id: 'underConstruction',
-      label: 'تحت الإنشاء',
-      emoji: '🏗️',
-      count: suggestionCounts.underConstruction,
-      isActive: query.isUnderConstruction === true,
+      id: 'coreShell',
+      label: 'عظم (طوب أحمر)',
+      emoji: '🧱',
+      count: suggestionCounts.coreShell,
+      isActive: query.finishingStatus === 'Core-Shell',
       toggle: () => {
         setQuery(q => ({
           ...q,
-          isUnderConstruction: q.isUnderConstruction === true ? undefined : true,
+          finishingStatus: q.finishingStatus === 'Core-Shell' ? undefined : 'Core-Shell',
+          isFinished: undefined,
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'installment',
+      label: 'متاح تقسيط',
+      emoji: '💳',
+      count: suggestionCounts.installment,
+      isActive: Boolean(query.installmentAvailable),
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          installmentAvailable: !q.installmentAvailable ? true : undefined,
         }))
         setPage(1)
       }
@@ -413,15 +457,15 @@ export default function PropertiesPage() {
       }
     },
     {
-      id: 'installment',
-      label: 'متاح تقسيط',
-      emoji: '💳',
-      count: suggestionCounts.installment,
-      isActive: Boolean(query.installmentAvailable),
+      id: 'underConstruction',
+      label: 'تحت الإنشاء',
+      emoji: '🏗️',
+      count: suggestionCounts.underConstruction,
+      isActive: query.isUnderConstruction === true,
       toggle: () => {
         setQuery(q => ({
           ...q,
-          installmentAvailable: !q.installmentAvailable ? true : undefined,
+          isUnderConstruction: q.isUnderConstruction === true ? undefined : true,
         }))
         setPage(1)
       }
@@ -450,34 +494,6 @@ export default function PropertiesPage() {
         setQuery(q => ({
           ...q,
           elevatorAvailable: !q.elevatorAvailable ? true : undefined,
-        }))
-        setPage(1)
-      }
-    },
-    {
-      id: 'apartment',
-      label: 'شقق سكنية',
-      emoji: '🏢',
-      count: suggestionCounts.apartment,
-      isActive: query.propertyType === 'Apartment',
-      toggle: () => {
-        setQuery(q => ({
-          ...q,
-          propertyType: q.propertyType === 'Apartment' ? undefined : 'Apartment',
-        }))
-        setPage(1)
-      }
-    },
-    {
-      id: 'house',
-      label: 'بيوت وفلل',
-      emoji: '🏠',
-      count: suggestionCounts.house,
-      isActive: query.propertyType === 'House',
-      toggle: () => {
-        setQuery(q => ({
-          ...q,
-          propertyType: q.propertyType === 'House' ? undefined : 'House',
         }))
         setPage(1)
       }
@@ -529,7 +545,7 @@ export default function PropertiesPage() {
                   const countStr = totalAvailableUnits.toLocaleString('ar-EG')
                   if (query.propertyType === 'Land') return `${countStr} أرض متاحة`
                   if (query.propertyType === 'Shop' || query.propertyType === 'Commercial') return `${countStr} محل متاح`
-                  if (query.propertyType === 'House' || query.propertyType === 'Villa') return `${countStr} بيت متاح`
+                  if (query.propertyType === 'House' || query.propertyType === 'Villa') return `${countStr} منزل متاح`
                   return `${countStr} شقة متاحة`
                 })()
               )}

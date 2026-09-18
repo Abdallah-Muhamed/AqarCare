@@ -17,6 +17,7 @@ export interface PropertyFloor {
   areaSqm?: number | null
   bedrooms?: number | null
   bathrooms?: number | null
+  finishingStatus?: string | null
   isAvailable: boolean
   sortOrder: number
 }
@@ -32,6 +33,11 @@ export interface PropertyListItem {
   propertyType: string | null
   listingType: string | null
   finishingStatus: string | null
+  numberOfFloors?: number | null
+  floorsFinishing?: string | null
+  finishedApartments?: number | null
+  semiFinishedApartments?: number | null
+  coreShellApartments?: number | null
   city: string | null
   district: string | null
   address: string | null
@@ -195,6 +201,10 @@ export interface MapProperty {
   installmentPrice?: number | null
   isUnderConstruction?: boolean
   apartmentsPerFloor?: number | null
+  numberOfFloors?: number | null
+  finishedApartments?: number | null
+  semiFinishedApartments?: number | null
+  coreShellApartments?: number | null
   floors?: PropertyFloor[]
 }
 

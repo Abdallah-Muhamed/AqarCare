@@ -14,32 +14,36 @@ const FILTER_OPTS = {
   status:       [{ v: 'Available', l: 'متاح' }, { v: 'Sold', l: 'مباع' }],
   listingType:  [{ v: 'Sale', l: 'للبيع' }, { v: 'Rent', l: 'للإيجار' }],
   propertyType: [
+    { v: 'House',     l: 'منازل' },
     { v: 'Apartment', l: 'شقة' },
-    { v: 'House',     l: 'بيت' },
     { v: 'Land',      l: 'أرض' },
     { v: 'Shop',      l: 'محل' },
   ],
   finishingStatus: [
-    { v: 'Core-Shell',    l: 'عظم' },
-    { v: 'Semi-Finished', l: 'نصف تشطيب' },
-    { v: 'Lux',           l: 'لوكس' },
-    { v: 'Super-Lux',     l: 'سوبر لوكس' },
-    { v: 'High-Lux',      l: 'هاي لوكس' },
+    { v: 'Core-Shell',      l: 'عظم' },
+    { v: 'Semi-Finished',   l: 'نصف تشطيب' },
+    { v: 'Lux',             l: 'لوكس' },
+    { v: 'Super-Lux',       l: 'سوبر لوكس' },
+    { v: 'Ultra-Super-Lux', l: 'ألترا سوبر لوكس' },
+    { v: 'High-Lux',        l: 'هاي لوكس' },
+    { v: 'Mixed',           l: 'تشطيب متعدد' },
   ],
 }
 
 const FINISHING_LABELS: Record<string, string> = {
-  'Core-Shell':   'عظم',
-  'Semi-Finished': 'نص تشطيب',
-  'Finished':     'تشطيب',
-  'Lux':          'لوكس',
-  'Super-Lux':    'سوبر لوكس',
-  'High-Lux':     'هاي لوكس',
+  'Core-Shell':      'عظم',
+  'Semi-Finished':   'نص تشطيب',
+  'Finished':        'تشطيب',
+  'Lux':             'لوكس',
+  'Super-Lux':       'سوبر لوكس',
+  'Ultra-Super-Lux': 'ألترا سوبر لوكس',
+  'High-Lux':        'هاي لوكس',
+  'Mixed':           'تشطيب متعدد',
 }
 
 const TYPE_LABELS: Record<string, string> = {
   Apartment:  'شقة',
-  House:      'بيت',
+  House:      'منزل',
   Villa:      'فيلا',
   Land:       'أرض',
   Shop:       'محل',
@@ -87,6 +91,11 @@ export default function MapPage() {
             return {
               ...mp,
               floors: (mp.floors && mp.floors.length > 0) ? mp.floors : matched?.floors,
+              numberOfFloors: mp.numberOfFloors ?? matched?.numberOfFloors,
+              apartmentsPerFloor: mp.apartmentsPerFloor ?? matched?.apartmentsPerFloor,
+              finishedApartments: mp.finishedApartments ?? matched?.finishedApartments,
+              semiFinishedApartments: mp.semiFinishedApartments ?? matched?.semiFinishedApartments,
+              coreShellApartments: mp.coreShellApartments ?? matched?.coreShellApartments,
             }
           })
         }
@@ -105,6 +114,18 @@ export default function MapPage() {
       }
     }
   }, [data, targetPropertyId])
+
+  // Coordinate body class when property sheet is open (e.g. to hide floating chatbot launcher on mobile)
+  useEffect(() => {
+    if (selectedProperty) {
+      document.body.classList.add('map-card-open')
+    } else {
+      document.body.classList.remove('map-card-open')
+    }
+    return () => {
+      document.body.classList.remove('map-card-open')
+    }
+  }, [selectedProperty])
 
   const set = (key: keyof MapFilters, val: string) =>
     setFilters(f => ({ ...f, [key]: val || undefined }))
@@ -143,7 +164,7 @@ export default function MapPage() {
                   const countStr = totalUnits.toLocaleString('ar-EG')
                   if (filters.propertyType === 'Land') return `${countStr} أرض متاحة`
                   if (filters.propertyType === 'Shop') return `${countStr} محل متاح`
-                  if (filters.propertyType === 'House') return `${countStr} بيت متاح`
+                  if (filters.propertyType === 'House') return `${countStr} منزل متاح`
                   if (filters.status === 'Sold') return `${countStr} شقة مباعة`
                   return `${countStr} شقة متاحة`
                 })()
@@ -358,22 +379,42 @@ export default function MapPage() {
                     {p.areaSqm != null && (
                       <div className="mappage__mobile-card-spec">📐 <span>{p.areaSqm} م²</span></div>
                     )}
-                    {!isLand && !isShop && p.bedrooms != null && (
-                      <div className="mappage__mobile-card-spec">🛏️ <span>{p.bedrooms} غرف</span></div>
-                    )}
-                    {!isLand && p.bathrooms != null && (
-                      <div className="mappage__mobile-card-spec">🚿 <span>{p.bathrooms} حمام</span></div>
-                    )}
-                    {hasFloors && floorsText && (
-                      <div className="mappage__mobile-card-spec">🏢 <span>{floorsText}</span></div>
-                    )}
-                    {!isHouse && !isLand && !isShop && p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
-                      <div className="mappage__mobile-card-spec">
-                        🏢 <span>{p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}</span>
-                      </div>
-                    )}
-                    {!isLand && finishing && (
-                      <div className="mappage__mobile-card-spec">🎨 <span>{finishing}</span></div>
+                    {isHouse ? (
+                      <>
+                        <div className="mappage__mobile-card-spec">🏢 <span>{p.numberOfFloors ?? (p.floors?.length || '—')} أدوار</span></div>
+                        {p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
+                          <div className="mappage__mobile-card-spec">🚪 <span>{p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}</span></div>
+                        )}
+                        {(p.finishedApartments ?? 0) > 0 && (
+                          <div className="mappage__mobile-card-spec" style={{ color: '#047857', fontWeight: 700 }}>✨ <span>{p.finishedApartments} متشطب</span></div>
+                        )}
+                        {(p.semiFinishedApartments ?? 0) > 0 && (
+                          <div className="mappage__mobile-card-spec" style={{ color: '#b45309', fontWeight: 700 }}>🧱 <span>{p.semiFinishedApartments} نص تشطيب</span></div>
+                        )}
+                        {(p.coreShellApartments ?? 0) > 0 && (
+                          <div className="mappage__mobile-card-spec" style={{ color: '#475569', fontWeight: 700 }}>🏗️ <span>{p.coreShellApartments} عظم</span></div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        {!isLand && !isShop && p.bedrooms != null && (
+                          <div className="mappage__mobile-card-spec">🛏️ <span>{p.bedrooms} غرف</span></div>
+                        )}
+                        {!isLand && p.bathrooms != null && (
+                          <div className="mappage__mobile-card-spec">🚿 <span>{p.bathrooms} حمام</span></div>
+                        )}
+                        {hasFloors && floorsText && (
+                          <div className="mappage__mobile-card-spec">🏢 <span>{floorsText}</span></div>
+                        )}
+                        {!isLand && !isShop && p.apartmentsPerFloor != null && p.apartmentsPerFloor > 0 && (
+                          <div className="mappage__mobile-card-spec">
+                            🏢 <span>{p.apartmentsPerFloor === 1 ? 'شقة بالدور' : p.apartmentsPerFloor === 2 ? 'شقتين بالدور' : `${p.apartmentsPerFloor} شقق بالدور`}</span>
+                          </div>
+                        )}
+                        {!isLand && finishing && (
+                          <div className="mappage__mobile-card-spec">🎨 <span>{finishing}</span></div>
+                        )}
+                      </>
                     )}
                   </div>
 

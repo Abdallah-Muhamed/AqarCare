@@ -212,8 +212,11 @@ public class PropertyService
             GasMeterAvailable = request.GasMeterAvailable,
             ElevatorAvailable = request.ElevatorAvailable,
             NumberOfFloors = request.NumberOfFloors,
-            FloorsFinishing = request.FloorsFinishing,
+            FloorsFinishing = (request.PropertyType == "House" || request.PropertyType == "Villa") ? null : request.FloorsFinishing,
             ApartmentsPerFloor = request.ApartmentsPerFloor,
+            FinishedApartments = request.FinishedApartments,
+            SemiFinishedApartments = request.SemiFinishedApartments,
+            CoreShellApartments = request.CoreShellApartments,
             FrontageWidth = request.FrontageWidth,
             FrontageLength = request.FrontageLength,
             StreetWidth = request.StreetWidth,
@@ -228,7 +231,13 @@ public class PropertyService
         var isHouse = request.PropertyType == "House" || request.PropertyType == "Villa";
         var isLandOrShop = request.PropertyType == "Land" || request.PropertyType == "Shop";
 
-        if (!isLandOrShop && request.Floors != null && request.Floors.Count > 0)
+        if (isHouse)
+        {
+            entity.FinishingStatus = null;
+            entity.FloorsFinishing = null;
+        }
+
+        if (!isLandOrShop && !isHouse && request.Floors != null && request.Floors.Count > 0)
         {
             var sort = 0;
             foreach (var f in request.Floors)
@@ -256,9 +265,46 @@ public class PropertyService
                     InstallmentPrice = isHouse ? null : f.InstallmentPrice,
                     SoldPrice = isHouse ? null : f.SoldPrice,
                     AreaSqm = f.AreaSqm,
+                    FinishingStatus = f.FinishingStatus,
                     IsAvailable = isHouse ? true : f.IsAvailable,
                     SortOrder = f.SortOrder != 0 ? f.SortOrder : sort++
                 });
+            }
+
+            if (isHouse)
+            {
+                entity.FinishingStatus = null;
+                entity.FloorsFinishing = null;
+                entity.NumberOfFloors = request.NumberOfFloors ?? (entity.Floors.Count > 0 ? entity.Floors.Count : null);
+                entity.ApartmentsPerFloor = request.ApartmentsPerFloor;
+
+                var aptMultiplier = Math.Max(1, entity.ApartmentsPerFloor.GetValueOrDefault(1));
+                if (request.FinishedApartments.HasValue)
+                {
+                    entity.FinishedApartments = request.FinishedApartments.Value;
+                }
+                else if (entity.Floors.Count > 0)
+                {
+                    entity.FinishedApartments = entity.Floors.Count(fl => fl.FinishingStatus is "Lux" or "Super-Lux" or "Ultra-Super-Lux" or "High-Lux" or "Finished") * aptMultiplier;
+                }
+
+                if (request.SemiFinishedApartments.HasValue)
+                {
+                    entity.SemiFinishedApartments = request.SemiFinishedApartments.Value;
+                }
+                else if (entity.Floors.Count > 0)
+                {
+                    entity.SemiFinishedApartments = entity.Floors.Count(fl => fl.FinishingStatus == "Semi-Finished") * aptMultiplier;
+                }
+
+                if (request.CoreShellApartments.HasValue)
+                {
+                    entity.CoreShellApartments = request.CoreShellApartments.Value;
+                }
+                else if (entity.Floors.Count > 0)
+                {
+                    entity.CoreShellApartments = entity.Floors.Count(fl => fl.FinishingStatus == "Core-Shell") * aptMultiplier;
+                }
             }
 
             if (!isHouse && !entity.Price.HasValue && entity.Floors.Any(fl => fl.Price.HasValue))
@@ -304,7 +350,7 @@ public class PropertyService
         entity.Bathrooms = (request.PropertyType == "Land") ? null : request.Bathrooms;
         entity.PropertyType = request.PropertyType;
         entity.ListingType = request.ListingType;
-        entity.FinishingStatus = (request.PropertyType == "Land") ? null : request.FinishingStatus;
+        entity.FinishingStatus = (request.PropertyType == "Land" || isHouse) ? null : request.FinishingStatus;
         entity.FinishingPackageId = request.FinishingPackageId;
         entity.InstallmentAvailable = request.InstallmentAvailable;
         entity.FloorNumber = (isHouse || request.PropertyType == "Land") ? null : request.FloorNumber;
@@ -321,8 +367,11 @@ public class PropertyService
         entity.GasMeterAvailable = request.GasMeterAvailable;
         entity.ElevatorAvailable = (request.PropertyType == "Land") ? false : request.ElevatorAvailable;
         entity.NumberOfFloors = request.NumberOfFloors;
-        entity.FloorsFinishing = request.FloorsFinishing;
-        entity.ApartmentsPerFloor = (isHouse || isLandOrShop) ? null : request.ApartmentsPerFloor;
+        entity.FloorsFinishing = isHouse ? null : request.FloorsFinishing;
+        entity.ApartmentsPerFloor = isLandOrShop ? null : request.ApartmentsPerFloor;
+        entity.FinishedApartments = request.FinishedApartments;
+        entity.SemiFinishedApartments = request.SemiFinishedApartments;
+        entity.CoreShellApartments = request.CoreShellApartments;
         entity.FrontageWidth = request.FrontageWidth;
         entity.FrontageLength = request.FrontageLength;
         entity.StreetWidth = request.StreetWidth;
@@ -332,7 +381,7 @@ public class PropertyService
         entity.HasGas = request.HasGas;
         entity.UpdatedAt = DateTime.UtcNow;
 
-        if (isLandOrShop)
+        if (isLandOrShop || isHouse)
         {
             if (entity.Floors.Any())
             {
@@ -381,6 +430,7 @@ public class PropertyService
                         existingFloor.InstallmentPrice = isHouse ? null : inputFloor.InstallmentPrice;
                         existingFloor.SoldPrice = isHouse ? null : inputFloor.SoldPrice;
                         existingFloor.AreaSqm = inputFloor.AreaSqm;
+                        existingFloor.FinishingStatus = inputFloor.FinishingStatus;
                         existingFloor.IsAvailable = isHouse ? true : inputFloor.IsAvailable;
                         existingFloor.SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++;
                     }
@@ -397,9 +447,46 @@ public class PropertyService
                         InstallmentPrice = isHouse ? null : inputFloor.InstallmentPrice,
                         SoldPrice = isHouse ? null : inputFloor.SoldPrice,
                         AreaSqm = inputFloor.AreaSqm,
+                        FinishingStatus = inputFloor.FinishingStatus,
                         IsAvailable = isHouse ? true : inputFloor.IsAvailable,
                         SortOrder = inputFloor.SortOrder != 0 ? inputFloor.SortOrder : sort++
                     });
+                }
+            }
+
+            if (isHouse)
+            {
+                entity.FinishingStatus = null;
+                entity.FloorsFinishing = null;
+                entity.NumberOfFloors = request.NumberOfFloors ?? (entity.Floors.Count > 0 ? entity.Floors.Count : null);
+                entity.ApartmentsPerFloor = request.ApartmentsPerFloor;
+
+                var aptMultiplier = Math.Max(1, entity.ApartmentsPerFloor.GetValueOrDefault(1));
+                if (request.FinishedApartments.HasValue)
+                {
+                    entity.FinishedApartments = request.FinishedApartments.Value;
+                }
+                else if (entity.Floors.Count > 0)
+                {
+                    entity.FinishedApartments = entity.Floors.Count(fl => fl.FinishingStatus is "Lux" or "Super-Lux" or "Ultra-Super-Lux" or "High-Lux" or "Finished") * aptMultiplier;
+                }
+
+                if (request.SemiFinishedApartments.HasValue)
+                {
+                    entity.SemiFinishedApartments = request.SemiFinishedApartments.Value;
+                }
+                else if (entity.Floors.Count > 0)
+                {
+                    entity.SemiFinishedApartments = entity.Floors.Count(fl => fl.FinishingStatus == "Semi-Finished") * aptMultiplier;
+                }
+
+                if (request.CoreShellApartments.HasValue)
+                {
+                    entity.CoreShellApartments = request.CoreShellApartments.Value;
+                }
+                else if (entity.Floors.Count > 0)
+                {
+                    entity.CoreShellApartments = entity.Floors.Count(fl => fl.FinishingStatus == "Core-Shell") * aptMultiplier;
                 }
             }
 
@@ -471,7 +558,7 @@ public class PropertyService
             x.Bathrooms,
             x.PropertyType,
             x.ListingType,
-            x.FinishingStatus,
+            (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : x.FinishingStatus,
             x.InstallmentAvailable,
             x.FloorNumber,
             x.City,
@@ -487,7 +574,10 @@ public class PropertyService
             x.GasMeterAvailable,
             x.ElevatorAvailable,
             x.NumberOfFloors,
-            x.FloorsFinishing,
+            (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : x.FloorsFinishing,
+            x.FinishedApartments,
+            x.SemiFinishedApartments,
+            x.CoreShellApartments,
             x.FrontageWidth,
             x.FrontageLength,
             x.StreetWidth,
@@ -508,7 +598,8 @@ public class PropertyService
                     (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.SoldPrice,
                     f.AreaSqm,
                     (x.PropertyType == "House" || x.PropertyType == "Villa") ? true : f.IsAvailable,
-                    f.SortOrder))
+                    f.SortOrder,
+                    f.FinishingStatus))
                 .ToList(),
             x.IsPublished,
             x.ApartmentsPerFloor);
@@ -525,7 +616,7 @@ public class PropertyService
             x.Bathrooms,
             x.PropertyType,
             x.ListingType,
-            x.FinishingStatus,
+            (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : x.FinishingStatus,
             x.FinishingPackageId,
             x.FinishingPackage?.Name,
             x.InstallmentAvailable,
@@ -544,7 +635,10 @@ public class PropertyService
             x.GasMeterAvailable,
             x.ElevatorAvailable,
             x.NumberOfFloors,
-            x.FloorsFinishing,
+            (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : x.FloorsFinishing,
+            x.FinishedApartments,
+            x.SemiFinishedApartments,
+            x.CoreShellApartments,
             x.FrontageWidth,
             x.FrontageLength,
             x.StreetWidth,
@@ -570,7 +664,21 @@ public class PropertyService
                     (x.PropertyType == "House" || x.PropertyType == "Villa") ? null : f.SoldPrice,
                     f.AreaSqm,
                     (x.PropertyType == "House" || x.PropertyType == "Villa") ? true : f.IsAvailable,
-                    f.SortOrder))
+                    f.SortOrder,
+                    f.FinishingStatus))
                 .ToList() ?? new List<PropertyFloorDto>(),
             x.ApartmentsPerFloor);
+
+    private static string FormatFinishingArabicName(string? status) => status switch
+    {
+        "Ultra-Super-Lux" => "ألترا سوبر لوكس",
+        "Super-Lux" => "سوبر لوكس",
+        "High-Lux" => "هاي لوكس",
+        "Lux" => "لوكس",
+        "Finished" => "تشطيب كامل",
+        "Semi-Finished" => "نصف تشطيب",
+        "Core-Shell" => "عظم",
+        "Mixed" => "تشطيب متعدد",
+        _ => status ?? "غير محدد"
+    };
 }

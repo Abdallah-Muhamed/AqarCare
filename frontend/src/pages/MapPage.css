@@ -410,8 +410,8 @@
 .mappage__backdrop {
   position: fixed;
   inset: 0;
-  z-index: 22;
-  background: rgba(0, 0, 0, 0.28);
+  z-index: 1040;
+  background: rgba(0, 0, 0, 0.35);
   backdrop-filter: blur(2px);
   -webkit-backdrop-filter: blur(2px);
   animation: mappageFadeIn 0.2s ease;
@@ -463,7 +463,7 @@
     bottom: 0;
     left: 0;
     right: 0;
-    z-index: 30;
+    z-index: 1060;
     animation: mappageSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     max-height: 85vh;
     pointer-events: auto;
@@ -474,7 +474,7 @@
     border-top: 1px solid #dcd3c1;
     border-radius: 20px 20px 0 0;
     box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.18);
-    padding: 0.6rem 0.9rem 1.2rem;
+    padding: 0.6rem 0.9rem calc(1.2rem + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 8px;

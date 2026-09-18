@@ -545,11 +545,15 @@ public class AIBrokerService
             }
             else if (finish.Contains("Semi", StringComparison.OrdinalIgnoreCase) || finish.Contains("نصف"))
             {
-                query = query.Where(p => p.FinishingStatus == "Semi-Finished");
+                query = query.Where(p => p.FinishingStatus == "Semi-Finished" || p.Floors.Any(fl => fl.FinishingStatus == "Semi-Finished"));
+            }
+            else if (finish.Contains("Ultra", StringComparison.OrdinalIgnoreCase) || finish.Contains("الترا") || finish.Contains("ألترا"))
+            {
+                query = query.Where(p => p.FinishingStatus == "Ultra-Super-Lux" || p.FinishingStatus == "Mixed" || p.Floors.Any(fl => fl.FinishingStatus == "Ultra-Super-Lux"));
             }
             else if (finish.Contains("Super", StringComparison.OrdinalIgnoreCase) || finish.Contains("Lux", StringComparison.OrdinalIgnoreCase) || finish.Contains("تشطيب") || finish.Contains("لوكس"))
             {
-                query = query.Where(p => p.FinishingStatus == "Finished" || p.FinishingStatus == "Lux" || p.FinishingStatus == "Super-Lux" || p.FinishingStatus == "High-Lux");
+                query = query.Where(p => p.FinishingStatus == "Finished" || p.FinishingStatus == "Lux" || p.FinishingStatus == "Super-Lux" || p.FinishingStatus == "High-Lux" || p.FinishingStatus == "Ultra-Super-Lux" || p.FinishingStatus == "Mixed" || p.Floors.Any(fl => fl.FinishingStatus != "Core-Shell"));
             }
         }
 
@@ -748,7 +752,16 @@ public class AIBrokerService
             string floorsSummary;
             if (isHouse)
             {
-                floorsSummary = $"البيت يباع بالكامل كوحدة واحدة ({p.Floors?.Count ?? 1} أدوار)";
+                var aptPerFloor = p.ApartmentsPerFloor.HasValue
+                    ? (p.ApartmentsPerFloor.Value == 1 ? "شقة بالدور" : p.ApartmentsPerFloor.Value == 2 ? "شقتين بالدور" : $"{p.ApartmentsPerFloor.Value} شقق بالدور")
+                    : "شقة بالدور";
+                var finishStats = new List<string>();
+                if (p.FinishedApartments.GetValueOrDefault() > 0) finishStats.Add($"{p.FinishedApartments} شقة متشطبة");
+                if (p.SemiFinishedApartments.GetValueOrDefault() > 0) finishStats.Add($"{p.SemiFinishedApartments} شقة نص تشطيب");
+                if (p.CoreShellApartments.GetValueOrDefault() > 0) finishStats.Add($"{p.CoreShellApartments} شقة عظم");
+
+                var finishDetail = finishStats.Any() ? string.Join("، ", finishStats) : "";
+                floorsSummary = $"البيت يباع بالكامل كوحدة واحدة ({p.NumberOfFloors ?? p.Floors?.Count ?? 1} أدوار، {aptPerFloor}{(string.IsNullOrEmpty(finishDetail) ? "" : $"، وفيه: {finishDetail}")})";
             }
             else if (availFloors.Any())
             {
@@ -794,7 +807,11 @@ public class AIBrokerService
                     : "متاح تقسيط")
                 : "كاش فقط";
 
-            var finishingArabic = FormatFinishingCompact(p.FinishingStatus);
+            var finishingArabic = isHouse ? "" : FormatFinishingCompact(p.FinishingStatus);
+            if (!isHouse && !string.IsNullOrWhiteSpace(p.FloorsFinishing))
+            {
+                finishingArabic = $"{finishingArabic} ({p.FloorsFinishing})";
+            }
             var typeArabic = FormatPropertyTypeArabic(p.PropertyType);
             var listingArabic = FormatListingTypeArabic(p.ListingType);
             var districtArabic = (p.District == "منشية البكري" || (p.Title != null && p.Title.Contains("الشعبية")) || (p.Address != null && p.Address.Contains("الشعبية")))
@@ -803,8 +820,9 @@ public class AIBrokerService
             var streetLoc = GetCompactStreet(p.Title, p.Address, p.DetailedAddress);
             var constructionStatus = p.IsUnderConstruction ? "تحت الإنشاء" : "مبنى جاهز";
             var elevator = p.ElevatorAvailable ? "يوجد أسانسير" : "بدون أسانسير";
+            var finishingPart = isHouse ? "" : $"{finishingArabic} | ";
 
-            sb.AppendLine($"- [عقار #{p.Id}]: {typeArabic} {listingArabic} | {districtArabic} ({streetLoc}) | {areaStr} | {priceStr} ({installmentStr}) | {finishingArabic} | {p.Bedrooms}غ/{p.Bathrooms}ح | {elevator} | {constructionStatus} | الوحدات المتاحة: [{floorsSummary}]");
+            sb.AppendLine($"- [عقار #{p.Id}]: {typeArabic} {listingArabic} | {districtArabic} ({streetLoc}) | {areaStr} | {priceStr} ({installmentStr}) | {finishingPart}{p.Bedrooms}غ/{p.Bathrooms}ح | {elevator} | {constructionStatus} | المواصفات: [{floorsSummary}]");
         }
 
         return sb.ToString().TrimEnd();
@@ -902,6 +920,8 @@ public class AIBrokerService
         "Core-Shell" => "عظم على الطوب الأحمر (يحتاج تشطيب)",
         "Semi-Finished" => "نصف تشطيب (الأقرب للفينش والسكن)",
         "Finished" or "Lux" or "Super-Lux" or "High-Lux" => "تشطيب كامل",
+        "Ultra-Super-Lux" => "ألترا سوبر لوكس (فاخر)",
+        "Mixed" => "تشطيب متعدد للأدوار",
         _ => status ?? "عظم"
     };
 
