@@ -12,15 +12,18 @@ import './PropertiesPage.css'
 export function isNearFloor(p: PropertyListItem): boolean {
   if (p.propertyType === 'Land') return false
 
-  // If single-unit property with low floorNumber
-  if (p.floorNumber != null && p.floorNumber <= 3) return true
+  const MAX_FLOOR = 7 // floors 0–7 are "below 8th floor"
 
-  // If property has floors array
+  // If single-unit property with low floorNumber
+  if (p.floorNumber != null && p.floorNumber <= MAX_FLOOR) return true
+
+  // If property has floors array — check any available floor below 8
   if (p.floors && p.floors.length > 0) {
     const hasLow = p.floors.some(f => {
       if (f.isAvailable === false) return false
-      if (f.floorNumber != null && f.floorNumber <= 3) return true
+      if (f.floorNumber != null && f.floorNumber <= MAX_FLOOR) return true
       const name = (f.floorName || '').toLowerCase()
+      // Text-based fallback for named floors
       return (
         name.includes('أرضي') ||
         name.includes('ارضي') ||
@@ -30,9 +33,12 @@ export function isNearFloor(p: PropertyListItem): boolean {
         name.includes('تاني') ||
         name.includes('ثالث') ||
         name.includes('تالت') ||
-        name.includes('دور 1') ||
-        name.includes('دور 2') ||
-        name.includes('دور 3')
+        name.includes('رابع') ||
+        name.includes('تالت') ||
+        name.includes('خامس') ||
+        name.includes('سادس') ||
+        name.includes('سابع') ||
+        /^دور [1-7]$/.test(name.trim())
       )
     })
     if (hasLow) return true
@@ -48,7 +54,11 @@ export function isNearFloor(p: PropertyListItem): boolean {
     text.includes('دور ثاني') ||
     text.includes('دور تاني') ||
     text.includes('دور ثالث') ||
-    text.includes('دور تالت')
+    text.includes('دور تالت') ||
+    text.includes('دور رابع') ||
+    text.includes('دور خامس') ||
+    text.includes('دور سادس') ||
+    text.includes('دور سابع')
   )
 }
 
@@ -457,7 +467,7 @@ export default function PropertiesPage() {
     },
     {
       id: 'nearFloor',
-      label: 'دور قريب (أرضي - ثالث)',
+      label: 'دور منخفض (أقل من الثامن)',
       emoji: '🪜',
       count: suggestionCounts.nearFloor,
       isActive: Boolean(query.nearFloorOnly),
