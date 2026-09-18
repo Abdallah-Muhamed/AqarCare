@@ -384,6 +384,34 @@ export default function PropertiesPage() {
       }
     },
     {
+      id: 'shop',
+      label: 'محلات تجارية',
+      emoji: '🏪',
+      count: suggestionCounts.shop,
+      isActive: query.propertyType === 'Shop',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'Shop' ? undefined : 'Shop',
+        }))
+        setPage(1)
+      }
+    },
+    {
+      id: 'land',
+      label: 'أراضي',
+      emoji: '🌿',
+      count: suggestionCounts.land,
+      isActive: query.propertyType === 'Land',
+      toggle: () => {
+        setQuery(q => ({
+          ...q,
+          propertyType: q.propertyType === 'Land' ? undefined : 'Land',
+        }))
+        setPage(1)
+      }
+    },
+    {
       id: 'finished',
       label: 'متشطب',
       emoji: '✨',
@@ -494,34 +522,6 @@ export default function PropertiesPage() {
         setQuery(q => ({
           ...q,
           elevatorAvailable: !q.elevatorAvailable ? true : undefined,
-        }))
-        setPage(1)
-      }
-    },
-    {
-      id: 'land',
-      label: 'أراضي',
-      emoji: '🌿',
-      count: suggestionCounts.land,
-      isActive: query.propertyType === 'Land',
-      toggle: () => {
-        setQuery(q => ({
-          ...q,
-          propertyType: q.propertyType === 'Land' ? undefined : 'Land',
-        }))
-        setPage(1)
-      }
-    },
-    {
-      id: 'shop',
-      label: 'محلات تجارية',
-      emoji: '🏪',
-      count: suggestionCounts.shop,
-      isActive: query.propertyType === 'Shop',
-      toggle: () => {
-        setQuery(q => ({
-          ...q,
-          propertyType: q.propertyType === 'Shop' ? undefined : 'Shop',
         }))
         setPage(1)
       }
