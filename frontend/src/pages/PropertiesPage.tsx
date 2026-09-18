@@ -6,7 +6,6 @@ import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
 import { getTotalAvailableUnits } from '../utils/formatters'
 import PropertyCard from '../components/PropertyCard'
-import Pagination from '../components/Pagination'
 import './PropertiesPage.css'
 
 export function isNearFloor(p: PropertyListItem): boolean {
@@ -93,15 +92,14 @@ const SORT_OPTS = [
   { val: 'area_asc',   label: 'المساحة: من الأصغر للأكبر' },
 ]
 
-const PAGE_SIZE = 12
 
 export default function PropertiesPage() {
   const [searchParams] = useSearchParams()
   const [rawItems, setRawItems] = useState<PropertyListItem[]>([])
   const [loading, setLoading]   = useState(true)
-  const [page, setPage]         = useState(1)
   const [showFilters, setShowFilters] = useState(false)
   const [query, setQuery]       = useState<PropertyQuery>({ sortBy: 'newest' })
+  const setPage = (_?: number) => {}
 
   // Synchronize initial query with URL search params
   useEffect(() => {
@@ -154,8 +152,8 @@ export default function PropertiesPage() {
   // Fetch properties from backend
   const fetchProperties = useCallback(() => {
     setLoading(true)
-    // Request up to 100 properties to allow rich, instant client-side filtering
-    api.getProperties({ pageSize: 100 })
+    // Request all properties for instant client-side filtering
+    api.getProperties({ pageSize: 10000 })
       .then(r => {
         setRawItems(r.items || [])
       })
@@ -338,10 +336,7 @@ export default function PropertiesPage() {
     })
   }, [rawItems, query])
 
-  const total = filteredItems.length
   const totalAvailableUnits = useMemo(() => getTotalAvailableUnits(filteredItems), [filteredItems])
-  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
-  const paginatedItems = filteredItems.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
 
   // Pre-calculate counts for each filter suggestion based on raw dataset
   const suggestionCounts = useMemo(() => {
@@ -906,7 +901,7 @@ export default function PropertiesPage() {
           <div className="grid-3">
             {Array.from({ length: 6 }).map((_, i) => <div key={i} className="skeleton" style={{ height: 380 }} />)}
           </div>
-        ) : paginatedItems.length === 0 ? (
+        ) : filteredItems.length === 0 ? (
           <div className="empty-state">
             <Search size={56} />
             <h3>لا توجد نتائج مطابقة</h3>
@@ -920,11 +915,8 @@ export default function PropertiesPage() {
         ) : (
           <>
             <div className="grid-3">
-              {paginatedItems.map(p => <PropertyCard key={p.id} property={p} />)}
+              {filteredItems.map(p => <PropertyCard key={p.id} property={p} />)}
             </div>
-            {totalPages > 1 && (
-              <Pagination page={page} totalPages={totalPages} onChange={setPage} />
-            )}
           </>
         )}
       </div>

@@ -17,7 +17,7 @@ public class PropertyService
     public async Task<PagedResult<PropertyListItemDto>> GetPublishedAsync(PropertyQuery query, CancellationToken ct = default)
     {
         var page = query.Page < 1 ? 1 : query.Page;
-        var pageSize = query.PageSize is < 1 or > 100 ? 12 : query.PageSize;
+        var pageSize = query.PageSize is < 1 or > 10000 ? 12 : query.PageSize;
 
         IQueryable<PropertyUnit> q = _db.PropertyUnits
             .AsNoTracking()
