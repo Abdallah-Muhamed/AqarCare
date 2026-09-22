@@ -289,15 +289,9 @@
 .quick-suggestions-scroll {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 6px;
   padding: 2px 2px 4px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none; /* Firefox */
-}
-.quick-suggestions-scroll::-webkit-scrollbar {
-  display: none; /* Chrome/Safari */
 }
 
 .quick-chip {
@@ -384,19 +378,11 @@
     padding: 0.6rem 0;
   }
   .quick-suggestions-inner {
-    flex-direction: row;
-    align-items: center;
     gap: 0.4rem;
-  }
-  .quick-suggestions-scroll {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
   }
   .quick-chip {
     padding: 4px 10px;
     font-size: 0.74rem;
-    flex-shrink: 0;
   }
 }
 
