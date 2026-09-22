@@ -252,10 +252,11 @@
 /* ── Filters panel ───────────────────────────────────────────────── */
 .map-filters {
   position: fixed;
-  bottom: 80px;
-  left: 12px;
-  top: auto;
-  z-index: 30;
+  top: 80px; /* below the top bar (~70px) */
+  right: 12px;
+  left: auto;
+  bottom: auto;
+  z-index: 200;
 }
 
 .map-filters__btn {
@@ -290,6 +291,7 @@
   display: flex;
   flex-direction: column;
   gap: .65rem;
+  z-index: 210; /* ensure panel overlays map */
 }
 .map-filters__group { display: flex; flex-direction: column; gap: 4px; }
 .map-filters__label { font-size: .72rem; font-weight: 600; color: #7a6e55; }
