@@ -32,7 +32,7 @@
 }
 
 .props-page__header {
-  padding-top: calc(var(--navbar-h) + var(--space-2xl));
+  padding-top: calc(var(--navbar-h) + var(--space-md));
   padding-bottom: var(--space-xl);
   background: linear-gradient(125deg, #e6eee7, #f8f3eb 65%);
   border-bottom: 1px solid var(--clr-border2);
@@ -88,10 +88,6 @@
   box-shadow: 0 10px 24px rgba(49,53,43,.06);
 }
 .filter-bar__inner { padding-block: var(--space-lg); }
-/* Ensure page content starts below fixed filter bar when it appears */
-.props-page {
-  padding-top: calc(var(--navbar-h) + 56px); /* 56px approx height of filter bar when open */
-}
 
 /* Quick Search */
 .filter-search-box {
