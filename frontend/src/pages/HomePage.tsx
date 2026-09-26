@@ -52,6 +52,18 @@ export default function HomePage() {
           {/* ── Search Bar like Property Finder / Bayut ───────────── */}
           <HeroSearchBar />
 
+          {/* ── Actions: Browse Properties & Explore Map ─────────────── */}
+          <div className="hero__actions" style={{ marginBottom: '1.5rem' }}>
+            <Link to="/properties" className="btn btn-primary">
+              <Building2 size={18} />
+              تصفح العقارات
+            </Link>
+            <Link to="/map" className="btn btn-outline">
+              <Map size={18} />
+              استكشف الخريطة
+            </Link>
+          </div>
+
           {/* Quick Filter Suggestions */}
           <div className="hero__quick-filters">
             <span className="hero__quick-filters-label">
