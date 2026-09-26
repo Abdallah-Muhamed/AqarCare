@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useNavigate } from 'react-router-dom'
 import { MapPin, Search, ChevronDown, X, Check } from 'lucide-react'
 import './HeroSearchBar.css'
 
@@ -25,15 +25,12 @@ const PROPERTY_TYPES = [
 export default function HeroSearchBar() {
   const navigate = useNavigate()
 
-  // Top Tab
-  const [activeTab, setActiveTab] = useState<'properties' | 'projects'>('properties')
-
-  // Top Row
+  // Top Row States
   const [listingType, setListingType] = useState<'Sale' | 'Rent'>('Sale')
   const [location, setLocation] = useState('')
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
 
-  // Bottom Row
+  // Bottom Row States
   const [status, setStatus] = useState<'all' | 'ready' | 'under-construction'>('all')
   const [propertyType, setPropertyType] = useState('all')
   const [bedrooms, setBedrooms] = useState<number | null>(null)
@@ -41,9 +38,8 @@ export default function HeroSearchBar() {
   const [minPrice, setMinPrice] = useState<string>('')
   const [maxPrice, setMaxPrice] = useState<string>('')
 
-  // Popover Toggles
+  // Popover State
   const [openDropdown, setOpenDropdown] = useState<'type' | 'rooms' | 'price' | null>(null)
-
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   // Close popovers on outside click
@@ -57,16 +53,6 @@ export default function HeroSearchBar() {
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
-
-  // Handle Tab Change
-  const handleTabChange = (tab: 'properties' | 'projects') => {
-    setActiveTab(tab)
-    if (tab === 'projects') {
-      setStatus('under-construction')
-    } else {
-      setStatus('all')
-    }
-  }
 
   // Handle Search Submission
   const handleSearch = () => {
@@ -84,7 +70,7 @@ export default function HeroSearchBar() {
       params.set('search', location.trim())
     }
 
-    if (activeTab === 'projects' || status === 'under-construction') {
+    if (status === 'under-construction') {
       params.set('filter', 'under-construction')
     } else if (status === 'ready') {
       params.set('filter', 'ready')
@@ -121,9 +107,9 @@ export default function HeroSearchBar() {
   // Label Formatter for Price Dropdown
   const getPriceLabel = () => {
     if (!minPrice && !maxPrice) return 'السعر (ج.م)'
-    if (minPrice && maxPrice) return `${Number(minPrice).toLocaleString('ar-EG')} - ${Number(maxPrice).toLocaleString('ar-EG')} ج.م`
-    if (minPrice) return `من ${Number(minPrice).toLocaleString('ar-EG')} ج.م`
-    return `حتى ${Number(maxPrice).toLocaleString('ar-EG')} ج.م`
+    if (minPrice && maxPrice) return `${Number(minPrice).toLocaleString('ar-EG')} - ${Number(maxPrice).toLocaleString('ar-EG')} ج`
+    if (minPrice) return `من ${Number(minPrice).toLocaleString('ar-EG')} ج`
+    return `حتى ${Number(maxPrice).toLocaleString('ar-EG')} ج`
   }
 
   // Type label formatter
@@ -134,25 +120,6 @@ export default function HeroSearchBar() {
 
   return (
     <div className="hero-search-wrapper" ref={dropdownRef}>
-      {/* ── Top Tabs (عقارات / المشاريع الجديدة) ──────────────────── */}
-      <div className="hero-search__tabs">
-        <button
-          type="button"
-          className={`hero-search__tab ${activeTab === 'properties' ? 'hero-search__tab--active' : ''}`}
-          onClick={() => handleTabChange('properties')}
-        >
-          عقارات
-        </button>
-        <button
-          type="button"
-          className={`hero-search__tab ${activeTab === 'projects' ? 'hero-search__tab--active' : ''}`}
-          onClick={() => handleTabChange('projects')}
-        >
-          <span>المشاريع الجديدة</span>
-          <span className="hero-search__badge-new">جديد</span>
-        </button>
-      </div>
-
       {/* ── Main Search Card ──────────────────────────────────────── */}
       <div className="hero-search-card">
         <div className="hero-search-card__inner">
@@ -216,7 +183,7 @@ export default function HeroSearchBar() {
                         setShowLocationSuggestions(false)
                       }}
                     >
-                      <MapPin size={14} style={{ color: '#0f766e' }} />
+                      <MapPin size={14} className="hero-search__suggestion-pin" />
                       <span>{loc}</span>
                     </li>
                   ))}
@@ -262,10 +229,10 @@ export default function HeroSearchBar() {
               </button>
             </div>
 
-            {/* Dropdown 1: النوع (User requested: بدل سكني النوع) */}
+            {/* Dropdown 1: النوع (بدل سكني النوع) */}
             <div className="hero-search__dropdown-wrap">
               <div
-                className={`hero-search__dropdown-trigger ${openDropdown === 'type' ? 'hero-search__dropdown-trigger--open' : ''}`}
+                className={`hero-search__dropdown-trigger ${openDropdown === 'type' ? 'hero-search__dropdown-trigger--open' : ''} ${propertyType !== 'all' ? 'hero-search__dropdown-trigger--has-val' : ''}`}
                 onClick={() => setOpenDropdown(openDropdown === 'type' ? null : 'type')}
               >
                 <span className="hero-search__dropdown-trigger-text">{getTypeLabel()}</span>
@@ -297,7 +264,7 @@ export default function HeroSearchBar() {
             {/* Dropdown 2: عدد الغرف & الحمامات */}
             <div className="hero-search__dropdown-wrap">
               <div
-                className={`hero-search__dropdown-trigger ${openDropdown === 'rooms' ? 'hero-search__dropdown-trigger--open' : ''}`}
+                className={`hero-search__dropdown-trigger ${openDropdown === 'rooms' ? 'hero-search__dropdown-trigger--open' : ''} ${bedrooms != null || bathrooms != null ? 'hero-search__dropdown-trigger--has-val' : ''}`}
                 onClick={() => setOpenDropdown(openDropdown === 'rooms' ? null : 'rooms')}
               >
                 <span className="hero-search__dropdown-trigger-text">{getRoomsLabel()}</span>
@@ -360,7 +327,7 @@ export default function HeroSearchBar() {
             {/* Dropdown 3: السعر (ج.م) */}
             <div className="hero-search__dropdown-wrap">
               <div
-                className={`hero-search__dropdown-trigger ${openDropdown === 'price' ? 'hero-search__dropdown-trigger--open' : ''}`}
+                className={`hero-search__dropdown-trigger ${openDropdown === 'price' ? 'hero-search__dropdown-trigger--open' : ''} ${minPrice || maxPrice ? 'hero-search__dropdown-trigger--has-val' : ''}`}
                 onClick={() => setOpenDropdown(openDropdown === 'price' ? null : 'price')}
               >
                 <span className="hero-search__dropdown-trigger-text">{getPriceLabel()}</span>
@@ -427,7 +394,7 @@ export default function HeroSearchBar() {
                     {(minPrice || maxPrice) && (
                       <button
                         type="button"
-                        style={{ marginTop: '4px', background: 'transparent', border: 'none', color: '#ef4444', fontSize: '0.75rem', cursor: 'pointer', textAlign: 'center' }}
+                        className="hero-search__reset-price-btn"
                         onClick={() => {
                           setMinPrice('')
                           setMaxPrice('')
@@ -442,15 +409,6 @@ export default function HeroSearchBar() {
             </div>
           </div>
         </div>
-
-        {/* ── Bottom Banner Strip (سيرتش 2.0 / خريطة) ─────────────── */}
-        <Link to="/map" className="hero-search__bottom-strip">
-          <div className="hero-search__bottom-strip-content">
-            <span className="hero-search__car-icon">🚗</span>
-            <span>سيرتش 2.0 أوجد عقارات وفقاً للخريطة والقيادة</span>
-          </div>
-          <span className="hero-search__bottom-strip-arrow">&lt;</span>
-        </Link>
       </div>
     </div>
   )
