@@ -1,17 +1,31 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MapPin, Search, ChevronDown, X, Check } from 'lucide-react'
+import { fuzzyArabicMatch } from '../../utils/formatters'
 import './HeroSearchBar.css'
 
-const SUGGESTED_LOCATIONS = [
-  'المحلة الكبرى',
-  'الشعبية',
-  'منشية البكري',
-  'شارع الترعة',
-  'الجمهورية',
-  'أبو راضي',
-  'شكري القوتلي',
-  'شارع جمال عبدالناصر',
+interface LocationItem {
+  name: string
+  category: 'حي' | 'شارع' | 'معلم' | 'مدينة'
+}
+
+const SUGGESTED_LOCATIONS: LocationItem[] = [
+  { name: 'منشية البكري', category: 'حي' },
+  { name: 'الشعبية', category: 'حي' },
+  { name: 'الجمهورية', category: 'حي' },
+  { name: 'شكري القوتلي', category: 'حي' },
+  { name: 'أبو راضي', category: 'حي' },
+  { name: 'الرجبي', category: 'حي' },
+  { name: 'شارع البحر', category: 'شارع' },
+  { name: 'شارع الترعة', category: 'شارع' },
+  { name: 'شارع جمال عبدالناصر', category: 'شارع' },
+  { name: 'حي النخيل', category: 'معلم' },
+  { name: 'شارع الحنفي', category: 'شارع' },
+  { name: 'شارع سعد محمد سمك', category: 'شارع' },
+  { name: 'المنشية الجديدة', category: 'حي' },
+  { name: 'منشأة الزهراء', category: 'حي' },
+  { name: 'الوابورات', category: 'حي' },
+  { name: 'المحلة الكبرى', category: 'مدينة' },
 ]
 
 const PROPERTY_TYPES = [
@@ -174,19 +188,33 @@ export default function HeroSearchBar() {
               {/* Suggestions dropdown */}
               {showLocationSuggestions && (
                 <ul className="hero-search__suggestions">
-                  {SUGGESTED_LOCATIONS.filter(loc => !location || loc.includes(location)).map((loc, i) => (
-                    <li
-                      key={i}
-                      className="hero-search__suggestion-item"
-                      onClick={() => {
-                        setLocation(loc)
-                        setShowLocationSuggestions(false)
-                      }}
-                    >
-                      <MapPin size={14} className="hero-search__suggestion-pin" />
-                      <span>{loc}</span>
-                    </li>
-                  ))}
+                  {(() => {
+                    const matched = SUGGESTED_LOCATIONS.filter(
+                      loc => !location || fuzzyArabicMatch(loc.name, location)
+                    )
+                    if (matched.length === 0) {
+                      return (
+                        <li className="hero-search__suggestion-item hero-search__suggestion-item--empty">
+                          <span>اضغط "بحث" للبحث المباشر عن "{location}"</span>
+                        </li>
+                      )
+                    }
+                    return matched.map((loc, i) => (
+                      <li
+                        key={i}
+                        className="hero-search__suggestion-item"
+                        onMouseDown={(e) => {
+                          e.preventDefault()
+                          setLocation(loc.name)
+                          setShowLocationSuggestions(false)
+                        }}
+                      >
+                        <MapPin size={14} className="hero-search__suggestion-pin" />
+                        <span className="hero-search__suggestion-name">{loc.name}</span>
+                        <span className="hero-search__suggestion-cat">{loc.category}</span>
+                      </li>
+                    ))
+                  })()}
                 </ul>
               )}
             </div>

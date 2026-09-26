@@ -290,3 +290,66 @@ export function formatFloorsFinishingSummary(
   return parts.join(' • ')
 }
 
+/**
+ * Normalizes Arabic text for non-literal, flexible search:
+ * - Unifies alef forms: أ, إ, آ, ٱ -> ا
+ * - Unifies taa marbuta & haa: ة -> ه
+ * - Unifies yaa & alef maksura: ى -> ي
+ * - Strips tashkeel (diacritics) & tatweel (ـ)
+ */
+export function normalizeArabic(text?: string | null): string {
+  if (!text) return ''
+  return text
+    .toLowerCase()
+    .replace(/[\u064B-\u065F\u0640]/g, '') // remove tashkeel & tatweel
+    .replace(/[أإآٱ]/g, 'ا')
+    .replace(/ة/g, 'ه')
+    .replace(/ى/g, 'ي')
+    .replace(/ؤ/g, 'و')
+    .replace(/ئ/g, 'ي')
+    .trim()
+}
+
+/**
+ * Fuzzy matches search query tokens against target text.
+ * Handles:
+ * 1. Letter normalizations (أ/ا, ة/ه, ى/ي)
+ * 2. Prefix 'ال' matching (e.g. شعبية matches الشعبية and vice versa)
+ * 3. Prefix 'شارع' / 'ش' interchangeability
+ * 4. Tokenized search: all query tokens must match somewhere in target
+ */
+export function fuzzyArabicMatch(targetText: string, searchQuery: string): boolean {
+  if (!searchQuery || !searchQuery.trim()) return true
+  if (!targetText || !targetText.trim()) return false
+
+  const normTarget = normalizeArabic(targetText)
+  const normQuery = normalizeArabic(searchQuery)
+
+  // Direct normalized substring match
+  if (normTarget.includes(normQuery)) return true
+
+  // Tokenize query words
+  const queryTokens = normQuery.split(/\s+/).filter(Boolean)
+  const targetWords = normTarget.split(/[\s,\.\-\/\(\)،]+/).filter(Boolean)
+
+  return queryTokens.every(qToken => {
+    // Strip leading 'ال' for root comparison
+    const cleanQ = qToken.startsWith('ال') && qToken.length > 2 ? qToken.slice(2) : qToken
+
+    return targetWords.some(tWord => {
+      const cleanT = tWord.startsWith('ال') && tWord.length > 2 ? tWord.slice(2) : tWord
+
+      if (tWord.includes(qToken) || cleanT.includes(cleanQ) || normTarget.includes(cleanQ)) {
+        return true
+      }
+
+      // Handle "شارع" and "ش"
+      if ((cleanQ === 'ش' || qToken === 'شارع') && (cleanT === 'شارع' || tWord.startsWith('ش'))) {
+        return true
+      }
+
+      return false
+    })
+  })
+}
+

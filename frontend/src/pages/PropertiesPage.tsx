@@ -4,7 +4,7 @@ import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw, Sparkles } f
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
-import { getTotalAvailableUnits } from '../utils/formatters'
+import { getTotalAvailableUnits, fuzzyArabicMatch } from '../utils/formatters'
 import PropertyCard from '../components/PropertyCard'
 import './PropertiesPage.css'
 
@@ -231,11 +231,10 @@ export default function PropertiesPage() {
       // City
       if (query.city && p.city !== query.city) return false
 
-      // District (checks district or address)
+      // District (checks district or address with fuzzy Arabic matching)
       if (query.district) {
-        const matchesDistrict = p.district?.includes(query.district)
-        const matchesAddress = p.address?.includes(query.district) || p.detailedAddress?.includes(query.district)
-        if (!matchesDistrict && !matchesAddress) return false
+        const fullLocationText = `${p.district || ''} ${p.address || ''} ${p.detailedAddress || ''} ${p.city || ''}`
+        if (!fuzzyArabicMatch(fullLocationText, query.district)) return false
       }
 
       // Property Type
@@ -304,14 +303,10 @@ export default function PropertiesPage() {
       if (query.gasMeterAvailable && !p.gasMeterAvailable) return false
       if (query.isUnderConstruction != null && p.isUnderConstruction !== query.isUnderConstruction) return false
 
-      // Search keyword
+      // Search keyword (fuzzy non-literal Arabic search)
       if (query.search && query.search.trim()) {
-        const s = query.search.trim().toLowerCase()
-        const matchTitle = p.title?.toLowerCase().includes(s)
-        const matchAddr  = p.address?.toLowerCase().includes(s)
-        const matchDet   = p.detailedAddress?.toLowerCase().includes(s)
-        const matchDist  = p.district?.toLowerCase().includes(s)
-        if (!matchTitle && !matchAddr && !matchDet && !matchDist) return false
+        const fullText = `${p.title || ''} ${p.district || ''} ${p.address || ''} ${p.detailedAddress || ''} ${p.city || ''} ${(p as any).description || ''}`
+        if (!fuzzyArabicMatch(fullText, query.search)) return false
       }
 
       return true
