@@ -42,7 +42,7 @@ export default function HomePage() {
             منصة عقارية موثوقة ومتكاملة بالمحلة الكبرى
           </div>
           <h1 className="hero__title">
-            استكشف بيتك الجديد
+            ابحث عن عقارك المثالي
             <span className="hero__title-accent"> للبيع أو الإيجار</span>
           </h1>
           <p className="hero__subtitle">
