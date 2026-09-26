@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
-import { SlidersHorizontal, X, Search, Map, List, Check, RotateCcw, Sparkles } from 'lucide-react'
+import { SlidersHorizontal, X, Search, Map as MapIcon, List, Check, RotateCcw, Sparkles, MapPin } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
-import { getTotalAvailableUnits, fuzzyArabicMatch } from '../utils/formatters'
+import { getTotalAvailableUnits, fuzzyArabicMatch, normalizeArabic } from '../utils/formatters'
 import PropertyCard from '../components/PropertyCard'
 import './PropertiesPage.css'
 
@@ -92,6 +92,29 @@ const SORT_OPTS = [
   { val: 'area_asc',   label: 'المساحة: من الأصغر للأكبر' },
 ]
 
+interface LocationItem {
+  name: string
+  category: 'حي' | 'شارع' | 'معلم' | 'مدينة'
+}
+
+const STATIC_LOCATIONS: LocationItem[] = [
+  { name: 'منشية البكري', category: 'حي' },
+  { name: 'الشعبية', category: 'حي' },
+  { name: 'الجمهورية', category: 'حي' },
+  { name: 'شكري القوتلي', category: 'حي' },
+  { name: 'أبو راضي', category: 'حي' },
+  { name: 'الرجبي', category: 'حي' },
+  { name: 'شارع البحر', category: 'شارع' },
+  { name: 'شارع الترعة', category: 'شارع' },
+  { name: 'شارع جمال عبدالناصر', category: 'شارع' },
+  { name: 'حي النخيل', category: 'معلم' },
+  { name: 'شارع الحنفي', category: 'شارع' },
+  { name: 'شارع سعد محمد سمك', category: 'شارع' },
+  { name: 'المنشية الجديدة', category: 'حي' },
+  { name: 'منشأة الزهراء', category: 'حي' },
+  { name: 'الوابورات', category: 'حي' },
+  { name: 'المحلة الكبرى', category: 'مدينة' },
+]
 
 export default function PropertiesPage() {
   const [searchParams] = useSearchParams()
@@ -103,6 +126,64 @@ export default function PropertiesPage() {
 
   const [displayLimit, setDisplayLimit] = useState(24)
   const sentinelRef = useRef<HTMLDivElement | null>(null)
+
+  // Search input autocomplete suggestions
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false)
+  const searchWrapRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (searchWrapRef.current && !searchWrapRef.current.contains(e.target as Node)) {
+        setShowSearchSuggestions(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // Aggregate curated + rawItems registered locations
+  const dynamicLocations = useMemo<LocationItem[]>(() => {
+    const locMap = new Map<string, LocationItem>()
+
+    const addLoc = (rawName?: string | null, category: LocationItem['category'] = 'شارع') => {
+      if (!rawName) return
+      const clean = rawName.trim().replace(/^[\-–,،\.\s]+|[\-–,،\.\s]+$/g, '')
+      if (clean.length < 2 || clean === 'null' || !isNaN(Number(clean))) return
+      const norm = normalizeArabic(clean)
+      if (!locMap.has(norm)) {
+        locMap.set(norm, { name: clean, category })
+      }
+    }
+
+    STATIC_LOCATIONS.forEach(loc => addLoc(loc.name, loc.category))
+
+    rawItems.forEach(p => {
+      if (p.district) addLoc(p.district, 'حي')
+      if (p.address) {
+        addLoc(p.address, 'شارع')
+        const parts = p.address.split(/(?:متفرع من|جانبي|امتداد|عمومي|\-|\/|،)/)
+        if (parts.length > 1) {
+          parts.forEach(pt => addLoc(pt, 'شارع'))
+        }
+      }
+      if (p.detailedAddress) {
+        const isLandmark = /بجوار|امام|خلف|مسجد|مستشفى|صيدلية|برج|سنترال|ميدان/.test(p.detailedAddress)
+        addLoc(p.detailedAddress, isLandmark ? 'معلم' : 'شارع')
+        const parts = p.detailedAddress.split(/(?:بجوار|امام|خلف|قريب من|\-|\/|،)/)
+        if (parts.length > 1) {
+          parts.forEach(pt => addLoc(pt, 'معلم'))
+        }
+      }
+    })
+
+    return Array.from(locMap.values())
+  }, [rawItems])
+
+  const matchedSearchLocations = useMemo(() => {
+    const s = query.search?.trim()
+    if (!s) return []
+    return dynamicLocations.filter(loc => fuzzyArabicMatch(loc.name, s)).slice(0, 8)
+  }, [dynamicLocations, query.search])
 
   // Synchronize initial query with URL search params
   useEffect(() => {
@@ -601,7 +682,7 @@ export default function PropertiesPage() {
                 <List size={15} /> القائمة
               </button>
               <Link to="/map" className="props-view-tab">
-                <Map size={15} /> الخريطة
+                <MapIcon size={15} /> الخريطة
               </Link>
             </div>
             {/* Filter toggle */}
@@ -624,6 +705,71 @@ export default function PropertiesPage() {
                 مسح الفلاتر
               </button>
             )}
+          </div>
+        </div>
+      </div>
+
+      {/* Prominent Search Bar (Always Visible) */}
+      <div className="props-search-bar-section">
+        <div className="container">
+          <div className="props-search-bar-row">
+            {/* Search Input Box */}
+            <div className="props-search-box" ref={searchWrapRef}>
+              <Search size={19} className="props-search-icon" />
+              <input
+                type="text"
+                className="props-search-input"
+                placeholder="ابحث باسم الشارع، الحي، أو العقار (مثل: ش احمد قنديل، الشعبية، منشية البكري)..."
+                value={query.search ?? ''}
+                onChange={e => {
+                  set('search', e.target.value)
+                  setShowSearchSuggestions(true)
+                }}
+                onFocus={() => setShowSearchSuggestions(true)}
+              />
+              {query.search && (
+                <button
+                  type="button"
+                  className="props-search-clear-btn"
+                  onClick={() => set('search', '')}
+                  title="مسح البحث"
+                >
+                  <X size={15} />
+                </button>
+              )}
+
+              {/* Suggestions Dropdown */}
+              {showSearchSuggestions && matchedSearchLocations.length > 0 && (
+                <ul className="props-search-suggestions">
+                  {matchedSearchLocations.map((loc, i) => (
+                    <li
+                      key={i}
+                      className="props-search-suggestion-item"
+                      onMouseDown={(e) => {
+                        e.preventDefault()
+                        set('search', loc.name)
+                        setShowSearchSuggestions(false)
+                      }}
+                    >
+                      <MapPin size={14} className="props-search-suggestion-pin" />
+                      <span className="props-search-suggestion-name">{loc.name}</span>
+                      <span className="props-search-suggestion-cat">{loc.category}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+
+            {/* Advanced Filters Button */}
+            <button
+              type="button"
+              className={`btn props-search-filter-btn ${showFilters || hasFilters ? 'active' : ''}`}
+              onClick={() => setShowFilters(s => !s)}
+            >
+              <SlidersHorizontal size={16} />
+              <span>فلاتر متقدمة</span>
+              {hasFilters && <span className="filter-badge-count">{activeFilterCount}</span>}
+            </button>
           </div>
         </div>
       </div>
@@ -668,23 +814,6 @@ export default function PropertiesPage() {
       {/* Filter bar */}
       <div className={`filter-bar ${showFilters ? 'open' : ''}`}>
         <div className="container filter-bar__inner">
-
-          {/* Quick Search */}
-          <div className="filter-search-box">
-            <Search size={18} className="filter-search-icon" />
-            <input
-              type="text"
-              className="filter-search-input"
-              placeholder="ابحث باسم العقار، الشارع، أو الحي (مثال: الشعبية، المأمون، الفلل)..."
-              value={query.search ?? ''}
-              onChange={e => set('search', e.target.value)}
-            />
-            {query.search && (
-              <button className="filter-search-clear" onClick={() => set('search', '')}>
-                <X size={14} />
-              </button>
-            )}
-          </div>
 
           {/* Primary Filters Row */}
           <div className="filter-row">
