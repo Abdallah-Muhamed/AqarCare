@@ -1,137 +1,176 @@
-# AqarCare – Real Estate Management Platform
+# 🏢 AqarCare (عقار كير) – Modern Real Estate Platform
 
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript 5](https://img.shields.io/badge/TypeScript-5.5-3178C6?style=flat&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vercel Deployment](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=flat&logo=vercel)](https://aqar-care.vercel.app)
+[![Vite](https://img.shields.io/badge/Vite-5.4-646CFF?style=flat&logo=vite&logoColor=white)](https://vitejs.dev/)
+[![MapLibre GL](https://img.shields.io/badge/MapLibre-GL-3887BE?style=flat&logo=maplibre&logoColor=white)](https://maplibre.org/)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=flat&logo=vercel)](https://aqar-care.vercel.app)
+
+> **AqarCare (عقار كير)** is a full-stack, enterprise-grade real estate platform crafted specifically for the Egyptian market (focusing on El Mahalla El Kubra and Gharbia Governorate). Built with an **ASP.NET Core 8 Web API** and a high-performance **React 18 / TypeScript / Vite** frontend.
+
+🌐 **Live Demo:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)
 
 ---
 
-## Overview
-AqarCare is a full‑stack real‑estate platform built with **ASP.NET Core 8** (C#) and **React 18**. It provides a modern UI for property browsing, an AI‑driven sales broker, and an interactive map for the city of Al‑Sha‘biyah. The solution demonstrates high‑performance server‑side caching, SEO‑ready rendering, and a clean separation of concerns suitable for enterprise‑grade applications.
+## 🌟 Highlights & Key Features
+
+### 🔍 Unified Smart Search Experience
+- **PropertyFinder & Bayut-Inspired UX:** Identical search bar across both Homepage and Properties catalog (`/properties`).
+- **Dynamic Street & Landmark Autocomplete:** Aggregates registered districts, addresses, and landmarks from live properties alongside curated Mahalla neighborhoods.
+- **Fuzzy Arabic Search (`fuzzyArabicMatch`):** Tolerates common spelling variations (أ/إ/ا، ة/ه، ى/ي) and finds streets and properties even with partial words.
+- **Full Two-Way URL Sync:** Real-time synchronization between search parameters, URL query strings, and instant client-side property filtering.
+- **Quick Budget & Feature Chips:** 1-click filters for price thresholds, delivery status (Immediate / Under Construction), low floor preference, and elevator availability.
+
+### 🗺️ Interactive Map (MapLibre GL)
+- **Fluid Vector Mapping:** Georeferenced coordinates with custom camera fly-to animations and multi-zoom level precision.
+- **Type-Specific Markers & Labels:**
+  - **Land (`أرض`):** Custom SVG `LandPlot` vector marker with floating `أرض` pill.
+  - **Houses (`منزل`):** Distinctive residential building icon with floating `منزل` pill.
+  - **Commercial Shops (`محل`):** Storefront icon with floating `محل` pill.
+  - **Apartments (`شقة`):** Classic building pin with live finishing badges (`عظم` / `نص` / `تشطيب`).
+- **Responsive Overlays:** Interactive rich popups on desktop and smooth bottom sliding drawers on mobile devices.
+
+### 🏘️ Domain-Specific Property Modeling
+- **Apartments & Towers:** Granular floor-by-floor specifications, individual floor pricing (Cash & Installment), bedroom/bathroom counts, and elevator / utility meter status.
+- **Houses & Multi-Story Buildings:** Multi-unit breakdown (finished, semi-finished, core-shell apartments, ground floor shops) with price per square meter hidden for clarity.
+- **Land Parcels:** Detailed frontage length, street width, and official building permit verification.
+- **Commercial Units:** High-visibility retail and office listings with flexible financing options.
+
+### 🎨 Finishing Packages & Cost Estimator
+- Turnkey finishing packages (Economy, Modern, Luxury, Ultra Lux) with price-per-square-meter calculations and itemized work scopes.
+
+### ⚡ Performance & Mobile-First UX
+- **Zero Layout Shifts:** High-quality architectural SVG and WebP fallback placeholders preventing broken image boxes.
+- **Client-Side Instant Filtering:** Sub-millisecond response times across thousands of units with in-memory caching.
+- **1-Click WhatsApp Lead Generation:** Pre-formatted contextual inquiry messages containing unit ID, title, and price.
 
 ---
 
-## Key Features
-- **AI Sales Broker** – Conversational assistant powered by Groq Cloud that understands Egyptian Arabic queries and suggests suitable properties.
-- **Interactive Map** – MapLibre‑GL based map with colour‑coded markers, filter panel, and mobile‑first drawer.
-- **Multi‑Floor & House Management** – Granular control over tower floors, finishing levels, and standalone house units.
-- **Performance Optimisation** – In‑memory caching, Brotli/Gzip compression, and progressive rendering for fast page loads.
-- **Responsive Design** – Mobile‑first UI with glass‑morphism effects, smooth animations, and adaptive layout.
-- **Comprehensive API** – Swagger‑documented REST endpoints for properties, maps, and admin operations.
-- **CI/CD Ready** – Deployable to Vercel (frontend) and RunASP (backend) with zero‑downtime updates.
+## 🏗️ Architecture & Repository Structure
 
----
-
-## Architecture Overview
 ```
 AqarCare/
-├─ AqarCare/                # ASP.NET Core 8 Web API
-│   ├─ Controllers/        # API Controllers (Properties, AI Broker, Maps)
-│   ├─ Data/               # EF Core DbContext & Entities
-│   ├─ Services/           # Business logic (PropertyService, AIBrokerService)
-│   ├─ Middleware/         # API‑Key authentication
-│   └─ appsettings.json    # Configuration (connection string, API keys)
-├─ frontend/                # React 18 + TypeScript + Vite
-│   ├─ src/
-│   │   ├─ components/     # Reusable UI components (cards, map, chat)
-│   │   ├─ pages/          # Route pages (Home, Properties, Map, Admin)
-│   │   ├─ api/            # API client wrappers
-│   │   └─ utils/          # SEO helpers, formatters
-│   └─ public/              # static assets (robots.txt, sitemap.xml)
-└─ README.md                # This document
+├── AqarCare/                    # ASP.NET Core 8 Web API
+│   ├── Controllers/            # API Endpoints (Properties, Maps, Media, Admin)
+│   ├── Data/                   # EF Core AppDbContext & Database Entities
+│   ├── Models/                 # Domain Entities (Property, Floor, Media, CityMap)
+│   ├── DTOs/                   # Request/Response Data Transfer Objects
+│   ├── Services/               # Business Logic & Cloudinary Integrations
+│   ├── Middleware/             # API Key Security & Global Error Handling
+│   └── appsettings.json        # Database Connection & Configuration
+├── frontend/                   # React 18 + TypeScript + Vite Client
+│   ├── src/
+│   │   ├── api/                # Typed API client functions
+│   │   ├── components/         # Reusable UI (HeroSearchBar, PropertyCard, ImageGallery)
+│   │   │   ├── home/           # Homepage-specific components
+│   │   │   ├── map/            # MapLibre GL components & layer controls
+│   │   │   └── admin/          # Admin management modals & pickers
+│   │   ├── constants/          # Static locations & realistic placeholder configs
+│   │   ├── pages/              # Routes (Home, Properties, Detail, Map, Packages, Admin)
+│   │   ├── types/              # TypeScript interfaces & query schemas
+│   │   └── utils/              # Arabic normalization, formatters & SEO helpers
+│   ├── public/                 # Static assets, logos, and architectural renders
+│   └── vite.config.ts          # Vite build & proxy settings
+├── FB_MARKETING_PLAN.md        # Comprehensive Facebook advertising & organic strategy
+├── DEPLOYMENT.md               # Production deployment manual
+└── README.md                   # Platform documentation
 ```
-*An optional architecture diagram can be added here.*
 
 ---
 
-## Tech Stack
-**Backend**
-- ASP.NET Core 8 (C#)
-- Entity Framework Core 8 (SQL Server)
-- In‑memory caching (`IMemoryCache`)
-- Response compression (Brotli & Gzip)
-- Groq Cloud LLM for AI broker
-- Cloudinary .NET SDK for media storage
-- RunASP for hosting
-
-**Frontend**
-- React 18 with TypeScript
-- Vite 5 (fast bundling)
-- MapLibre GL for interactive maps
-- Lucide React icons
-- Modern CSS with custom variables & glass‑morphism effects
-- Vercel for deployment
-
----
-
-## Getting Started
-### Prerequisites
-- [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
-- Node.js 18+ and npm
-- SQL Server (local or Azure)
+## 💻 Tech Stack
 
 ### Backend
-```bash
-cd AqarCare
-# Copy the template settings and fill in your connection string & API keys
-cp appsettings.Template.json appsettings.json
-# Restore packages and apply migrations
-dotnet restore
-dotnet ef database update
-# Run the API (Swagger available at /swagger)
-dotnet run
-```
-The API listens on `http://localhost:5041` by default.
+- **Framework:** .NET 8.0 (C#)
+- **Data Access:** Entity Framework Core 8.0
+- **Database:** Microsoft SQL Server
+- **Caching:** In-Memory Caching (`IMemoryCache`)
+- **Compression:** Response Compression (Brotli & Gzip)
+- **Media Storage:** Cloudinary .NET SDK
+- **Documentation:** Swagger / OpenAPI
 
 ### Frontend
+- **Framework:** React 18 with TypeScript
+- **Bundler:** Vite 5
+- **Routing:** React Router v6
+- **Mapping:** MapLibre GL
+- **Icons:** Lucide React
+- **Styling:** Custom CSS with CSS Variables & Glassmorphism
+- **Deployment:** Vercel
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
+- [Node.js](https://nodejs.org/) (v18 or higher) & npm
+- SQL Server (LocalDB, Express, or Azure SQL)
+
+### 1. Backend Setup
 ```bash
+# Navigate to the API project
+cd AqarCare
+
+# Copy settings template and configure connection string
+cp appsettings.Template.json appsettings.json
+
+# Restore dependencies & apply migrations
+dotnet restore
+dotnet ef database update
+
+# Run the backend API
+dotnet run
+```
+*API will run by default at `http://localhost:5041` with Swagger at `http://localhost:5041/swagger`.*
+
+### 2. Frontend Setup
+```bash
+# Navigate to the frontend directory
 cd ../frontend
+
+# Install dependencies
 npm install
+
+# Start the Vite development server
 npm run dev
 ```
-Open `http://localhost:5173` to view the application.
+*The client app will be accessible at `http://localhost:5173`.*
 
 ---
 
-## API Documentation
-The API is fully described in Swagger UI:
-- **Base URL:** `http://localhost:5041`
-- **Swagger:** `http://localhost:5041/swagger`
+## 📡 Core API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `GET` | `/api/properties` | List published properties (cached, supports pagination) |
-| `GET` | `/api/properties/{id}` | Retrieve detailed property information |
-| `POST` | `/api/ai/broker` | Chat with the AI sales broker |
-| `GET` | `/api/maps/{citySlug}` | Map data for the selected city |
-| `GET` | `/api/admin/properties` | Admin‑only list of all properties (requires `X‑Api‑Key`) |
-| `POST` | `/api/admin/properties` | Create a new property (admin) |
-| `PUT` | `/api/admin/properties/{id}` | Update an existing property (admin) |
-| `DELETE` | `/api/admin/properties/{id}` | Delete a property (admin) |
-| `POST` | `/api/admin/media/upload` | Upload media to Cloudinary (admin) |
+| Method | Endpoint | Description | Auth |
+|:---|:---|:---|:---|
+| `GET` | `/api/properties` | Fetch properties list (with pagination, sorting & filters) | Public |
+| `GET` | `/api/properties/{id}` | Retrieve comprehensive property details & floors | Public |
+| `GET` | `/api/maps/{citySlug}` | Fetch interactive map data & georeferenced units | Public |
+| `GET` | `/api/admin/properties` | Retrieve full admin properties dataset | `X-Api-Key` |
+| `POST` | `/api/admin/properties` | Create a new property with floor matrix | `X-Api-Key` |
+| `PUT` | `/api/admin/properties/{id}` | Update existing property data and status | `X-Api-Key` |
+| `DELETE` | `/api/admin/properties/{id}` | Delete a property record | `X-Api-Key` |
+| `POST` | `/api/admin/media/upload` | Upload photos and video media to Cloudinary | `X-Api-Key` |
 
 ---
 
-## Contributing
-Contributions are welcome. Please follow these steps:
-1. Fork the repository.
-2. Create a feature branch (`git checkout -b feature/your-feature`).
-3. Ensure the solution builds and all tests pass.
-4. Open a Pull Request with a clear description of changes.
+## 📄 Facebook Marketing & Lead Plan
+
+A complete advertising and organic growth plan tailored for the Egyptian real estate market is available in:
+👉 [FB_MARKETING_PLAN.md](file:///c:/Users/user/Documents/AspNetCore/AqarCare/FB_MARKETING_PLAN.md)
+
+It includes budget distribution, precise audience targeting (Mahalla/Gharbia radius), ready-to-copy Arabic ad copy for 850k apartments, installments, and residential houses, plus WhatsApp sales conversion scripts.
 
 ---
 
-## License
-This project is licensed under the **MIT License**.
+## 👨‍💻 Author & Acknowledgements
+
+Developed by **Abdallah Mohamed**
+- **GitHub:** [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)
+- **Repository:** [AqarCare](https://github.com/Abdallah-Muhamed/AqarCare)
 
 ---
 
-## About the Author
-**Abdallah Mohamed** – Full‑stack .NET developer with a focus on performance‑critical web applications.
-- GitHub: [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)
-- Portfolio: https://github.com/Abdallah-Muhamed/AqarCare
-
----
-
-*Built with passion for modern real‑estate solutions in Egypt.*
+## 📜 License
+This project is open-source and licensed under the [MIT License](LICENSE).
