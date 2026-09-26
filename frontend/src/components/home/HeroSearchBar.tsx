@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MapPin, Search, ChevronDown, X, Check, Building2 } from 'lucide-react'
 import { api } from '../../api'
 import type { PropertyListItem } from '../../types'
@@ -92,9 +92,13 @@ export default function HeroSearchBar() {
     return Array.from(locMap.values())
   }, [properties])
 
-  // Top Row States
-  const [listingType, setListingType] = useState<'Sale' | 'Rent'>('Sale')
-  const [location, setLocation] = useState('')
+  const [searchParams] = useSearchParams()
+
+  // Top Row States initialized from URL params if present
+  const [listingType, setListingType] = useState<'Sale' | 'Rent'>(
+    (searchParams.get('listingType') as 'Sale' | 'Rent') || 'Sale'
+  )
+  const [location, setLocation] = useState(searchParams.get('search') || searchParams.get('district') || '')
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
 
   // 1. Matched locations & streets
@@ -114,13 +118,63 @@ export default function HeroSearchBar() {
     }).slice(0, 4)
   }, [properties, location])
 
-  // Bottom Row States
-  const [status, setStatus] = useState<'all' | 'ready' | 'under-construction'>('all')
-  const [propertyType, setPropertyType] = useState('all')
-  const [bedrooms, setBedrooms] = useState<number | null>(null)
-  const [bathrooms, setBathrooms] = useState<number | null>(null)
-  const [minPrice, setMinPrice] = useState<string>('')
-  const [maxPrice, setMaxPrice] = useState<string>('')
+  // Bottom Row States initialized from URL params
+  const [status, setStatus] = useState<'all' | 'ready' | 'under-construction'>(() => {
+    const f = searchParams.get('filter')
+    if (f === 'ready') return 'ready'
+    if (f === 'under-construction') return 'under-construction'
+    return 'all'
+  })
+  const [propertyType, setPropertyType] = useState(searchParams.get('type') || 'all')
+  const [bedrooms, setBedrooms] = useState<number | null>(() => {
+    const b = searchParams.get('bedrooms')
+    return b ? Number(b) : null
+  })
+  const [bathrooms, setBathrooms] = useState<number | null>(() => {
+    const b = searchParams.get('bathrooms')
+    return b ? Number(b) : null
+  })
+  const [minPrice, setMinPrice] = useState<string>(searchParams.get('minPrice') || '')
+  const [maxPrice, setMaxPrice] = useState<string>(searchParams.get('maxPrice') || '')
+
+  // Sync state if URL searchParams change
+  useEffect(() => {
+    const lType = searchParams.get('listingType')
+    if (lType === 'Sale' || lType === 'Rent') {
+      setListingType(lType)
+    }
+
+    const s = searchParams.get('search') ?? searchParams.get('district')
+    if (s !== null) {
+      setLocation(s)
+    }
+
+    const f = searchParams.get('filter')
+    if (f === 'ready' || f === 'under-construction') {
+      setStatus(f)
+    } else if (!f) {
+      setStatus('all')
+    }
+
+    const t = searchParams.get('type')
+    if (t) {
+      setPropertyType(t)
+    } else {
+      setPropertyType('all')
+    }
+
+    const beds = searchParams.get('bedrooms')
+    setBedrooms(beds ? Number(beds) : null)
+
+    const baths = searchParams.get('bathrooms')
+    setBathrooms(baths ? Number(baths) : null)
+
+    const minP = searchParams.get('minPrice')
+    setMinPrice(minP || '')
+
+    const maxP = searchParams.get('maxPrice')
+    setMaxPrice(maxP || '')
+  }, [searchParams])
 
   // Popover State
   const [openDropdown, setOpenDropdown] = useState<'type' | 'rooms' | 'price' | null>(null)
