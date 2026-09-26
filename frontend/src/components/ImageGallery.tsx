@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { ChevronLeft, ChevronRight, X, ZoomIn } from 'lucide-react'
+import { getPropertyPlaceholder } from '../constants/placeholders'
 import type { PropertyMedia } from '../types'
 import './ImageGallery.css'
 
-interface Props { media: PropertyMedia[] }
+interface Props {
+  media: PropertyMedia[]
+  propertyType?: string | null
+}
 
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=800&q=80'
-
-export default function ImageGallery({ media }: Props) {
-  const list = media.length ? media : [{ id: 0, mediaType: 'Image', url: PLACEHOLDER, sortOrder: 0 }]
+export default function ImageGallery({ media, propertyType }: Props) {
+  const placeholder = getPropertyPlaceholder(propertyType)
+  const list = media.length ? media : [{ id: 0, mediaType: 'Image', url: placeholder, sortOrder: 0 }]
   const [active, setActive] = useState(0)
   const [lightbox, setLightbox] = useState(false)
   const activeMedia = list[active]

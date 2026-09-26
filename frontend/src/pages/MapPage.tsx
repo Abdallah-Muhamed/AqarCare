@@ -5,6 +5,7 @@ import { api } from '../api'
 import type { CityMap, MapFilters, MapProperty } from '../types'
 import { formatFloorsText, getTotalAvailableUnits } from '../utils/formatters'
 import { setPageSeo } from '../utils/seo'
+import { getPropertyPlaceholder } from '../constants/placeholders'
 import MapGLView from '../components/map/MapGLView'
 import './MapPage.css'
 
@@ -274,15 +275,7 @@ export default function MapPage() {
           return `يبدأ من ${min.toLocaleString('ar-EG')} جنيه`
         }
 
-        const defaultImgs: Record<string, string> = {
-          Apartment: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-          House: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
-          Villa: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
-          Land: '/land-placeholder.jpg',
-          Shop: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-          Commercial: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-        }
-        const defaultImg = defaultImgs[p.propertyType ?? ''] ?? defaultImgs.Apartment
+        const defaultImg = getPropertyPlaceholder(p.propertyType)
         const imgUrl = p.primaryImageUrl || defaultImg
 
         const hasFloors = !isLand && (((p.floors && p.floors.length > 0)) || p.floorNumber != null)

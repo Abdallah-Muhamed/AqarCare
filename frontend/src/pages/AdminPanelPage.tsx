@@ -4,6 +4,7 @@ import { API_BASE_URL } from '../constants/api';
 import MapPickerModal from '../components/admin/MapPickerModal';
 import type { PropertyFloor } from '../types';
 import { formatFloorsText, parseMultiFloorNumbers, formatFloorsFinishingSummary } from '../utils/formatters';
+import { getPropertyPlaceholder } from '../constants/placeholders';
 
 interface Property {
   id: number;
@@ -2229,13 +2230,7 @@ export default function AdminPanelPage() {
                           />
                         ) : (
                           <img 
-                            src={property.primaryImageUrl || ({
-                              House: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
-                              Villa: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
-                              Land: '/land-placeholder.jpg',
-                              Shop: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-                              Commercial: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-                            }[property.propertyType ?? ''] ?? 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80')} 
+                            src={property.primaryImageUrl || getPropertyPlaceholder(property.propertyType)} 
                             alt={property.title ?? ''} 
                           />
                         )}

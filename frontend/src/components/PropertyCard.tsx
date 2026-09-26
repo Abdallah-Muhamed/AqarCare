@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { BedDouble, Bath, Maximize2, MapPin, Star, Play } from 'lucide-react'
 import type { PropertyListItem } from '../types'
 import { formatFloorsText } from '../utils/formatters'
+import { getPropertyPlaceholder } from '../constants/placeholders'
 import './PropertyCard.css'
 
 interface Props { property: PropertyListItem }
@@ -32,15 +33,7 @@ export default function PropertyCard({ property: p }: Props) {
     : (statusBadge[p.status] ?? { label: p.status, cls: 'badge' })
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
   const [imgError, setImgError] = useState(false)
-  const placeholderImages: Record<string, string> = {
-    Apartment:  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
-    House:      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
-    Villa:      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
-    Land:       '/land-placeholder.jpg',
-    Shop:       'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-    Commercial: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
-  }
-  const placeholderImage = placeholderImages[p.propertyType ?? ''] ?? placeholderImages.Apartment
+  const placeholderImage = getPropertyPlaceholder(p.propertyType)
 
   const optimizeCloudinaryUrl = (url?: string | null) => {
     if (!url) return placeholderImage

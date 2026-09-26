@@ -5,6 +5,7 @@ import { api } from '../api'
 import type { PropertyDetail } from '../types'
 import { groupFloors } from '../utils/formatters'
 import { setPageSeo } from '../utils/seo'
+import { getPropertyPlaceholder } from '../constants/placeholders'
 import ImageGallery from '../components/ImageGallery'
 import './PropertyDetailPage.css'
 
@@ -45,7 +46,7 @@ export default function PropertyDetailPage() {
     if (prop) {
       const loc = [prop.district, prop.city].filter(Boolean).join('، ')
       const desc = prop.description || `${prop.title || 'وحدة عقارية'} في ${loc} مع خيارات كاش وتقسيط على عقار كير.`
-      const img = prop.media?.[0]?.url || 'https://aqar-care.vercel.app/logo.png'
+      const img = prop.media?.[0]?.url || getPropertyPlaceholder(prop.propertyType)
       setPageSeo({
         title: `${prop.title || 'عقار'} | عقار كير`,
         description: desc,
@@ -105,7 +106,7 @@ export default function PropertyDetailPage() {
         <div className="detail-layout">
           {/* Left — gallery + description */}
           <div className="detail-main">
-            <ImageGallery media={prop.media} />
+            <ImageGallery media={prop.media} propertyType={prop.propertyType} />
 
             <div className="detail-card">
               <h1 className="detail-title">{prop.title || 'غير محدد'}</h1>
