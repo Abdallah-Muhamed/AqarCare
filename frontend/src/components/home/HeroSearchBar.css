@@ -134,7 +134,7 @@ input[type="text"].hero-search__location-input:focus {
   color: #25312c;
 }
 
-/* Autocomplete Suggestions */
+/* Autocomplete Suggestions Container */
 .hero-search__suggestions {
   position: absolute;
   top: calc(100% + 6px);
@@ -145,10 +145,38 @@ input[type="text"].hero-search__location-input:focus {
   border-radius: 14px;
   box-shadow: 0 14px 35px rgba(45, 48, 35, 0.14);
   z-index: 100;
-  max-height: 250px;
+  max-height: 380px;
   overflow-y: auto;
-  list-style: none;
   padding: 6px 0;
+  margin: 0;
+}
+
+.hero-search__suggestions-section {
+  border-bottom: 1px solid #f0ebe1;
+  padding-bottom: 4px;
+  margin-bottom: 4px;
+}
+
+.hero-search__suggestions-section:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.hero-search__suggestions-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px 4px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #7b857d;
+  letter-spacing: 0.2px;
+}
+
+.hero-search__suggestions-list {
+  list-style: none;
+  padding: 0;
   margin: 0;
 }
 
@@ -156,7 +184,7 @@ input[type="text"].hero-search__location-input:focus {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  padding: 9px 16px;
   font-size: 0.88rem;
   font-weight: 600;
   color: #25312c;
@@ -182,6 +210,7 @@ input[type="text"].hero-search__location-input:focus {
   color: var(--clr-gold, #b7793d);
   letter-spacing: 0.2px;
   transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .hero-search__suggestion-item:hover .hero-search__suggestion-cat {
@@ -189,16 +218,93 @@ input[type="text"].hero-search__location-input:focus {
   color: #ffffff;
 }
 
-.hero-search__suggestion-item--empty {
-  cursor: default;
-  color: #718096;
-  font-size: 0.82rem;
-  justify-content: center;
+/* Property Item in Suggestions */
+.hero-search__suggestion-item--prop {
+  padding: 8px 14px;
+  gap: 12px;
 }
 
-.hero-search__suggestion-item--empty:hover {
-  background: transparent;
+.hero-search__suggestion-prop-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #f2eee6;
+  color: #2d4a3e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+
+.hero-search__suggestion-item--prop:hover .hero-search__suggestion-prop-icon {
+  background: #2d4a3e;
+  color: #ffffff;
+}
+
+.hero-search__suggestion-prop-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  text-align: right;
+}
+
+.hero-search__suggestion-prop-title {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #25312c;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hero-search__suggestion-prop-meta {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #7b857d;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hero-search__suggestion-cat--prop {
+  background: rgba(45, 74, 62, 0.08);
+  color: #2d4a3e;
+}
+
+.hero-search__suggestion-item--prop:hover .hero-search__suggestion-cat--prop {
+  background: #2d4a3e;
+  color: #ffffff;
+}
+
+/* Empty State */
+.hero-search__suggestion-empty {
+  padding: 16px 14px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   color: #718096;
+  font-size: 0.84rem;
+}
+
+.hero-search__suggestion-empty-btn {
+  background: #fbf7f0;
+  border: 1px solid var(--clr-gold, #b7793d);
+  color: #865227;
+  padding: 6px 16px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hero-search__suggestion-empty-btn:hover {
+  background: var(--clr-gold, #b7793d);
+  color: #ffffff;
 }
 
 .hero-search__suggestion-pin {

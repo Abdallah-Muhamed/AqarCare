@@ -1,7 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { MapPin, Search, ChevronDown, X, Check } from 'lucide-react'
-import { fuzzyArabicMatch } from '../../utils/formatters'
+import { MapPin, Search, ChevronDown, X, Check, Building2 } from 'lucide-react'
+import { api } from '../../api'
+import type { PropertyListItem } from '../../types'
+import { fuzzyArabicMatch, normalizeArabic } from '../../utils/formatters'
 import './HeroSearchBar.css'
 
 interface LocationItem {
@@ -39,10 +41,78 @@ const PROPERTY_TYPES = [
 export default function HeroSearchBar() {
   const navigate = useNavigate()
 
+  // Properties from Database
+  const [properties, setProperties] = useState<PropertyListItem[]>([])
+
+  useEffect(() => {
+    api.getProperties({ pageSize: 1000 })
+      .then(res => {
+        if (res && res.items) setProperties(res.items)
+      })
+      .catch(() => {})
+  }, [])
+
+  // Aggregate curated + database registered locations
+  const dynamicLocations = useMemo<LocationItem[]>(() => {
+    const locMap = new Map<string, LocationItem>()
+
+    const addLoc = (rawName?: string | null, category: LocationItem['category'] = 'شارع') => {
+      if (!rawName) return
+      const clean = rawName.trim().replace(/^[\-–,،\.\s]+|[\-–,،\.\s]+$/g, '')
+      if (clean.length < 2 || clean === 'null' || !isNaN(Number(clean))) return
+      const norm = normalizeArabic(clean)
+      if (!locMap.has(norm)) {
+        locMap.set(norm, { name: clean, category })
+      }
+    }
+
+    // 1. Curated main districts and landmarks of Al-Mahalla
+    SUGGESTED_LOCATIONS.forEach(loc => addLoc(loc.name, loc.category))
+
+    // 2. Dynamically extract from real registered properties in the database
+    properties.forEach(p => {
+      if (p.district) addLoc(p.district, 'حي')
+      if (p.address) {
+        addLoc(p.address, 'شارع')
+        const parts = p.address.split(/(?:متفرع من|جانبي|امتداد|عمومي|\-|\/|،)/)
+        if (parts.length > 1) {
+          parts.forEach(pt => addLoc(pt, 'شارع'))
+        }
+      }
+      if (p.detailedAddress) {
+        const isLandmark = /بجوار|امام|خلف|مسجد|مستشفى|صيدلية|برج|سنترال|ميدان/.test(p.detailedAddress)
+        addLoc(p.detailedAddress, isLandmark ? 'معلم' : 'شارع')
+        const parts = p.detailedAddress.split(/(?:بجوار|امام|خلف|قريب من|\-|\/|،)/)
+        if (parts.length > 1) {
+          parts.forEach(pt => addLoc(pt, 'معلم'))
+        }
+      }
+    })
+
+    return Array.from(locMap.values())
+  }, [properties])
+
   // Top Row States
   const [listingType, setListingType] = useState<'Sale' | 'Rent'>('Sale')
   const [location, setLocation] = useState('')
   const [showLocationSuggestions, setShowLocationSuggestions] = useState(false)
+
+  // 1. Matched locations & streets
+  const matchedLocations = useMemo(() => {
+    if (!location || !location.trim()) {
+      return SUGGESTED_LOCATIONS.slice(0, 8)
+    }
+    return dynamicLocations.filter(loc => fuzzyArabicMatch(loc.name, location)).slice(0, 8)
+  }, [dynamicLocations, location])
+
+  // 2. Matched real properties (if user typed search text)
+  const matchedProperties = useMemo(() => {
+    if (!location || !location.trim()) return []
+    return properties.filter(p => {
+      const fullText = `${p.title || ''} ${p.district || ''} ${p.address || ''} ${p.detailedAddress || ''} ${p.city || ''}`
+      return fuzzyArabicMatch(fullText, location)
+    }).slice(0, 4)
+  }, [properties, location])
 
   // Bottom Row States
   const [status, setStatus] = useState<'all' | 'ready' | 'under-construction'>('all')
@@ -102,6 +172,42 @@ export default function HeroSearchBar() {
       params.set('bedrooms', bedrooms.toString())
     }
 
+    if (bathrooms != null) {
+      params.set('bathrooms', bathrooms.toString())
+    }
+
+    navigate(`/properties?${params.toString()}`)
+  }
+
+  // Handle Location Selection from Suggestions
+  const handleSelectLocation = (locName: string) => {
+    setLocation(locName)
+    setShowLocationSuggestions(false)
+
+    const params = new URLSearchParams()
+    if (listingType) {
+      params.set('listingType', listingType)
+    }
+    if (propertyType && propertyType !== 'all') {
+      params.set('type', propertyType)
+    }
+    params.set('search', locName.trim())
+
+    if (status === 'under-construction') {
+      params.set('filter', 'under-construction')
+    } else if (status === 'ready') {
+      params.set('filter', 'ready')
+    }
+
+    if (minPrice) {
+      params.set('minPrice', minPrice)
+    }
+    if (maxPrice) {
+      params.set('maxPrice', maxPrice)
+    }
+    if (bedrooms != null) {
+      params.set('bedrooms', bedrooms.toString())
+    }
     if (bathrooms != null) {
       params.set('bathrooms', bathrooms.toString())
     }
@@ -187,35 +293,87 @@ export default function HeroSearchBar() {
 
               {/* Suggestions dropdown */}
               {showLocationSuggestions && (
-                <ul className="hero-search__suggestions">
-                  {(() => {
-                    const matched = SUGGESTED_LOCATIONS.filter(
-                      loc => !location || fuzzyArabicMatch(loc.name, location)
-                    )
-                    if (matched.length === 0) {
-                      return (
-                        <li className="hero-search__suggestion-item hero-search__suggestion-item--empty">
-                          <span>اضغط "بحث" للبحث المباشر عن "{location}"</span>
-                        </li>
-                      )
-                    }
-                    return matched.map((loc, i) => (
-                      <li
-                        key={i}
-                        className="hero-search__suggestion-item"
+                <div className="hero-search__suggestions">
+                  {/* Locations / Streets Section */}
+                  {matchedLocations.length > 0 && (
+                    <div className="hero-search__suggestions-section">
+                      <div className="hero-search__suggestions-header">
+                        <MapPin size={13} />
+                        <span>{location.trim() ? 'المناطق والشوارع المسجلة' : 'أشهر المناطق في المحلة الكبرى'}</span>
+                      </div>
+                      <ul className="hero-search__suggestions-list">
+                        {matchedLocations.map((loc, i) => (
+                          <li
+                            key={`loc-${i}`}
+                            className="hero-search__suggestion-item"
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              handleSelectLocation(loc.name)
+                            }}
+                          >
+                            <MapPin size={14} className="hero-search__suggestion-pin" />
+                            <span className="hero-search__suggestion-name">{loc.name}</span>
+                            <span className="hero-search__suggestion-cat">{loc.category}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Matching Real Properties Section */}
+                  {matchedProperties.length > 0 && (
+                    <div className="hero-search__suggestions-section hero-search__suggestions-section--props">
+                      <div className="hero-search__suggestions-header">
+                        <Building2 size={13} />
+                        <span>عقارات مطابقة في هذا الموقع ({matchedProperties.length})</span>
+                      </div>
+                      <ul className="hero-search__suggestions-list">
+                        {matchedProperties.map((prop) => (
+                          <li
+                            key={`prop-${prop.id}`}
+                            className="hero-search__suggestion-item hero-search__suggestion-item--prop"
+                            onMouseDown={(e) => {
+                              e.preventDefault()
+                              setShowLocationSuggestions(false)
+                              navigate(`/properties/${prop.id}`)
+                            }}
+                          >
+                            <div className="hero-search__suggestion-prop-icon">
+                              <Building2 size={16} />
+                            </div>
+                            <div className="hero-search__suggestion-prop-info">
+                              <span className="hero-search__suggestion-prop-title">{prop.title}</span>
+                              <span className="hero-search__suggestion-prop-meta">
+                                {prop.district || prop.address || prop.city}
+                                {prop.price ? ` • ${Number(prop.price).toLocaleString('ar-EG')} ج.م` : ''}
+                              </span>
+                            </div>
+                            <span className="hero-search__suggestion-cat hero-search__suggestion-cat--prop">
+                              {prop.propertyType === 'Apartment' ? 'شقة' : prop.propertyType === 'House' ? 'منزل' : prop.propertyType === 'Land' ? 'أرض' : prop.propertyType === 'Shop' ? 'محل' : 'عقار'}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Empty state */}
+                  {matchedLocations.length === 0 && matchedProperties.length === 0 && (
+                    <div className="hero-search__suggestion-empty">
+                      <span>لا توجد شوارع مسجلة تطابق "{location}"</span>
+                      <button
+                        type="button"
+                        className="hero-search__suggestion-empty-btn"
                         onMouseDown={(e) => {
                           e.preventDefault()
-                          setLocation(loc.name)
-                          setShowLocationSuggestions(false)
+                          handleSearch()
                         }}
                       >
-                        <MapPin size={14} className="hero-search__suggestion-pin" />
-                        <span className="hero-search__suggestion-name">{loc.name}</span>
-                        <span className="hero-search__suggestion-cat">{loc.category}</span>
-                      </li>
-                    ))
-                  })()}
-                </ul>
+                        اضغط هنا للبحث الشامل عن "{location}" في كل العقارات
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
             </div>
 
