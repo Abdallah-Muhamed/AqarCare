@@ -308,5 +308,4 @@ npm run build
 **Abdallah Mohamed**  
 *Full-Stack Software Engineer*
 - **GitHub:** [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)
-- **LinkedIn:** [Abdallah Mohamed](https://linkedin.com)
 - **Portfolio Repository:** [AqarCare](https://github.com/Abdallah-Muhamed/AqarCare)
