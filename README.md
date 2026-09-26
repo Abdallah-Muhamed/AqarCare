@@ -1,4 +1,4 @@
-# 🏢 AqarCare (عقار كير) – Modern Real Estate Platform
+# 🏢 AqarCare (عقار كير) – Real Estate Platform
 
 [![.NET 8](https://img.shields.io/badge/.NET-8.0-512BD4?style=flat&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
 [![React 18](https://img.shields.io/badge/React-18.3-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/)
@@ -7,43 +7,43 @@
 [![MapLibre GL](https://img.shields.io/badge/MapLibre-GL-3887BE?style=flat&logo=maplibre&logoColor=white)](https://maplibre.org/)
 [![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-000000?style=flat&logo=vercel)](https://aqar-care.vercel.app)
 
-> **AqarCare (عقار كير)** is a full-stack, enterprise-grade real estate platform crafted specifically for the Egyptian market (focusing on El Mahalla El Kubra and Gharbia Governorate). Built with an **ASP.NET Core 8 Web API** and a high-performance **React 18 / TypeScript / Vite** frontend.
+> **AqarCare (عقار كير)** is a full-stack real estate web application built for property exploration, geographic mapping, and direct client inquiries in El Mahalla El Kubra and Gharbia Governorate. Built with an **ASP.NET Core 8 Web API** and a **React 18 / TypeScript / Vite** frontend.
 
-🌐 **Live Demo:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)
+🌐 **Live Website:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)
 
 ---
 
-## 🌟 Highlights & Key Features
+## 🌟 Key Features
 
-### 🔍 Unified Smart Search Experience
-- **PropertyFinder & Bayut-Inspired UX:** Identical search bar across both Homepage and Properties catalog (`/properties`).
-- **Dynamic Street & Landmark Autocomplete:** Aggregates registered districts, addresses, and landmarks from live properties alongside curated Mahalla neighborhoods.
+### 🔍 Unified Search & Discovery
+- **Unified Experience:** Identical, responsive search bar across both the Homepage and the Properties catalog (`/properties`).
+- **Dynamic Street & Landmark Autocomplete:** Extracts districts, streets, and landmarks directly from registered property inventory with fast suggestions.
 - **Fuzzy Arabic Search (`fuzzyArabicMatch`):** Tolerates common spelling variations (أ/إ/ا، ة/ه، ى/ي) and finds streets and properties even with partial words.
-- **Full Two-Way URL Sync:** Real-time synchronization between search parameters, URL query strings, and instant client-side property filtering.
-- **Quick Budget & Feature Chips:** 1-click filters for price thresholds, delivery status (Immediate / Under Construction), low floor preference, and elevator availability.
+- **Two-Way URL Synchronization:** Instant client-side filtering synchronized with URL parameters for shareable search links.
+- **Quick Budget & Feature Filters:** 1-click filters for budget tiers, delivery status (Immediate / Under Construction), low floor preference, and elevator availability.
 
-### 🗺️ Interactive Map (MapLibre GL)
-- **Fluid Vector Mapping:** Georeferenced coordinates with custom camera fly-to animations and multi-zoom level precision.
+### 🗺️ Interactive Geographic Map (MapLibre GL)
+- **Vector Mapping:** Georeferenced coordinates with smooth animations and multi-zoom level precision.
 - **Type-Specific Markers & Labels:**
-  - **Land (`أرض`):** Custom SVG `LandPlot` vector marker with floating `أرض` pill.
-  - **Houses (`منزل`):** Distinctive residential building icon with floating `منزل` pill.
-  - **Commercial Shops (`محل`):** Storefront icon with floating `محل` pill.
+  - **Land (`أرض`):** Custom SVG `LandPlot` vector marker with floating `أرض` badge.
+  - **Houses (`منزل`):** Distinctive residential building icon with floating `منزل` badge.
+  - **Commercial Shops (`محل`):** Storefront icon with floating `محل` badge.
   - **Apartments (`شقة`):** Classic building pin with live finishing badges (`عظم` / `نص` / `تشطيب`).
-- **Responsive Overlays:** Interactive rich popups on desktop and smooth bottom sliding drawers on mobile devices.
+- **Responsive Overlays:** Interactive desktop popups and smooth mobile bottom drawer cards.
 
-### 🏘️ Domain-Specific Property Modeling
+### 🏘️ Granular Property Modeling
 - **Apartments & Towers:** Granular floor-by-floor specifications, individual floor pricing (Cash & Installment), bedroom/bathroom counts, and elevator / utility meter status.
-- **Houses & Multi-Story Buildings:** Multi-unit breakdown (finished, semi-finished, core-shell apartments, ground floor shops) with price per square meter hidden for clarity.
+- **Houses & Multi-Story Buildings:** Multi-unit breakdown (finished, semi-finished, core-shell apartments, ground floor shops) with whole-building pricing.
 - **Land Parcels:** Detailed frontage length, street width, and official building permit verification.
 - **Commercial Units:** High-visibility retail and office listings with flexible financing options.
 
-### 🎨 Finishing Packages & Cost Estimator
+### 🎨 Finishing Packages
 - Turnkey finishing packages (Economy, Modern, Luxury, Ultra Lux) with price-per-square-meter calculations and itemized work scopes.
 
-### ⚡ Performance & Mobile-First UX
-- **Zero Layout Shifts:** High-quality architectural SVG and WebP fallback placeholders preventing broken image boxes.
-- **Client-Side Instant Filtering:** Sub-millisecond response times across thousands of units with in-memory caching.
-- **1-Click WhatsApp Lead Generation:** Pre-formatted contextual inquiry messages containing unit ID, title, and price.
+### ⚡ Performance & Mobile UX
+- **Zero Layout Shifts:** High-quality architectural fallback visuals preventing empty boxes.
+- **Client-Side Instant Filtering:** Sub-millisecond response times across property listings with in-memory caching.
+- **Direct WhatsApp Inquiries:** Pre-formatted contextual inquiry messages containing unit ID, title, and price for direct client communication.
 
 ---
 
@@ -63,16 +63,15 @@ AqarCare/
 │   ├── src/
 │   │   ├── api/                # Typed API client functions
 │   │   ├── components/         # Reusable UI (HeroSearchBar, PropertyCard, ImageGallery)
-│   │   │   ├── home/           # Homepage-specific components
+│   │   │   ├── home/           # Homepage components
 │   │   │   ├── map/            # MapLibre GL components & layer controls
 │   │   │   └── admin/          # Admin management modals & pickers
-│   │   ├── constants/          # Static locations & realistic placeholder configs
+│   │   ├── constants/          # Static locations & placeholder configs
 │   │   ├── pages/              # Routes (Home, Properties, Detail, Map, Packages, Admin)
 │   │   ├── types/              # TypeScript interfaces & query schemas
 │   │   └── utils/              # Arabic normalization, formatters & SEO helpers
 │   ├── public/                 # Static assets, logos, and architectural renders
 │   └── vite.config.ts          # Vite build & proxy settings
-├── FB_MARKETING_PLAN.md        # Comprehensive Facebook advertising & organic strategy
 ├── DEPLOYMENT.md               # Production deployment manual
 └── README.md                   # Platform documentation
 ```
@@ -155,22 +154,8 @@ npm run dev
 
 ---
 
-## 📄 Facebook Marketing & Lead Plan
-
-A complete advertising and organic growth plan tailored for the Egyptian real estate market is available in:
-👉 [FB_MARKETING_PLAN.md](file:///c:/Users/user/Documents/AspNetCore/AqarCare/FB_MARKETING_PLAN.md)
-
-It includes budget distribution, precise audience targeting (Mahalla/Gharbia radius), ready-to-copy Arabic ad copy for 850k apartments, installments, and residential houses, plus WhatsApp sales conversion scripts.
-
----
-
-## 👨‍💻 Author & Acknowledgements
+## 👨‍💻 Author
 
 Developed by **Abdallah Mohamed**
 - **GitHub:** [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)
 - **Repository:** [AqarCare](https://github.com/Abdallah-Muhamed/AqarCare)
-
----
-
-## 📜 License
-This project is open-source and licensed under the [MIT License](LICENSE).
