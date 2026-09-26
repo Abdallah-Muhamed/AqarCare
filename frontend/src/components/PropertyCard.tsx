@@ -54,7 +54,7 @@ export default function PropertyCard({ property: p }: Props) {
   const isLand  = p.propertyType === 'Land'
   const isShop  = p.propertyType === 'Shop' || p.propertyType === 'Commercial'
 
-  // Price per meter calculation
+  // Price per meter calculation (strictly hidden for House/Villa)
   const floorPpms = (!isHouse && !isLand ? (p.floors || []) : [])
     .map(f => {
       if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter
@@ -65,14 +65,14 @@ export default function PropertyCard({ property: p }: Props) {
     .filter((ppm): ppm is number => ppm != null && ppm > 0)
 
   const propBasePrice = p.price ?? p.installmentPrice
-  const unitPpm = (propBasePrice != null && p.areaSqm != null && p.areaSqm > 0)
+  const unitPpm = (!isHouse && propBasePrice != null && p.areaSqm != null && p.areaSqm > 0)
     ? Math.round(propBasePrice / p.areaSqm)
     : null
 
   const minPpm = floorPpms.length > 0 ? Math.min(...floorPpms) : unitPpm
   const maxPpm = floorPpms.length > 0 ? Math.max(...floorPpms) : unitPpm
-  const ppmText = minPpm != null
-    ? (isHouse || isLand || isShop || minPpm === maxPpm ? `${minPpm.toLocaleString('ar-EG')} ج/م²` : `يبدأ من ${minPpm.toLocaleString('ar-EG')} ج/م²`)
+  const ppmText = (!isHouse && minPpm != null)
+    ? (isLand || isShop || minPpm === maxPpm ? `${minPpm.toLocaleString('ar-EG')} ج/م²` : `يبدأ من ${minPpm.toLocaleString('ar-EG')} ج/م²`)
     : null
   
   return (
@@ -332,7 +332,7 @@ export default function PropertyCard({ property: p }: Props) {
                       )}
                     </div>
                   )}
-                  {ppmText && (
+                  {!isHouse && ppmText && (
                     <div style={{ fontSize: '0.8rem', color: 'var(--clr-gold)', fontWeight: 700, marginTop: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                       <span>📏 سعر المتر:</span>
                       <span>{ppmText}</span>
@@ -360,7 +360,7 @@ export default function PropertyCard({ property: p }: Props) {
                     💳 {instLabel} : {p.installmentPrice.toLocaleString('ar-EG')} جنيه
                   </small>
                 )}
-                {ppmText && (
+                {!isHouse && ppmText && (
                   <div style={{ fontSize: '0.8rem', color: 'var(--clr-gold)', fontWeight: 700, marginTop: '3px' }}>
                     📏 سعر المتر: {ppmText}
                   </div>

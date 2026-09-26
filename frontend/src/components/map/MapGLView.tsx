@@ -402,8 +402,20 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
           case 'Villa': return '🏡'
           case 'Shop':
           case 'Commercial': return '🏪'
-          case 'Land': return '🗺️'
+          case 'Land':
+            return `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round" class="mapgl-pin__svg-icon"><path d="m12 8 6-3-6-3v10"/><path d="m8 11.99-5.5 3.14a1 1 0 0 0 0 1.74l8.5 4.86a2 2 0 0 0 2 0l8.5-4.86a1 1 0 0 0 0-1.74L16 12"/><path d="m6.49 12.85 11.02 6.3"/><path d="M17.51 12.85 6.5 19.15"/></svg>`
           default: return '📍'
+        }
+      }
+
+      const getTypeTopLabel = (t?: string | null) => {
+        switch (t) {
+          case 'Land': return { text: 'أرض', cls: 'land' }
+          case 'House':
+          case 'Villa': return { text: 'منزل', cls: 'house' }
+          case 'Shop':
+          case 'Commercial': return { text: 'محل', cls: 'shop' }
+          default: return null // Apartments stay as is ("الشقق كما هيا")
         }
       }
 
@@ -422,11 +434,14 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
       filtered.forEach(prop => {
         const [lon, lat] = propToLonLat(prop.x, prop.y)
         const typeIcon = getTypeIcon(prop.propertyType)
-        const finishing = getFinishingInfo(prop.finishingStatus)
+        const topLabel = getTypeTopLabel(prop.propertyType)
+        const isApartment = !prop.propertyType || prop.propertyType === 'Apartment'
+        const finishing = isApartment ? getFinishingInfo(prop.finishingStatus) : null
 
         const el = document.createElement('div')
         el.className = `mapgl-pin mapgl-pin--${prop.status}`
         el.innerHTML = `
+          ${topLabel ? `<div class="mapgl-pin__top-pill mapgl-pin__top-pill--${topLabel.cls}">${topLabel.text}</div>` : ''}
           <div class="mapgl-pin__head">
             <span class="mapgl-pin__icon">${typeIcon}</span>
             ${finishing ? `<span class="mapgl-pin__badge mapgl-pin__badge--${finishing.cls}">${finishing.text}</span>` : ''}

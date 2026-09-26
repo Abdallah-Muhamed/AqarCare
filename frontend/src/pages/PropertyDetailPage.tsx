@@ -523,7 +523,7 @@ export default function PropertyDetailPage() {
                                             💳 تقسيط: {item.installmentPrice.toLocaleString('ar-EG')} <span style={{ fontSize: '0.75rem', fontWeight: 600 }}>جنيه</span>
                                           </div>
                                         )}
-                                        {(() => {
+                                        {!isHouse && (() => {
                                           const itemPpm = item.pricePerMeter ?? (
                                             (item.price ?? item.installmentPrice) && item.areaSqm && item.areaSqm > 0
                                               ? Math.round((item.price ?? item.installmentPrice)! / item.areaSqm)
@@ -638,7 +638,7 @@ export default function PropertyDetailPage() {
                   </>
                 );
               })()}
-              {(() => {
+              {!isHouse && (() => {
                 const floorPpms = (!isHouse && !isLand ? (prop.floors || []) : [])
                   .map(f => {
                     if (f.pricePerMeter != null && f.pricePerMeter > 0) return f.pricePerMeter;
