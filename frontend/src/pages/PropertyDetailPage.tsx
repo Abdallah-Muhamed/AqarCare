@@ -309,17 +309,78 @@ export default function PropertyDetailPage() {
                   </div>
                 )}
 
-                {/* Floor number: only for single unit without floors, not for House or Land */}
-                {!isHouse && !isLand && prop.floorNumber != null && (!prop.floors || prop.floors.length === 0) && (
+                {/* Floor number: only for single unit without floors, not for House, Land, or Shop */}
+                {!isHouse && !isLand && !isShop && prop.floorNumber != null && (!prop.floors || prop.floors.length === 0) && (
                   <div className="detail-spec"><Building2 size={18} /><div><strong>{prop.floorNumber === 0 ? 'الأرضي' : prop.floorNumber}</strong><small>رقم الدور</small></div></div>
                 )}
 
                 {!isLand && (
                   <div className="detail-spec"><ArrowUpDown size={18} /><div><strong>{prop.elevatorAvailable ? 'متوفر' : 'غير متوفر'}</strong><small>أسانسير</small></div></div>
                 )}
-                <div className="detail-spec"><Droplets size={18} /><div><strong>{prop.waterMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد مياه</small></div></div>
-                <div className="detail-spec"><Zap size={18} /><div><strong>{prop.electricityMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد كهرباء</small></div></div>
-                <div className="detail-spec"><Flame size={18} /><div><strong>{prop.gasMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد غاز</small></div></div>
+                {!isLand ? (
+                  <>
+                    <div className="detail-spec"><Droplets size={18} /><div><strong>{prop.waterMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد مياه</small></div></div>
+                    <div className="detail-spec"><Zap size={18} /><div><strong>{prop.electricityMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد كهرباء</small></div></div>
+                    <div className="detail-spec"><Flame size={18} /><div><strong>{prop.gasMeterAvailable ? 'متاح' : 'غير متاح'}</strong><small>عداد غاز</small></div></div>
+                  </>
+                ) : (
+                  <>
+                    {prop.frontageLength != null && prop.frontageLength > 0 && (
+                      <div className="detail-spec" style={{ borderColor: 'rgba(30,58,138,0.3)', background: 'rgba(30,58,138,0.04)' }}>
+                        <span style={{ fontSize: '1.1rem' }}>📏</span>
+                        <div>
+                          <strong style={{ color: '#1e3a8a' }}>{prop.frontageLength} متر</strong>
+                          <small>طول الواجهة</small>
+                        </div>
+                      </div>
+                    )}
+                    <div className="detail-spec" style={{ borderColor: prop.hasBuildingLicense ? 'rgba(5,150,105,0.3)' : undefined, background: prop.hasBuildingLicense ? 'rgba(5,150,105,0.04)' : undefined }}>
+                      <span style={{ fontSize: '1.1rem' }}>📜</span>
+                      <div>
+                        <strong style={{ color: prop.hasBuildingLicense ? '#047857' : undefined }}>
+                          {prop.hasBuildingLicense ? 'يوجد رخصة بناء' : 'بدون رخصة بناء'}
+                        </strong>
+                        <small>رخصة البناء</small>
+                      </div>
+                    </div>
+                    {prop.streetWidth && (
+                      <div className="detail-spec">
+                        <span style={{ fontSize: '1.1rem' }}>🛣️</span>
+                        <div>
+                          <strong>{prop.streetWidth}</strong>
+                          <small>عرض الشارع</small>
+                        </div>
+                      </div>
+                    )}
+                    {prop.frontageWidth != null && prop.frontageWidth > 0 && (
+                      <div className="detail-spec">
+                        <span style={{ fontSize: '1.1rem' }}>📐</span>
+                        <div>
+                          <strong>{prop.frontageWidth} متر</strong>
+                          <small>عرض / عمق الأرض</small>
+                        </div>
+                      </div>
+                    )}
+                    {prop.hasElectricity && (
+                      <div className="detail-spec">
+                        <Zap size={18} />
+                        <div><strong>متوفر</strong><small>كهرباء</small></div>
+                      </div>
+                    )}
+                    {prop.hasWater && (
+                      <div className="detail-spec">
+                        <Droplets size={18} />
+                        <div><strong>متوفر</strong><small>مياه</small></div>
+                      </div>
+                    )}
+                    {prop.hasSewerage && (
+                      <div className="detail-spec">
+                        <span style={{ fontSize: '1.1rem' }}>🚽</span>
+                        <div><strong>متوفر</strong><small>صرف صحي</small></div>
+                      </div>
+                    )}
+                  </>
+                )}
                 <div className="detail-spec"><CheckCircle2 size={18} /><div><strong>{prop.installmentAvailable ? 'متاح' : 'غير متاح'}</strong><small>تقسيط</small></div></div>
                 {(() => {
                   const availableFloors = !isHouse && !isLand ? (prop.floors?.filter(f => f.isAvailable) ?? []) : [];

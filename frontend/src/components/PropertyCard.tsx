@@ -32,7 +32,15 @@ export default function PropertyCard({ property: p }: Props) {
     : (statusBadge[p.status] ?? { label: p.status, cls: 'badge' })
   const isVideo = p.primaryImageUrl?.match(/\.(mp4|webm|ogg|mov)$/i) || false
   const [imgError, setImgError] = useState(false)
-  const placeholderImage = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'
+  const placeholderImages: Record<string, string> = {
+    Apartment:  'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80',
+    House:      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
+    Villa:      'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
+    Land:       '/land-placeholder.jpg',
+    Shop:       'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
+    Commercial: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
+  }
+  const placeholderImage = placeholderImages[p.propertyType ?? ''] ?? placeholderImages.Apartment
 
   const optimizeCloudinaryUrl = (url?: string | null) => {
     if (!url) return placeholderImage
@@ -113,7 +121,7 @@ export default function PropertyCard({ property: p }: Props) {
         {p.isFeatured && !isSold && (
           <div className="prop-card__featured"><Star size={12} fill="currentColor" />مميز</div>
         )}
-        {p.isUnderConstruction && !isSold && (
+        {p.isUnderConstruction && !isLand && !isSold && (
           <div className="prop-card__featured" style={{ right: p.isFeatured ? '74px' : '12px', background: '#fffbeb', color: '#b45309' }}>
             🏗️ تحت الإنشاء
           </div>
@@ -176,9 +184,31 @@ export default function PropertyCard({ property: p }: Props) {
                 {p.areaSqm ?? '—'} م²
               </div>
             </>
+          ) : isLand ? (
+            <>
+              <div className="prop-card__spec">
+                <Maximize2 size={15} />
+                {p.areaSqm ?? '—'} م²
+              </div>
+              {p.frontageLength != null && p.frontageLength > 0 && (
+                <div className="prop-card__spec" style={{ fontWeight: 700, color: '#1e3a8a' }} title="طول الواجهة">
+                  📏 واجهة {p.frontageLength} م
+                </div>
+              )}
+              {p.hasBuildingLicense && (
+                <div className="prop-card__spec" style={{ fontWeight: 700, color: '#047857' }} title="ترخيص البناء">
+                  📜 مرخصة للبناء
+                </div>
+              )}
+              {p.streetWidth && (
+                <div className="prop-card__spec" title="عرض الشارع">
+                  🛣️ {p.streetWidth}
+                </div>
+              )}
+            </>
           ) : (
             <>
-              {!isLand && (p.floors && p.floors.length > 0 ? (
+              {!isLand && !isShop && (p.floors && p.floors.length > 0 ? (
                 <div className="prop-card__spec" style={{ fontWeight: 700, color: '#2d4a3e' }} title="الأدوار المتاحة">
                   🏢 {formatFloorsText(p.floors, p.propertyType)}
                 </div>

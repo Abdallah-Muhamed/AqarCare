@@ -105,7 +105,15 @@ export default function MapGLView({ data, filters, selectedProperty, onSelectPro
     const listing = LISTING_AR[p.listingType ?? ''] ?? ''
     const status  = STATUS_AR[p.status] ?? p.status
     const finishing = p.finishingStatus ? (FINISHING_AR[p.finishingStatus] ?? p.finishingStatus) : ''
-    const defaultImg = 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80'
+    const defaultImgs: Record<string, string> = {
+      Apartment: 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=500&q=80',
+      House: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=500&q=80',
+      Villa: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=500&q=80',
+      Land: '/land-placeholder.jpg',
+      Shop: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=500&q=80',
+      Commercial: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=500&q=80',
+    }
+    const defaultImg = defaultImgs[p.propertyType ?? ''] ?? defaultImgs.Apartment
     const imgUrl  = p.primaryImageUrl || defaultImg
 
     const isHouse = p.propertyType === 'House' || p.propertyType === 'Villa'

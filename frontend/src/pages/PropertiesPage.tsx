@@ -109,8 +109,14 @@ export default function PropertiesPage() {
     const filter = searchParams.get('filter')
     const type = searchParams.get('type')
     const maxP = searchParams.get('maxPrice')
+    const minP = searchParams.get('minPrice')
+    const search = searchParams.get('search')
+    const listingType = searchParams.get('listingType')
+    const bedrooms = searchParams.get('bedrooms')
+    const bathrooms = searchParams.get('bathrooms')
+    const district = searchParams.get('district')
 
-    if (filter || type || maxP) {
+    if (filter || type || maxP || minP || search || listingType || bedrooms || bathrooms || district) {
       setQuery(q => {
         const next = { ...q }
         if (filter === 'core-shell') {
@@ -136,6 +142,13 @@ export default function PropertiesPage() {
 
         if (type) next.propertyType = type
         if (maxP) next.maxPrice = Number(maxP)
+        if (minP) next.minPrice = Number(minP)
+        if (search) next.search = search
+        if (listingType) next.listingType = listingType
+        if (bedrooms) next.bedrooms = Number(bedrooms)
+        if (bathrooms) next.bathrooms = Number(bathrooms)
+        if (district) next.district = district
+
         if (filter === 'house' || filter === 'houses' || filter === 'manazel') {
           next.propertyType = 'House'
         }

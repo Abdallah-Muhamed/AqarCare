@@ -39,6 +39,15 @@ interface Property {
   electricityMeterAvailable?: boolean;
   gasMeterAvailable?: boolean;
   elevatorAvailable?: boolean;
+  // Land-specific fields
+  frontageWidth?: number | null;
+  frontageLength?: number | null;
+  streetWidth?: string | null;
+  hasBuildingLicense?: boolean;
+  hasElectricity?: boolean;
+  hasWater?: boolean;
+  hasSewerage?: boolean;
+  hasGas?: boolean;
   // The admin list endpoint returns a single primary image URL, not a media array.
   primaryImageUrl?: string | null;
   floors?: PropertyFloor[];
@@ -110,6 +119,15 @@ export default function AdminPanelPage() {
     finishedApartments: '',
     semiFinishedApartments: '',
     coreShellApartments: '',
+    // Land-specific fields
+    frontageWidth: '',
+    frontageLength: '',
+    streetWidth: '',
+    hasBuildingLicense: false,
+    hasElectricity: false,
+    hasWater: false,
+    hasSewerage: false,
+    hasGas: false,
   });
 
   const [floors, setFloors] = useState<PropertyFloor[]>([]);
@@ -581,7 +599,7 @@ export default function AdminPanelPage() {
           installmentPrice: computedInstallmentPrice,
           soldPrice: formData.soldPrice ? parseFloat(formData.soldPrice) : null,
           areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : (processedFloors.find(f => f.areaSqm && f.areaSqm > 0)?.areaSqm ?? null),
-          floorNumber: (isHouseType || isLandType)
+          floorNumber: (isHouseType || isLandType || isShopType)
             ? null
             : (formData.floorNumber ? parseInt(formData.floorNumber) : ((processedFloors.length === 1 && processedFloors[0].floorNumber != null ? processedFloors[0].floorNumber : null))),
           bedrooms: (isLandType || isShopType)
@@ -606,8 +624,19 @@ export default function AdminPanelPage() {
             ? parseInt(formData.semiFinishedApartments, 10) : null,
           coreShellApartments: isHouseType && formData.coreShellApartments !== ''
             ? parseInt(formData.coreShellApartments, 10) : null,
+          waterMeterAvailable: isLandType ? false : formData.waterMeterAvailable,
+          electricityMeterAvailable: isLandType ? false : formData.electricityMeterAvailable,
+          gasMeterAvailable: isLandType ? false : formData.gasMeterAvailable,
           elevatorAvailable: isLandType ? false : formData.elevatorAvailable,
-          isUnderConstruction: formData.isUnderConstruction,
+          isUnderConstruction: isLandType ? false : formData.isUnderConstruction,
+          frontageWidth: isLandType && formData.frontageWidth ? parseFloat(formData.frontageWidth) : null,
+          frontageLength: isLandType && formData.frontageLength ? parseFloat(formData.frontageLength) : null,
+          streetWidth: isLandType ? (formData.streetWidth || null) : null,
+          hasBuildingLicense: isLandType ? formData.hasBuildingLicense : false,
+          hasElectricity: isLandType ? formData.hasElectricity : false,
+          hasWater: isLandType ? formData.hasWater : false,
+          hasSewerage: isLandType ? formData.hasSewerage : false,
+          hasGas: isLandType ? formData.hasGas : false,
           floors: processedFloors,
         }),
       });
@@ -703,6 +732,14 @@ export default function AdminPanelPage() {
       finishedApartments: property.finishedApartments?.toString() ?? '',
       semiFinishedApartments: property.semiFinishedApartments?.toString() ?? '',
       coreShellApartments: property.coreShellApartments?.toString() ?? '',
+      frontageWidth: property.frontageWidth?.toString() ?? '',
+      frontageLength: property.frontageLength?.toString() ?? '',
+      streetWidth: property.streetWidth ?? '',
+      hasBuildingLicense: property.hasBuildingLicense ?? false,
+      hasElectricity: property.hasElectricity ?? false,
+      hasWater: property.hasWater ?? false,
+      hasSewerage: property.hasSewerage ?? false,
+      hasGas: property.hasGas ?? false,
     });
 
     const propArea = property.areaSqm ? parseFloat(property.areaSqm.toString()) : null;
@@ -814,6 +851,14 @@ export default function AdminPanelPage() {
       finishedApartments: '',
       semiFinishedApartments: '',
       coreShellApartments: '',
+      frontageWidth: '',
+      frontageLength: '',
+      streetWidth: '',
+      hasBuildingLicense: false,
+      hasElectricity: false,
+      hasWater: false,
+      hasSewerage: false,
+      hasGas: false,
     });
     setFloors([]);
   };
@@ -980,7 +1025,21 @@ export default function AdminPanelPage() {
                         value={formData.propertyType}
                         onChange={(e) => {
                           const newType = e.target.value;
-                          setFormData({ ...formData, propertyType: newType });
+                          setFormData({
+                            ...formData,
+                            propertyType: newType,
+                            ...(newType === 'Land' ? {
+                              isUnderConstruction: false,
+                              waterMeterAvailable: false,
+                              electricityMeterAvailable: false,
+                              gasMeterAvailable: false,
+                              elevatorAvailable: false,
+                              finishingStatus: '',
+                              bedrooms: '',
+                              bathrooms: '',
+                              floorNumber: '',
+                            } : {}),
+                          });
                           if (newType === 'Land' || newType === 'Shop' || newType === 'House') {
                             setFloors([]);
                           } else if (floors.length === 0) {
@@ -1190,27 +1249,59 @@ export default function AdminPanelPage() {
                           />
                         </div>
 
-                        {formData.propertyType === 'Shop' && (
+                        {formData.propertyType === 'Land' && (
                           <>
-                            <div className="form-group">
-                              <label>الدور (0 للأرضي)</label>
+                            <div className="form-group" style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
+                              <label style={{ color: '#0f172a', fontWeight: 800 }}>
+                                📏 طول الواجهة (متر) *
+                              </label>
                               <input
                                 type="number"
-                                value={formData.floorNumber}
-                                onChange={(e) => setFormData({ ...formData, floorNumber: e.target.value })}
-                                placeholder="0"
+                                step="0.1"
+                                value={formData.frontageLength}
+                                onChange={(e) => setFormData({ ...formData, frontageLength: e.target.value })}
+                                placeholder="مثال: 12"
+                                required
+                                style={{ background: '#fff', borderColor: '#94a3b8', fontWeight: 700 }}
+                              />
+                              <small style={{ color: '#64748b', fontSize: '0.78rem' }}>
+                                طول واجهة الأرض على الشارع بالمتر (معلومة أساسية للأراضي).
+                              </small>
+                            </div>
+
+                            <div className="form-group">
+                              <label>عرض الشارع (متر)</label>
+                              <input
+                                type="text"
+                                value={formData.streetWidth}
+                                onChange={(e) => setFormData({ ...formData, streetWidth: e.target.value })}
+                                placeholder="مثال: 10 متر أو شارع 8 متر"
                               />
                             </div>
+
                             <div className="form-group">
-                              <label>الحمامات</label>
+                              <label>عرض / عمق الأرض (متر اختياري)</label>
                               <input
                                 type="number"
-                                value={formData.bathrooms}
-                                onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
-                                placeholder="0"
+                                step="0.1"
+                                value={formData.frontageWidth}
+                                onChange={(e) => setFormData({ ...formData, frontageWidth: e.target.value })}
+                                placeholder="مثال: 15"
                               />
                             </div>
                           </>
+                        )}
+
+                        {formData.propertyType === 'Shop' && (
+                          <div className="form-group">
+                            <label>الحمامات (اختياري)</label>
+                            <input
+                              type="number"
+                              value={formData.bathrooms}
+                              onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                              placeholder="0"
+                            />
+                          </div>
                         )}
                       </>
                     )}
@@ -1897,38 +1988,86 @@ export default function AdminPanelPage() {
 
                 {/* Section: Utilities & Services */}
                 <div className="form-section">
-                  <h3 className="form-section__title">🛠️ الخدمات</h3>
-                  <div className="checkbox-row">
-                    <label className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.waterMeterAvailable}
-                        onChange={(e) => setFormData({ ...formData, waterMeterAvailable: e.target.checked })}
-                      />
-                      <span className="checkbox-card__icon">💧</span>
-                      <span>عداد مياه متاح</span>
-                    </label>
+                  <h3 className="form-section__title">
+                    {formData.propertyType === 'Land' ? '📜 الترخيص والمرافق' : '🛠️ الخدمات'}
+                  </h3>
+                  {formData.propertyType === 'Land' ? (
+                    <div className="checkbox-row">
+                      <label className="checkbox-card" style={{
+                        borderColor: formData.hasBuildingLicense ? 'var(--clr-gold)' : undefined,
+                        background: formData.hasBuildingLicense ? 'rgba(183,121,61,0.08)' : undefined,
+                        fontWeight: 700,
+                      }}>
+                        <input
+                          type="checkbox"
+                          checked={formData.hasBuildingLicense}
+                          onChange={(e) => setFormData({ ...formData, hasBuildingLicense: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">📜</span>
+                        <span>يوجد رخصة بناء (مرخصة)</span>
+                      </label>
 
-                    <label className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.electricityMeterAvailable}
-                        onChange={(e) => setFormData({ ...formData, electricityMeterAvailable: e.target.checked })}
-                      />
-                      <span className="checkbox-card__icon">⚡</span>
-                      <span>عداد كهرباء متاح</span>
-                    </label>
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.hasElectricity}
+                          onChange={(e) => setFormData({ ...formData, hasElectricity: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">⚡</span>
+                        <span>دخول كهرباء</span>
+                      </label>
 
-                    <label className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.gasMeterAvailable}
-                        onChange={(e) => setFormData({ ...formData, gasMeterAvailable: e.target.checked })}
-                      />
-                      <span className="checkbox-card__icon">🔥</span>
-                      <span>عداد غاز متاح</span>
-                    </label>
-                    {formData.propertyType !== 'Land' && (
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.hasWater}
+                          onChange={(e) => setFormData({ ...formData, hasWater: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">💧</span>
+                        <span>دخول مياه</span>
+                      </label>
+
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.hasSewerage}
+                          onChange={(e) => setFormData({ ...formData, hasSewerage: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">🚽</span>
+                        <span>شبكة صرف صحي</span>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="checkbox-row">
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.waterMeterAvailable}
+                          onChange={(e) => setFormData({ ...formData, waterMeterAvailable: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">💧</span>
+                        <span>عداد مياه متاح</span>
+                      </label>
+
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.electricityMeterAvailable}
+                          onChange={(e) => setFormData({ ...formData, electricityMeterAvailable: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">⚡</span>
+                        <span>عداد كهرباء متاح</span>
+                      </label>
+
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.gasMeterAvailable}
+                          onChange={(e) => setFormData({ ...formData, gasMeterAvailable: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">🔥</span>
+                        <span>عداد غاز متاح</span>
+                      </label>
                       <label className="checkbox-card">
                         <input
                           type="checkbox"
@@ -1938,8 +2077,8 @@ export default function AdminPanelPage() {
                         <span className="checkbox-card__icon">🛗</span>
                         <span>يوجد أسانسير</span>
                       </label>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Section: Description & Media */}
@@ -1992,15 +2131,17 @@ export default function AdminPanelPage() {
                       <span className="checkbox-card__icon">💳</span>
                       <span>متاح بالتقسيط</span>
                     </label>
-                    <label className="checkbox-card">
-                      <input
-                        type="checkbox"
-                        checked={formData.isUnderConstruction}
-                        onChange={(e) => setFormData({ ...formData, isUnderConstruction: e.target.checked })}
-                      />
-                      <span className="checkbox-card__icon">🏗️</span>
-                      <span>تحت الإنشاء</span>
-                    </label>
+                    {formData.propertyType !== 'Land' && (
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.isUnderConstruction}
+                          onChange={(e) => setFormData({ ...formData, isUnderConstruction: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">🏗️</span>
+                        <span>تحت الإنشاء</span>
+                      </label>
+                    )}
                     <label className="checkbox-card">
                       <input
                         type="checkbox"
@@ -2088,7 +2229,13 @@ export default function AdminPanelPage() {
                           />
                         ) : (
                           <img 
-                            src={property.primaryImageUrl || 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80'} 
+                            src={property.primaryImageUrl || ({
+                              House: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
+                              Villa: 'https://images.unsplash.com/photo-1568605114967-8130f3a36994?w=600&q=80',
+                              Land: '/land-placeholder.jpg',
+                              Shop: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
+                              Commercial: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?w=600&q=80',
+                            }[property.propertyType ?? ''] ?? 'https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?w=600&q=80')} 
                             alt={property.title ?? ''} 
                           />
                         )}

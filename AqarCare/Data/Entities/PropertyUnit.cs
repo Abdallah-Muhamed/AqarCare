@@ -31,6 +31,7 @@ public class PropertyUnit
     public decimal? FrontageWidth { get; set; } // in meters
     public decimal? FrontageLength { get; set; } // in meters
     public string? StreetWidth { get; set; } // width of street facing the land
+    public bool HasBuildingLicense { get; set; } // رخصة بناء للأراضي
     public bool HasElectricity { get; set; }
     public bool HasWater { get; set; }
     public bool HasSewerage { get; set; }

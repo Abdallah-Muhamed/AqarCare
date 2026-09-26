@@ -6,6 +6,7 @@ import type { PropertyListItem } from '../types'
 import { setPageSeo } from '../utils/seo'
 // PackageListItem, PackageCard, api.getPackages — kept for future use, currently hidden
 import PropertyCard from '../components/PropertyCard'
+import HeroSearchBar from '../components/home/HeroSearchBar'
 import './HomePage.css'
 
 export default function HomePage() {
@@ -38,26 +39,18 @@ export default function HomePage() {
           <img src="/logo-navbar.png" alt="عقار كير" className="hero__brand-logo" />
           <div className="badge badge-gold hero__badge">
             <Star size={12} fill="currentColor" />
-            منصة عقارية موثوقة ومتكاملة
+            منصة عقارية موثوقة ومتكاملة بالمحلة الكبرى
           </div>
           <h1 className="hero__title">
-            اعثر على
-            <span className="hero__title-accent"> عقارك المثالي</span>
-            <br />بكل سهولة وأمان
+            استكشف بيتك الجديد
+            <span className="hero__title-accent"> للبيع أو الإيجار</span>
           </h1>
           <p className="hero__subtitle">
-            تصفّح وحداتنا السكنية والتجارية المتاحة للبيع والإيجار، واستكشفها على الخريطة التفاعلية بشكل بصري احترافي.
+            تصفّح وحداتنا السكنية والتجارية، الأراضي والمنازل، واستكشفها بدقة على الخريطة التفاعلية.
           </p>
-          <div className="hero__actions">
-            <Link to="/properties" className="btn btn-primary">
-              <Building2 size={18} />
-              تصفح العقارات
-            </Link>
-            <Link to="/map" className="btn btn-outline">
-              <Map size={18} />
-              استكشف الخريطة
-            </Link>
-          </div>
+
+          {/* ── Search Bar like Property Finder / Bayut ───────────── */}
+          <HeroSearchBar />
 
           {/* Quick Filter Suggestions */}
           <div className="hero__quick-filters">

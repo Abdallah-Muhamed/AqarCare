@@ -55,6 +55,15 @@ export interface PropertyListItem {
   apartmentsPerFloor?: number | null
   floors?: PropertyFloor[]
   isPublished?: boolean
+  // Land-specific fields
+  frontageWidth?: number | null
+  frontageLength?: number | null
+  streetWidth?: string | null
+  hasBuildingLicense?: boolean
+  hasElectricity?: boolean
+  hasWater?: boolean
+  hasSewerage?: boolean
+  hasGas?: boolean
 }
 
 export interface PropertyDetail extends PropertyListItem {

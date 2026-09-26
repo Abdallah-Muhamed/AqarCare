@@ -240,6 +240,7 @@ public class PropertyService
             FrontageWidth = request.FrontageWidth,
             FrontageLength = request.FrontageLength,
             StreetWidth = request.StreetWidth,
+            HasBuildingLicense = request.HasBuildingLicense,
             HasElectricity = request.HasElectricity,
             HasWater = request.HasWater,
             HasSewerage = request.HasSewerage,
@@ -396,6 +397,7 @@ public class PropertyService
         entity.FrontageWidth = request.FrontageWidth;
         entity.FrontageLength = request.FrontageLength;
         entity.StreetWidth = request.StreetWidth;
+        entity.HasBuildingLicense = request.HasBuildingLicense;
         entity.HasElectricity = request.HasElectricity;
         entity.HasWater = request.HasWater;
         entity.HasSewerage = request.HasSewerage;
@@ -606,6 +608,7 @@ public class PropertyService
             x.FrontageWidth,
             x.FrontageLength,
             x.StreetWidth,
+            x.HasBuildingLicense,
             x.HasElectricity,
             x.HasWater,
             x.HasSewerage,
@@ -667,6 +670,7 @@ public class PropertyService
             x.FrontageWidth,
             x.FrontageLength,
             x.StreetWidth,
+            x.HasBuildingLicense,
             x.HasElectricity,
             x.HasWater,
             x.HasSewerage,

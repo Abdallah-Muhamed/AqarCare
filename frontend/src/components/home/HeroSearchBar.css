@@ -1,0 +1,553 @@
+/* ── HeroSearchBar.css ────────────────────────────────────────── */
+.hero-search-wrapper {
+  width: 100%;
+  max-width: 920px;
+  margin: 1.5rem auto 2.5rem;
+  position: relative;
+  z-index: 20;
+}
+
+/* ── Top Tabs (عقارات / المشاريع الجديدة) ────────────────────────── */
+.hero-search__tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: -1px;
+  padding-inline-start: 1rem;
+}
+
+.hero-search__tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 20px;
+  background: #ffffff;
+  color: #374151;
+  font-size: 0.92rem;
+  font-weight: 700;
+  border: 1px solid #e2e8f0;
+  border-bottom: none;
+  border-radius: 14px 14px 0 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.hero-search__tab:hover {
+  color: #15803d;
+  background: #f8fafc;
+}
+
+.hero-search__tab--active {
+  background: #e8f5e9;
+  color: #1b5e20;
+  border-color: #cbd5e1;
+  border-bottom: 1px solid #e8f5e9;
+  font-weight: 800;
+}
+
+.hero-search__badge-new {
+  background: #ef4444;
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 99px;
+  line-height: 1.2;
+}
+
+/* ── Main Card ─────────────────────────────────────────────────── */
+.hero-search-card {
+  background: #ffffff;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.09), 0 2px 6px rgba(0, 0, 0, 0.03);
+  border: 1px solid #e2e8f0;
+  overflow: visible;
+}
+
+.hero-search-card__inner {
+  padding: 1.25rem 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+/* ── Top Row ───────────────────────────────────────────────────── */
+.hero-search__row-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Toggle Pill (للبيع / للإيجار) */
+.hero-search__toggle-group {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px;
+  flex-shrink: 0;
+}
+
+.hero-search__toggle-btn {
+  padding: 8px 18px;
+  border-radius: 9px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #4b5563;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.hero-search__toggle-btn--active {
+  background: #e8f5e9;
+  color: #1b5e20;
+  font-weight: 800;
+}
+
+/* Location Input Container */
+.hero-search__location-wrap {
+  position: relative;
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.hero-search__location-icon {
+  position: absolute;
+  right: 14px;
+  color: #0f766e;
+  pointer-events: none;
+}
+
+.hero-search__location-input {
+  width: 100%;
+  height: 46px;
+  padding: 0 42px 0 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1f2937;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.hero-search__location-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.12);
+}
+
+.hero-search__clear-btn {
+  position: absolute;
+  left: 12px;
+  background: transparent;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  padding: 4px;
+}
+
+.hero-search__clear-btn:hover {
+  color: #4b5563;
+}
+
+/* Autocomplete Suggestions */
+.hero-search__suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+  z-index: 100;
+  max-height: 240px;
+  overflow-y: auto;
+  list-style: none;
+  padding: 6px 0;
+  margin: 0;
+}
+
+.hero-search__suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 16px;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.hero-search__suggestion-item:hover {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+/* Big Search Button */
+.hero-search__submit-btn {
+  height: 46px;
+  padding: 0 32px;
+  background: #16a34a;
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 14px rgba(22, 163, 74, 0.28);
+  flex-shrink: 0;
+}
+
+.hero-search__submit-btn:hover {
+  background: #15803d;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(22, 163, 74, 0.35);
+}
+
+.hero-search__submit-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Bottom Row ────────────────────────────────────────────────── */
+.hero-search__row-bottom {
+  display: grid;
+  grid-template-columns: auto 1fr 1.3fr 1.3fr;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+/* Status Pill Toggle (الجميع / جاهز / قيد الإنشاء) */
+.hero-search__status-group {
+  display: inline-flex;
+  align-items: center;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px;
+}
+
+.hero-search__status-btn {
+  padding: 7px 14px;
+  border-radius: 9px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #4b5563;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.hero-search__status-btn--active {
+  background: #e8f5e9;
+  color: #1b5e20;
+  font-weight: 800;
+}
+
+/* Dropdown Selector Item */
+.hero-search__dropdown-wrap {
+  position: relative;
+}
+
+.hero-search__dropdown-trigger {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  cursor: pointer;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #374151;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.hero-search__dropdown-trigger:hover,
+.hero-search__dropdown-trigger--open {
+  border-color: #10b981;
+  background: #fafafa;
+}
+
+.hero-search__dropdown-trigger-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hero-search__dropdown-arrow {
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.hero-search__dropdown-trigger--open .hero-search__dropdown-arrow {
+  transform: rotate(180deg);
+}
+
+/* Popover Menu */
+.hero-search__popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.14);
+  padding: 1rem;
+  z-index: 100;
+  min-width: 250px;
+}
+
+/* Type Popover options */
+.hero-search__type-options {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-search__type-option {
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-weight: 700;
+  color: #374151;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  width: 100%;
+  text-align: right;
+  transition: all 0.15s ease;
+}
+
+.hero-search__type-option:hover {
+  background: #f0fdf4;
+  color: #15803d;
+}
+
+.hero-search__type-option--active {
+  background: #e8f5e9;
+  color: #1b5e20;
+  font-weight: 800;
+}
+
+/* Rooms & Baths Popover */
+.hero-search__rooms-section {
+  margin-bottom: 0.85rem;
+}
+
+.hero-search__rooms-section:last-child {
+  margin-bottom: 0;
+}
+
+.hero-search__rooms-title {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #6b7280;
+  margin-bottom: 6px;
+}
+
+.hero-search__pill-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.hero-search__pill-btn {
+  padding: 5px 11px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.hero-search__pill-btn:hover {
+  border-color: #10b981;
+  color: #15803d;
+}
+
+.hero-search__pill-btn--active {
+  background: #16a34a;
+  border-color: #16a34a;
+  color: #ffffff;
+}
+
+/* Price Popover */
+.hero-search__price-inputs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 0.75rem;
+}
+
+.hero-search__price-input-box {
+  flex: 1;
+}
+
+.hero-search__price-input-box label {
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.hero-search__price-input-box input {
+  width: 100%;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  outline: none;
+}
+
+.hero-search__price-input-box input:focus {
+  border-color: #10b981;
+}
+
+.hero-search__quick-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hero-search__quick-price-btn {
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #374151;
+  cursor: pointer;
+  text-align: right;
+}
+
+.hero-search__quick-price-btn:hover {
+  background: #e8f5e9;
+  color: #1b5e20;
+}
+
+/* ── Bottom Banner Strip (سيرتش 2.0 / خريطة / مدة القيادة) ───────── */
+.hero-search__bottom-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 18px;
+  background: #e0f2fe;
+  border-top: 1px solid #bae6fd;
+  border-radius: 0 0 17px 17px;
+  text-decoration: none;
+  color: #0369a1;
+  font-size: 0.86rem;
+  font-weight: 800;
+  transition: all 0.2s ease;
+}
+
+.hero-search__bottom-strip:hover {
+  background: #bae6fd;
+  color: #075985;
+}
+
+.hero-search__bottom-strip-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.hero-search__car-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.hero-search__bottom-strip-arrow {
+  transition: transform 0.2s ease;
+}
+
+.hero-search__bottom-strip:hover .hero-search__bottom-strip-arrow {
+  transform: translateX(-4px);
+}
+
+/* ── Responsive ─────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .hero-search__row-bottom {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .hero-search-card__inner {
+    padding: 1rem 0.85rem;
+    gap: 0.75rem;
+  }
+
+  .hero-search__row-top {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hero-search__toggle-group {
+    width: 100%;
+  }
+
+  .hero-search__toggle-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .hero-search__submit-btn {
+    width: 100%;
+  }
+
+  .hero-search__row-bottom {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-search__status-group {
+    width: 100%;
+  }
+
+  .hero-search__status-btn {
+    flex: 1;
+    text-align: center;
+  }
+
+  .hero-search__popover {
+    right: 0;
+    left: 0;
+    min-width: unset;
+  }
+}
