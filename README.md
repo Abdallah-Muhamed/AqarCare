@@ -11,8 +11,9 @@
 
 > A full-stack, performance-critical real estate web platform engineered with **ASP.NET Core 8 Web API** and a reactive **React 18 / TypeScript / Vite** frontend. Built to solve high-density property exploration, sub-millisecond search across multi-unit towers, georeferenced vector mapping, and instant client lead conversion in the Egyptian property market.
 
-🔗 **Live Production System:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)
-
+🔗 **Live Production System:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)  
+🏙️ **Browse Properties:** [https://aqar-care.vercel.app/properties](https://aqar-care.vercel.app/properties)  
+🗺️ **Interactive Vector Map:** [https://aqar-care.vercel.app/map](https://aqar-care.vercel.app/map)  
 ---
 
 ## 📑 Table of Contents
