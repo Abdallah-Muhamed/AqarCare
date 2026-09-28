@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import { Routes, Route, useLocation } from 'react-router-dom'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
@@ -9,11 +10,16 @@ import PackageDetailPage from './pages/PackageDetailPage'
 import AdminPanelPage from './pages/AdminPanelPage'
 import MapPage from './pages/MapPage'
 import NotFoundPage from './pages/NotFoundPage'
+import { initUtmTracking } from './utils/analytics'
 
 export default function App() {
-  const { pathname } = useLocation()
+  const { pathname, search } = useLocation()
   const isAdmin = pathname.startsWith('/admin')
   const isMap   = pathname === '/map'
+
+  useEffect(() => {
+    initUtmTracking()
+  }, [pathname, search])
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>

@@ -53,3 +53,63 @@
   border: 1px solid rgba(255, 255, 255, 0.4);
 }
 
+/* ── WhatsApp Quick Action Row ─────────────────────────────────── */
+.prop-card__action-row {
+  margin-top: 0.75rem;
+  padding-top: 0.65rem;
+  border-top: 1px dashed rgba(24, 40, 33, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.prop-card__wa-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: #25d366;
+  color: #ffffff;
+  border: none;
+  border-radius: 99px;
+  padding: 6px 14px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(37, 211, 102, 0.28);
+  transition: all 0.2s ease;
+  width: 100%;
+  font-family: inherit;
+  text-decoration: none;
+}
+
+.prop-card__wa-btn:hover {
+  background: #20bd5a;
+  box-shadow: 0 4px 14px rgba(37, 211, 102, 0.42);
+  transform: translateY(-1px);
+}
+
+.prop-card__wa-btn svg {
+  flex-shrink: 0;
+}
+
+.prop-card--sold .prop-card__wa-btn {
+  background: #475569;
+  box-shadow: 0 2px 8px rgba(71, 85, 105, 0.25);
+}
+
+.prop-card--sold .prop-card__wa-btn:hover {
+  background: #334155;
+}
+
+@media (max-width: 768px) {
+  .prop-card__action-row {
+    margin-top: 0.45rem;
+    padding-top: 0.45rem;
+  }
+  .prop-card__wa-btn {
+    padding: 5px 10px;
+    font-size: 0.74rem;
+  }
+}
+

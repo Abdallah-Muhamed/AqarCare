@@ -6,6 +6,7 @@ import type { PropertyDetail } from '../types'
 import { groupFloors } from '../utils/formatters'
 import { setPageSeo } from '../utils/seo'
 import { getPropertyPlaceholder } from '../constants/placeholders'
+import { getPropertyWhatsAppUrl } from '../utils/analytics'
 import ImageGallery from '../components/ImageGallery'
 import './PropertyDetailPage.css'
 
@@ -84,7 +85,8 @@ export default function PropertyDetailPage() {
     </div>
   )
 
-  const st = statusLabel[prop.status] ?? { label: prop.status, cls: 'badge' }
+  const isSold = prop.status?.toLowerCase() === 'sold' || (prop.floors && prop.floors.length > 0 && prop.floors.every(f => f.isAvailable === false))
+  const st = isSold ? { label: 'تم البيع', cls: 'badge-sold' } : (statusLabel[prop.status] ?? { label: prop.status, cls: 'badge' })
   const isHouse = prop.propertyType === 'House' || prop.propertyType === 'Villa'
   const isLand  = prop.propertyType === 'Land'
   const isShop  = prop.propertyType === 'Shop' || prop.propertyType === 'Commercial'
@@ -674,15 +676,20 @@ export default function PropertyDetailPage() {
               </div>
 
               {(() => {
-                const locationText = [prop.district, prop.city].filter(Boolean).join('، ') || 'المحلة الكبرى'
-                const waText = encodeURIComponent(
-                  `السلام عليكم، أود الاستفسار بخصوص العقار رقم #${prop.id}: "${prop.title || 'وحدة عقارية'}" (${locationText}).`
-                )
-                const waUrl = `https://wa.me/201055937687?text=${waText}`
+                const waUrl = getPropertyWhatsAppUrl({
+                  id: prop.id,
+                  title: prop.title,
+                  price: prop.price,
+                  installmentPrice: prop.installmentPrice,
+                  district: prop.district,
+                  city: prop.city,
+                  propertyType: prop.propertyType,
+                  isSold,
+                })
 
                 return (
                   <a href={waUrl} target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)', background: '#25d366', color: '#fff' }}>
-                    <MessageCircle size={16} /> تواصل معنا عبر واتساب
+                    <MessageCircle size={16} /> {isSold ? 'استفسار عن بدائل مماثلة عبر واتساب' : 'تواصل معنا عبر واتساب'}
                   </a>
                 )
               })()}
@@ -706,11 +713,19 @@ export default function PropertyDetailPage() {
         const maxCash = floorCashPrices.length > 0 ? Math.max(...floorCashPrices) : prop.price
         const isCashRange = !isHouse && !isLand && floorCashPrices.length > 1 && minCash !== maxCash
 
-        const locationText = [prop.district, prop.city].filter(Boolean).join('، ') || 'المحلة الكبرى'
-        const waText = encodeURIComponent(
-          `السلام عليكم، أود الاستفسار بخصوص العقار رقم #${prop.id}: "${prop.title || 'وحدة عقارية'}" (${locationText}).`
-        )
-        const waUrl = `https://wa.me/201055937687?text=${waText}`
+        const floorInstPrices = availableFloors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0)
+        const minInst = floorInstPrices.length > 0 ? Math.min(...floorInstPrices) : prop.installmentPrice
+
+        const waUrl = getPropertyWhatsAppUrl({
+          id: prop.id,
+          title: prop.title,
+          price: minCash,
+          installmentPrice: minInst,
+          district: prop.district,
+          city: prop.city,
+          propertyType: prop.propertyType,
+          isSold,
+        })
         const ctaLabel = isHouse ? 'سعر البيت' : isLand ? 'سعر الأرض' : isShop ? 'سعر المحل' : 'سعر الوحدة'
 
         return (
@@ -736,7 +751,7 @@ export default function PropertyDetailPage() {
                 className="btn"
                 style={{ background: '#25d366', color: '#fff', minHeight: 42, padding: '0 1rem' }}
               >
-                <MessageCircle size={16} /> تواصل
+                <MessageCircle size={16} /> {isSold ? 'بدائل مماثلة' : 'تواصل'}
               </a>
               <Link
                 to={`/map?propertyId=${prop.id}`}
