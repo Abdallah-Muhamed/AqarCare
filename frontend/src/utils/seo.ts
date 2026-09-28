@@ -35,5 +35,12 @@ export function setPageSeo({ title, description, image, url }: SeoOptions) {
 
   if (url) {
     setMeta('og:url', url, true)
+    let canonicalEl = document.querySelector('link[rel="canonical"]')
+    if (!canonicalEl) {
+      canonicalEl = document.createElement('link')
+      canonicalEl.setAttribute('rel', 'canonical')
+      document.head.appendChild(canonicalEl)
+    }
+    canonicalEl.setAttribute('href', url)
   }
 }
