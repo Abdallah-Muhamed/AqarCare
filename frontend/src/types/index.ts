@@ -234,22 +234,3 @@ export interface MapFilters {
   maxPrice?: number
 }
 
-// ── AI Broker Chat ──────────────────────────────────────────────
-export interface ChatMessage {
-  id?: string
-  role: 'user' | 'assistant'
-  content: string
-  recommendedProperties?: PropertyListItem[]
-}
-
-export interface AIBrokerRequest {
-  messages: { role: string; content: string }[]
-}
-
-export interface AIBrokerResponse {
-  reply: string
-  recommendedPropertyIds: number[]
-  recommendedProperties: PropertyListItem[]
-  followUpMessage?: string | null
-}
-

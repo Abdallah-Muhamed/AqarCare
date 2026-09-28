@@ -116,7 +116,7 @@ export default function MapPage() {
     }
   }, [data, targetPropertyId])
 
-  // Coordinate body class when property sheet is open (e.g. to hide floating chatbot launcher on mobile)
+  // Coordinate body class when property sheet is open on mobile
   useEffect(() => {
     if (selectedProperty) {
       document.body.classList.add('map-card-open')
