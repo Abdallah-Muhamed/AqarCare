@@ -1,80 +1,140 @@
-# 🏢 AqarCare (عقار كير) – Enterprise-Grade Real Estate Platform
+# 🏢 AqarCare (عقار كير) – Real Estate Management Platform
 
 [![Production Deployment](https://img.shields.io/badge/Production-Live-00C781?style=for-the-badge&logo=vercel&logoColor=white)](https://aqar-care.vercel.app)
+[![Backend CI Pipeline](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Abdallah-Muhamed/AqarCare/actions)
 [![.NET 8](https://img.shields.io/badge/.NET_8.0-512BD4?style=for-the-badge&logo=dotnet&logoColor=white)](https://dotnet.microsoft.com/en-us/download/dotnet/8.0)
-[![C#](https://img.shields.io/badge/C%23-239120?style=for-the-badge&logo=c-sharp&logoColor=white)](https://docs.microsoft.com/en-us/dotnet/csharp/)
+[![C# 12](https://img.shields.io/badge/C%23_12-239120?style=for-the-badge&logo=c-sharp&logoColor=white)](https://docs.microsoft.com/en-us/dotnet/csharp/)
 [![React 18](https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
-[![TypeScript 5](https://img.shields.io/badge/TypeScript_5.5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Vite](https://img.shields.io/badge/Vite_5.4-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
-[![MapLibre GL](https://img.shields.io/badge/MapLibre_GL-3887BE?style=for-the-badge&logo=maplibre&logoColor=white)](https://maplibre.org/)
+[![TypeScript 5](https://img.shields.io/badge/TypeScript_5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![SQL Server](https://img.shields.io/badge/SQL_Server_2022-CC292B?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)](https://www.microsoft.com/sql-server)
+[![Tests](https://img.shields.io/badge/Tests-xUnit_&_FluentAssertions-green?style=for-the-badge)](https://github.com/Abdallah-Muhamed/AqarCare)
 
-> A full-stack, performance-critical real estate web platform engineered with **ASP.NET Core 8 Web API** and a reactive **React 18 / TypeScript / Vite** frontend. Built to solve high-density property exploration, sub-millisecond search across multi-unit towers, georeferenced vector mapping, and instant client lead conversion in the Egyptian property market.
+> A full-stack real estate management and GIS property exploration platform engineered with **ASP.NET Core 8 Web API** and **React 18 / TypeScript / Vite**. Designed to model complex Egyptian real estate domain requirements, including multi-unit residential towers, whole-building houses, commercial stores, and licensed land parcels, alongside georeferenced spatial vector mapping and administrative property operations.
 
 🔗 **Live Production System:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)  
 🏙️ **Browse Properties:** [https://aqar-care.vercel.app/properties](https://aqar-care.vercel.app/properties)  
 🗺️ **Interactive Vector Map:** [https://aqar-care.vercel.app/map](https://aqar-care.vercel.app/map)  
+
 ---
 
 ## 📑 Table of Contents
-1. [Engineering Highlights & Core Capabilities](#-engineering-highlights--core-capabilities)
-2. [Deep Performance Engineering](#-deep-performance-engineering)
-3. [Domain Modeling & Data Architecture](#-domain-modeling--data-architecture)
-4. [Architecture & System Design](#-architecture--system-design)
-5. [Code Patterns & Key Implementations](#-code-patterns--key-implementations)
-6. [Tech Stack & Infrastructure](#-tech-stack--infrastructure)
-7. [API Contract & Documentation](#-api-contract--documentation)
-8. [Local Development & Setup](#-local-development--setup)
+1. [Architecture & System Design](#-architecture--system-design)
+2. [Authentication, Authorization & Security](#-authentication-authorization--security)
+3. [Resilience & Engineering Trade-offs (FAQ)](#-resilience--engineering-trade-offs)
+4. [Domain Modeling & Data Architecture](#-domain-modeling--data-architecture)
+5. [GIS Vector Engine & Arabic Linguistic Search](#-gis-vector-engine--arabic-linguistic-search)
+6. [Automated Testing & CI/CD Pipeline](#-automated-testing--cicd-pipeline)
+7. [API Specification & Security Contracts](#-api-specification--security-contracts)
+8. [Local Setup & Environment Configuration](#-local-setup--environment-configuration)
 9. [Author](#-author)
 
 ---
 
-## 🌟 Engineering Highlights & Core Capabilities
+## 🏗️ Architecture & System Design
 
-### ⚡ Sub-Millisecond Search & Discovery Engine
-- **Deterministic Two-Way URL Sync:** Real-time bi-directional synchronization between UI query filters, URL search params, and memoized client filtering. Every state transition produces a canonical, shareable URL.
-- **Fuzzy Arabic NLP Search (`fuzzyArabicMatch`):** Custom string normalization pipeline that resolves complex Arabic orthographic variants (alif forms `أ / إ / آ / ا`, taa marbuta `ة / ه`, yaa `ى / ي`), diacritics removal, and sub-sequence token overlap. Runs entirely in the browser at **60 FPS** without network latency.
-- **Dynamic Spatial Autocomplete:** Automatically aggregates registered districts, street addresses, and local landmarks from real database property inventories into instant type-ahead suggestions.
+The application follows a clean layered architecture with clear separation of concerns between client presentation, HTTP transport, application services, caching, and persistence:
 
-### 🗺️ Georeferenced Spatial Vector Engine (MapLibre GL)
-- **High-Performance WebGL Map Layer:** Handles interactive city-level map rendering with zero canvas stuttering, viewport bounding constraints, and camera fly-to animations.
-- **Type-Specific Vector Pin System:**
-  - **Land (`أرض`):** Custom SVG `LandPlot` surveyor vector icon with floating badge.
-  - **Houses (`منزل`):** Multi-story residential glyph with floating badge.
-  - **Shops (`محل`):** Commercial storefront vector with floating badge.
-  - **Apartments (`شقة`):** Standard building pins dynamically badged by finishing level (`عظم` / `نص` / `تشطيب`).
-- **Responsive Overlays:** Desktop rich floating card popovers with smooth camera offset positioning; mobile slides into a gesture-friendly bottom sheet drawer.
-
-### 🏢 Hierarchical Multi-Unit Domain Architecture
-- **Towers & Multi-Apartment Complexes:** Granular parent-child data structures modeling towers, floors, and individual apartment units with unique pricing (cash vs installment), availability flags, area metrics, and utility meter statuses.
-- **Whole-Building Houses & Villas:** Specialized residential building logic with multi-floor aggregations, ground-floor commercial shops, and automatic suppression of misleading meter-price metrics.
-- **Land Parcels:** Engineering attributes including exact street width, frontage length, and licensed building status.
+```
+[ Client: React 18 / TypeScript / Vite / MapLibre GL ]
+                       │
+                       │ HTTPS (RESTful JSON + Brotli / Gzip)
+                       ▼
+[ Cloud Edge: Vercel CDN Routing & Static Assets ]
+                       │
+                       ▼
+[ ASP.NET Core 8 Web API Gateway ]
+   ├── Built-in Rate Limiting Middleware (Fixed-Window IP Throttling)
+   ├── Response Compression Middleware (Brotli & Gzip for HTTPS)
+   ├── JWT Bearer Authentication & Claims Transformation Pipeline
+   ├── Dual-Auth Middleware (JWT Tokens & Constant-Time Hashed API Key)
+   │
+   ├── [ Controllers Layer ]
+   │      ├── AuthController (Login, Token Issuance, Session Verification)
+   │      ├── PropertiesController (Public Property Queries & Details)
+   │      ├── MapsController (Public GIS Datasets & Geolocated Pins)
+   │      └── Admin Controllers (Protected Inventory, Floors, Media Operations)
+   │
+   ├── [ Application Services Layer ]
+   │      ├── PropertyService (Filtering, Multi-Unit Calculations, Cache Orchestration)
+   │      ├── MapService (Geographic Coordinate Normalization & City Maps)
+   │      ├── CloudinaryService (ICloudinaryService Media Upload & Ingestion)
+   │      └── JwtTokenService (IJwtTokenService Token Generation & Claims)
+   │
+   ├── [ Caching Layer: In-Memory Cache with Atomic Version Invalidation ]
+   │
+   └── [ Data Access Layer: EF Core 8 with SQL Server 2022 ]
+          ├── Split Query Execution (.AsSplitQuery)
+          ├── Optimistic Concurrency Control ([Timestamp] RowVersion)
+          └── Read-Only Optimization (.AsNoTracking)
+```
 
 ---
 
-## 🚀 Deep Performance Engineering
+## 🔐 Authentication, Authorization & Security
 
-Performance was treated as a first-class requirement across the entire stack.
+Administrative operations are protected using industry-standard ASP.NET Core security patterns:
 
-| Metric / Optimization | Implementation | Impact |
-|:---|:---|:---|
-| **First Contentful Paint (FCP)** | Vite tree-shaking + Pre-warmed Brotli compression | **< 0.8s** on mobile 4G |
-| **Cumulative Layout Shift (CLS)** | Fixed aspect-ratio containers & vector architectural fallbacks | **0.00** (Zero layout jumps) |
-| **Server Response (TTFB)** | `IMemoryCache` multi-tier caching with lock-free atomic versioning | **< 35ms** on cached hits |
-| **Payload Size Optimization** | Response compression middleware (Brotli & Gzip enabled for HTTPS) | **~75% reduction** in JSON transfer size |
-| **Database Query Efficiency** | EF Core `.AsNoTracking()` and `.AsSplitQuery()` on relational loads | Eliminates Cartesian explosion & tracking overhead |
-| **Client CPU & Memory** | `useMemo` caching + Intersection Observer infinite scroll sentinel | Constant memory footprint across 10,000+ units |
+### 1. Modern JWT Bearer Authentication
+- **Endpoint:** `POST /api/auth/login` validates administrator credentials and issues a signed JSON Web Token (JWT) with standard role claims (`ClaimTypes.Role: Admin`).
+- Tokens include cryptographic signatures (HMAC SHA-256), customizable expiration windows, and issuer/audience validation via `Microsoft.AspNetCore.Authentication.JwtBearer`.
+- Controller endpoints enforce authorization using standard ASP.NET Core `[Authorize(Roles = "Admin")]` metadata.
 
-### Key Performance Pillars:
+### 2. Secure Machine-to-Machine Integration (Dual Authentication)
+- In addition to interactive user login via JWT, backend management scripts and automated webhooks can authenticate using `X-Api-Key`.
+- **Side-Channel Mitigation:** The authentication middleware uses `CryptographicOperations.FixedTimeEquals` to perform constant-time byte comparisons between incoming headers and configured secrets, preventing timing attacks.
+- Once verified, the middleware synthesizes a valid `ClaimsPrincipal` with the `Admin` role, ensuring unified downstream authorization policies.
 
-1. **Lock-Free Atomic Cache Invalidation:**
-   The backend uses an atomic `Interlocked.Increment(ref _cacheVersion)` pattern on writes. Instead of traversing and flushing thousands of distinct cache keys, versioned composite cache keys are immediately invalidated with zero thread lock contention.
+### 3. Rate Limiting Protection (.NET 8 Built-in)
+- Integrated `Microsoft.AspNetCore.RateLimiting` protects sensitive routes against brute-force attacks and volumetric abuse:
+  - **Auth Limiter:** Fixed-window limit of 5 attempts per minute per IP address on `/api/auth/login`.
+  - **API Limiter:** 120 requests per minute general traffic ceiling to safeguard against automated scrapers.
 
-2. **Mitigating EF Core Cartesian Explosions (`AsSplitQuery`):**
-   Properties joined with multiple child collections (`Media` + `Floors`) are loaded using split queries. This prevents the server from duplicating parent row data over large multi-unit joins, slashing database memory consumption and wire transfer size by over **60%**.
+---
 
-3. **Client-Side Progressive Rendering:**
-   Instead of dumping heavy DOM trees, the frontend renders in chunked limits using an `IntersectionObserver` sentinel, avoiding layout thrashing while preserving sub-millisecond client search.
+## 🛡️ Resilience & Engineering Trade-offs
+
+Here is how the architecture addresses real-world engineering failure modes and concurrency challenges:
+
+### 1. What happens if two administrators update the same property simultaneously?
+**Solution: Optimistic Concurrency Control (`RowVersion`)**
+- `PropertyUnit` carries a `[Timestamp] public byte[]? RowVersion { get; set; }` concurrency token mapped to SQL Server's `ROWVERSION` type.
+- During updates, EF Core attaches the original `RowVersion` sent by the client. If another transaction has modified and committed the record in the interim, the database rejects the update and EF Core throws a `DbUpdateConcurrencyException`.
+- The controller catches this exception and returns an HTTP `409 Conflict` response with an actionable error message, preventing silent data loss (lost updates).
+
+### 2. What happens if Cloudinary upload succeeds but the database save fails?
+**Solution: Automated Compensating Transactions**
+- Multi-step media ingestion involves an external third-party CDN (Cloudinary) and internal database persistence.
+- In `PropertyService.UploadAndAttachMediaAsync`, after an image or video is uploaded to Cloudinary:
+  ```csharp
+  try
+  {
+      _db.PropertyMedia.Add(media);
+      await _db.SaveChangesAsync(ct);
+  }
+  catch
+  {
+      // Compensating action: Delete the asset from Cloudinary
+      // to prevent orphaned files consuming storage quotas.
+      if (!string.IsNullOrWhiteSpace(uploadResult.PublicId))
+      {
+          await cloudinaryService.DeleteAsync(uploadResult.PublicId, CancellationToken.None);
+      }
+      throw;
+  }
+  ```
+- If the database commit fails (network blip, constraint violation), the `catch` block invokes a compensating delete request against Cloudinary before bubbling up the exception.
+
+### 3. What happens if the cache contains stale data?
+**Solution: Cache-Aside with Atomic Version Invalidation**
+- Read queries use composite versioned cache keys: `pub_v{_cacheVersion}_{filters}` with a conservative 60-second sliding TTL.
+- Write operations (Create, Update, Delete) trigger `Interlocked.Increment(ref _cacheVersion)`. This instantly invalidates all active cached search permutations without lock contention or expensive key iteration.
+- **Horizontal Scaling Consideration:** In a single-instance deployment, in-memory caching is fast and cost-effective. For distributed multi-node deployments across container clusters, this strategy smoothly upgrades to **Redis Distributed Cache** combined with **Redis Pub/Sub** or Redis cache tags to broadcast invalidation signals across all API nodes.
+
+### 4. How are EF Core Cartesian product explosions mitigated?
+**Solution: Explicit Split Queries (`AsSplitQuery`)**
+- Real estate records frequently join multiple one-to-many child collections (`PropertyUnit` -> `Floors` + `Media`).
+- Default relational joins create a Cartesian product, multiplying parent columns across all child combinations.
+- AqarCare explicitly chains `.AsSplitQuery()` on relational queries, executing individual, targeted SQL SELECT statements per collection, cutting data transfer overhead and database memory usage.
 
 ---
 
@@ -94,8 +154,9 @@ Performance was treated as a first-class requirement across the entire stack.
                     │ FrontageLength: dec?    │
                     │ StreetWidth: string?    │
                     │ HasBuildingLicense: bool│
-                    │ X, Y: double? (GIS)     │
-                    │ IsPublished: bool       │
+                    │ Status: string          │
+                    │ RowVersion: byte[] (CC) │
+                    │ CreatedAt, UpdatedAt    │
                     └───────────┬─────────────┘
                                 │ 1
                                 │
@@ -107,199 +168,140 @@ Performance was treated as a first-class requirement across the entire stack.
 │ Id: int (PK)                │   │ Id: int (PK)                │
 │ PropertyUnitId: int (FK)    │   │ PropertyUnitId: int (FK)    │
 │ FloorNumber: int            │   │ MediaUrl: string            │
-│ FloorName: string           │   │ MediaType: enum             │
-│ Price: decimal?             │   │ IsPrimary: bool             │
+│ FloorName: string           │   │ MediaType: string           │
+│ Price: decimal?             │   │ CloudinaryPublicId: string  │
 │ InstallmentPrice: decimal?  │   │ SortOrder: int              │
 │ PricePerMeter: decimal?     │   └─────────────────────────────┘
-│ Bedrooms: int?              │
-│ Bathrooms: int?             │
+│ Bedrooms, Bathrooms         │
 │ IsAvailable: bool           │
 └─────────────────────────────┘
 ```
 
----
-
-## 🏗️ Architecture & System Design
-
-```
-[ Client: React 18 / TypeScript / Vite ]
-           │
-           │ HTTPS (JSON + Brotli / Gzip)
-           ▼
-[ Cloud Edge: Vercel CDN Routing & Static Assets ]
-           │
-           │ RESTful API Calls
-           ▼
-[ ASP.NET Core 8 Web API Gateway ]
-   ├── ApiKey Authentication Middleware (Admin Isolation)
-   ├── Response Compression Middleware (Brotli / Gzip)
-   ├── Global Exception Handling & Logging Pipeline
-   │
-   ├── [ Controllers Layer ]
-   │      ├── PropertiesController
-   │      ├── MapsController
-   │      └── AdminController
-   │
-   ├── [ Application & Business Services Layer ]
-   │      ├── PropertyService (Filtering, Multi-Unit Calculations)
-   │      ├── MapService (Geographic Coordinate Normalization)
-   │      └── CloudinaryService (Media Ingestion & CDN Optimization)
-   │
-   ├── [ Caching Layer: In-Memory Cache with Atomic Versioning ]
-   │
-   └── [ Data Access Layer: EF Core 8 (AsSplitQuery, AsNoTracking) ]
-           │
-           ▼
-   [ Microsoft SQL Server 2022 ]
-```
+### Domain Attributes by Category:
+- **Multi-Unit Towers:** Explicit parent-child matrix representing floors and units with independent cash vs installment pricing, meter price calculations, and availability statuses.
+- **Whole-Building Houses:** Multi-floor residential buildings with individual apartment finishing distributions (`متشطب`, `نص تشطيب`, `عظم`) and suppressed meter prices.
+- **Land Parcels:** Surveyor metrics including street width, frontage length, and official building license verification (`رخصة بناء`).
 
 ---
 
-## 💻 Code Patterns & Key Implementations
+## 🗺️ GIS Vector Engine & Arabic Linguistic Search
 
-### 1. High-Throughput Cached Data Retrieval (.NET 8)
-```csharp
-public async Task<PagedResult<PropertyListItemDto>> GetPublishedAsync(PropertyQuery query, CancellationToken ct = default)
-{
-    var page = query.Page < 1 ? 1 : query.Page;
-    var pageSize = query.PageSize is < 1 or > 10000 ? 12 : query.PageSize;
+### 1. Vector Mapping with MapLibre GL
+- Hardware-accelerated WebGL vector map rendering supporting interactive navigation across administrative zones.
+- Domain-specific SVG pins dynamically adapt to property types:
+  - **Land (`أرض`):** Surveyor land plot marker.
+  - **Houses (`منزل`):** Multi-story residential building glyph.
+  - **Shops (`محل`):** Commercial storefront icon.
+  - **Apartments (`شقة`):** Floor-based residential markers with finishing level badges.
 
-    // Fast-path: Lock-free atomic versioned cache lookup
-    string cacheKey = $"pub_v{Interlocked.Read(ref _cacheVersion)}_{query.City}_{query.District}_{query.PropertyType}_{query.ListingType}_{query.MinPrice}_{query.MaxPrice}_{page}_{pageSize}";
+### 2. Arabic Fuzzy Search Normalization
+Arabic search inputs encounter varied spelling conventions. The client-side normalization pipeline unifies these orthographic variations prior to matching:
 
-    if (_cache.TryGetValue(cacheKey, out PagedResult<PropertyListItemDto>? cachedResult) && cachedResult != null)
-    {
-        return cachedResult;
-    }
-
-    // Optimized execution pipeline: Split query prevents Cartesian product on child collections
-    IQueryable<PropertyUnit> q = _db.PropertyUnits
-        .AsNoTracking()
-        .AsSplitQuery()
-        .Include(x => x.Media)
-        .Include(x => x.Floors.OrderBy(f => f.SortOrder))
-        .Where(x => x.IsPublished);
-
-    // Dynamic composable predicate filters ...
-    var totalCount = await q.CountAsync(ct);
-    var items = await q.Skip((page - 1) * pageSize).Take(pageSize).Select(p => p.ToDto()).ToListAsync(ct);
-
-    var result = new PagedResult<PropertyListItemDto> { Items = items, TotalCount = totalCount, Page = page, PageSize = pageSize };
-    _cache.Set(cacheKey, result, TimeSpan.FromMinutes(10));
-    return result;
-}
-```
-
-### 2. High-Performance Arabic Fuzzy Search (TypeScript)
 ```typescript
-/**
- * Normalizes complex Arabic text for fast deterministic substring & fuzzy matching.
- * Strips tashkeel, standardizes alif/hamza variants, and converts final letters.
- */
 export function normalizeArabic(text: string): string {
   if (!text) return '';
   return text
     .trim()
     .toLowerCase()
-    .replace(/[\u064B-\u065F\u0670]/g, '') // Strip diacritics / Tashkeel
-    .replace(/[إأآٱ]/g, 'ا')               // Unify Alif variants
-    .replace(/ة/g, 'ه')                    // Unify Taa Marbuta
-    .replace(/ى/g, 'ي')                    // Unify Yaa / Alif Maqsura
-    .replace(/[\-–—_\/\\,،\.]/g, ' ')      // Normalize separators
-    .replace(/\s+/g, ' ');                 // Collapse whitespace
-}
-
-export function fuzzyArabicMatch(source: string, search: string): boolean {
-  if (!search) return true;
-  const sNorm = normalizeArabic(source);
-  const qNorm = normalizeArabic(search);
-  if (sNorm.includes(qNorm)) return true;
-
-  // Multi-token intersection match for flexible search order
-  const tokens = qNorm.split(' ').filter(Boolean);
-  return tokens.every(token => sNorm.includes(token));
+    .replace(/[\u064B-\u065F\u0670]/g, '') // Strip diacritics (Tashkeel)
+    .replace(/[إأآٱ]/g, 'ا')               // Standardize Alif variants
+    .replace(/ة/g, 'ه')                    // Normalize Taa Marbuta
+    .replace(/ى/g, 'ي')                    // Standardize Yaa / Alif Maqsura
+    .replace(/[\-–—_\/\\,،\.]/g, ' ')      // Standardize punctuation
+    .replace(/\s+/g, ' ');                 // Collapse multiple spaces
 }
 ```
 
 ---
 
-## 🛠️ Tech Stack & Infrastructure
+## 🧪 Automated Testing & CI/CD Pipeline
 
-### Backend
-- **Core Platform:** C# 12 / .NET 8.0 Web API
-- **ORM & Data:** Entity Framework Core 8.0 with SQL Server 2022
-- **Caching & Compression:** `Microsoft.Extensions.Caching.Memory`, `Microsoft.AspNetCore.ResponseCompression` (Brotli & Gzip)
-- **Media Pipeline:** Cloudinary .NET SDK for on-the-fly media transformations and global CDN delivery
-- **API Security:** Custom API Key Authentication Middleware for administrative endpoints
-- **API Specification:** Swagger / OpenAPI with Authorization Header schemas
+### 1. Unit & Integration Test Suite (`AqarCare.Tests`)
+The test project covers business rules, security contracts, and error-handling paths using **xUnit**, **Moq**, and **FluentAssertions**:
 
-### Frontend
-- **Framework & Language:** React 18.3, TypeScript 5.5 (Strict Mode)
-- **Build Tool & Bundler:** Vite 5.4 with ES2022 targets
-- **Mapping & GIS:** MapLibre GL for client-side hardware-accelerated vector rendering
-- **Iconography:** Lucide React
-- **CSS Architecture:** Responsive modular CSS with CSS Custom Properties and glassmorphic elevations
-- **Deployment:** Vercel Edge Network with automatic CI/CD deployment on push
+```
+AqarCare.Tests
+ ├── PropertyServiceTests.cs     # Filtering, pagination, multi-unit calculations, cache invalidation
+ ├── AuthServiceTests.cs         # JWT generation, role claims, login authentication verification
+ ├── FaultToleranceTests.cs      # Compensating actions upon database save failures
+ └── MapServiceTests.cs          # Active city filtering and GIS endpoint edge cases
+```
+
+Run tests locally:
+```bash
+dotnet test AqarCare.sln --verbosity normal
+```
+
+### 2. Continuous Integration (GitHub Actions)
+The repository includes an automated workflow [`.github/workflows/backend-ci.yml`](.github/workflows/backend-ci.yml) that triggers on every `push` and `pull_request` targeting `main`:
+1. Checks out repository code.
+2. Configures .NET 8.0 SDK environment.
+3. Restores NuGet package dependencies with build caching.
+4. Compiles the entire solution in `Release` configuration.
+5. Executes the automated test suite with code coverage collection.
 
 ---
 
-## 📡 API Contract & Documentation
+## 📡 API Specification & Security Contracts
 
-Interactive OpenAPI / Swagger documentation is exposed at `/swagger` when running locally or in staging:
+Interactive OpenAPI / Swagger documentation is available at `/swagger` when running locally or in staging environments:
 
 | Method | Endpoint | Description | Security |
 |:---|:---|:---|:---|
-| `GET` | `/api/properties` | Retrieve paginated, filterable properties list | Public |
-| `GET` | `/api/properties/{id}` | Retrieve single property with nested floors & media | Public |
-| `GET` | `/api/maps/{citySlug}` | Fetch interactive map GIS datasets & geolocated pins | Public |
-| `GET` | `/api/admin/properties` | Fetch complete inventory (including unpublished/drafts) | `X-Api-Key` |
-| `POST` | `/api/admin/properties` | Create a property with full floor matrix | `X-Api-Key` |
-| `PUT` | `/api/admin/properties/{id}` | Update existing property attributes and status | `X-Api-Key` |
-| `DELETE` | `/api/admin/properties/{id}` | Delete property record | `X-Api-Key` |
-| `POST` | `/api/admin/media/upload` | Upload media stream to Cloudinary CDN | `X-Api-Key` |
+| `POST` | `/api/auth/login` | Authenticate admin & receive JWT Bearer token | Public (Rate Limited) |
+| `GET` | `/api/auth/me` | Inspect current authenticated identity & roles | `Bearer <JWT>` |
+| `GET` | `/api/properties` | Retrieve paginated, filterable properties | Public |
+| `GET` | `/api/properties/{id}` | Retrieve property details with floors & media | Public |
+| `GET` | `/api/maps/{citySlug}` | Fetch interactive map GIS datasets & pins | Public |
+| `GET` | `/api/admin/properties` | Fetch complete inventory (including drafts) | `Bearer` / `X-Api-Key` |
+| `POST` | `/api/admin/properties` | Create a property with full floor matrix | `Bearer` / `X-Api-Key` |
+| `PUT` | `/api/admin/properties/{id}` | Update property (Optimistic Concurrency Check) | `Bearer` / `X-Api-Key` |
+| `DELETE` | `/api/admin/properties/{id}` | Delete property record and invalidate cache | `Bearer` / `X-Api-Key` |
+| `POST` | `/api/admin/properties/{id}/media/upload` | Upload & attach media with compensating rollback | `Bearer` / `X-Api-Key` |
+| `DELETE` | `/api/admin/properties/{id}/media/{mediaId}` | Remove media record from property | `Bearer` / `X-Api-Key` |
 
 ---
 
-## 🚀 Local Development & Setup
+## 🚀 Local Setup & Environment Configuration
 
 ### Prerequisites
 - [.NET 8.0 SDK](https://dotnet.microsoft.com/download/dotnet/8.0)
 - [Node.js](https://nodejs.org/) (v18+) & npm
-- Local SQL Server or SQL Server Express instance
+- Local SQL Server instance or Docker SQL Server container
 
-### 1. Clone & Configure Backend
+### 1. Configure & Run Backend
 ```bash
 git clone https://github.com/Abdallah-Muhamed/AqarCare.git
 cd AqarCare/AqarCare
 
-# Copy appsettings template and set connection string
+# Copy settings template and provide your database credentials
 cp appsettings.Template.json appsettings.json
 
-# Restore dependencies & run migrations
+# Restore dependencies and apply database migrations
 dotnet restore
 dotnet ef database update
 
-# Run the API
+# Run the API server
 dotnet run
 ```
-*API will be available at `http://localhost:5041` with Swagger at `http://localhost:5041/swagger`.*
+*API will start at `http://localhost:5041` with Swagger UI available at `http://localhost:5041/swagger`.*
 
-### 2. Configure & Launch Frontend
+### 2. Configure & Run Frontend
 ```bash
 cd ../frontend
 
 # Install dependencies
 npm install
 
-# Run the development server
+# Start Vite development server
 npm run dev
 ```
 *Frontend will be running at `http://localhost:5173`.*
 
-### 3. Production Build Validation
+### 3. Run Test Suite
 ```bash
-cd frontend
-npm run build
+cd ..
+dotnet test AqarCare.sln
 ```
 
 ---
@@ -307,6 +309,6 @@ npm run build
 ## 👨‍💻 Author
 
 **Abdallah Mohamed**  
-*Full-Stack Software Engineer*
-- **GitHub:** [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)
-- **Portfolio Repository:** [AqarCare](https://github.com/Abdallah-Muhamed/AqarCare)
+*Software Engineer*  
+- **GitHub:** [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)  
+- **Repository:** [AqarCare](https://github.com/Abdallah-Muhamed/AqarCare)  

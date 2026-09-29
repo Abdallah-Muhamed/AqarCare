@@ -3,7 +3,6 @@ bin/
 obj/
 out/
 publish/
-*.sln
 *.user
 *.suo
 *.cache

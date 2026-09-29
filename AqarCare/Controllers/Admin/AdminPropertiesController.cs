@@ -11,10 +11,12 @@ namespace AqarCare.Controllers.Admin;
 public class AdminPropertiesController : ControllerBase
 {
     private readonly PropertyService _propertyService;
+    private readonly CloudinaryService _cloudinaryService;
 
-    public AdminPropertiesController(PropertyService propertyService)
+    public AdminPropertiesController(PropertyService propertyService, CloudinaryService cloudinaryService)
     {
         _propertyService = propertyService;
+        _cloudinaryService = cloudinaryService;
     }
 
     [HttpGet]
@@ -41,8 +43,15 @@ public class AdminPropertiesController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<ActionResult<PropertyDetailDto>> Update(int id, [FromBody] UpdatePropertyRequest request, CancellationToken ct)
     {
-        var result = await _propertyService.UpdateAsync(id, request, ct);
-        return result is null ? NotFound() : Ok(result);
+        try
+        {
+            var result = await _propertyService.UpdateAsync(id, request, ct);
+            return result is null ? NotFound() : Ok(result);
+        }
+        catch (Microsoft.EntityFrameworkCore.DbUpdateConcurrencyException)
+        {
+            return Conflict(new { error = "Conflict detected: The property record was modified by another administrator. Please reload the latest data." });
+        }
     }
 
     [HttpDelete("{id:int}")]
@@ -57,6 +66,28 @@ public class AdminPropertiesController : ControllerBase
     {
         var result = await _propertyService.AddMediaAsync(id, request, ct);
         return result is null ? NotFound() : Ok(result);
+    }
+
+    [HttpPost("{id:int}/media/upload")]
+    [RequestSizeLimit(100_000_000)]
+    public async Task<ActionResult<PropertyMediaDto>> UploadMedia(int id, IFormFile file, [FromQuery] string? folder, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0)
+            return BadRequest(new { error = "File is required." });
+
+        try
+        {
+            var result = await _propertyService.UploadAndAttachMediaAsync(id, file, folder, _cloudinaryService, ct);
+            return Ok(result);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound(new { error = $"Property {id} not found." });
+        }
+        catch (InvalidOperationException ex)
+        {
+            return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = ex.Message });
+        }
     }
 
     [HttpDelete("{id:int}/media/{mediaId:int}")]

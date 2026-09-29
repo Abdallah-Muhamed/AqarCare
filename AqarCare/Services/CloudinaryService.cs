@@ -13,7 +13,14 @@ public class CloudinarySettings
     public string Folder { get; set; } = "aqarcare";
 }
 
-public class CloudinaryService
+public interface ICloudinaryService
+{
+    bool IsConfigured { get; }
+    Task<MediaUploadResult> UploadAsync(IFormFile file, string? subFolder = null, CancellationToken ct = default);
+    Task DeleteAsync(string publicId, CancellationToken ct = default);
+}
+
+public class CloudinaryService : ICloudinaryService
 {
     private readonly Cloudinary _cloudinary;
     private readonly CloudinarySettings _settings;

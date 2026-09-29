@@ -1,8 +1,13 @@
 
+using System.Text;
+using System.Threading.RateLimiting;
 using AqarCare.Data;
 using AqarCare.Middleware;
 using AqarCare.Services;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace AqarCare
 {
@@ -18,18 +23,88 @@ namespace AqarCare
             {
                 options.EnableForHttps = true;
             });
+
+            // JWT & Auth Configuration
+            var jwtSettings = builder.Configuration.GetSection(JwtSettings.SectionName)
+                .Get<JwtSettings>() ?? new JwtSettings();
+            builder.Services.AddSingleton(jwtSettings);
+            builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+
+            builder.Services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+            .AddJwtBearer(options =>
+            {
+                options.RequireHttpsMetadata = false;
+                options.SaveToken = true;
+                options.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuer = true,
+                    ValidateAudience = true,
+                    ValidateLifetime = true,
+                    ValidateIssuerSigningKey = true,
+                    ValidIssuer = jwtSettings.Issuer,
+                    ValidAudience = jwtSettings.Audience,
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSettings.SecretKey)),
+                    ClockSkew = TimeSpan.Zero
+                };
+            });
+
+            builder.Services.AddAuthorization();
+
+            // Rate Limiting
+            builder.Services.AddRateLimiter(options =>
+            {
+                options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+                options.AddFixedWindowLimiter("AuthLimiter", opt =>
+                {
+                    opt.PermitLimit = 5;
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.QueueLimit = 0;
+                });
+                options.AddFixedWindowLimiter("ApiLimiter", opt =>
+                {
+                    opt.PermitLimit = 120;
+                    opt.Window = TimeSpan.FromMinutes(1);
+                    opt.QueueLimit = 0;
+                });
+            });
+
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
+                options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
+                    Name = "Authorization",
+                    In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+                    Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+
                 options.AddSecurityDefinition("ApiKey", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
-                    Description = "Admin API Key. Header: X-Api-Key",
+                    Description = "Admin API Key header. Example: \"X-Api-Key: {key}\"",
                     Name = "X-Api-Key",
                     In = Microsoft.OpenApi.Models.ParameterLocation.Header,
                     Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
                 });
+
                 options.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
                 {
+                    {
+                        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                        {
+                            Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                            {
+                                Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            }
+                        },
+                        Array.Empty<string>()
+                    },
                     {
                         new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                         {
@@ -50,7 +125,8 @@ namespace AqarCare
             var cloudinarySettings = builder.Configuration.GetSection(CloudinarySettings.SectionName)
                 .Get<CloudinarySettings>() ?? new CloudinarySettings();
             builder.Services.AddSingleton(cloudinarySettings);
-            builder.Services.AddSingleton<CloudinaryService>();
+            builder.Services.AddSingleton<ICloudinaryService, CloudinaryService>();
+            builder.Services.AddSingleton<CloudinaryService>(sp => (CloudinaryService)sp.GetRequiredService<ICloudinaryService>());
             builder.Services.AddScoped<PropertyService>();
             builder.Services.AddScoped<MapService>();
             builder.Services.AddHttpClient<MansheyatElBakryOsmImportService>(client =>
@@ -214,6 +290,8 @@ namespace AqarCare
 
             app.UseResponseCompression();
             app.UseHttpsRedirection();
+            app.UseRateLimiter();
+            app.UseAuthentication();
             app.UseMiddleware<ApiKeyAuthMiddleware>();
             app.UseAuthorization();
             app.MapControllers();

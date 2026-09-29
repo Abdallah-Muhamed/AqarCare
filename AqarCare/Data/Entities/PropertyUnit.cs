@@ -1,3 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace AqarCare.Data.Entities;
 
 public class PropertyUnit
@@ -52,6 +54,9 @@ public class PropertyUnit
     public bool ElevatorAvailable { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAt { get; set; } = DateTime.UtcNow;
+
+    [Timestamp]
+    public byte[]? RowVersion { get; set; }
 
     public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
     public ICollection<PropertyFloor> Floors { get; set; } = new List<PropertyFloor>();

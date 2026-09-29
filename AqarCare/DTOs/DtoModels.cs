@@ -125,7 +125,8 @@ public record PropertyDetailDto(
     decimal? InstallmentPrice = null,
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorDto>? Floors = null,
-    int? ApartmentsPerFloor = null);
+    int? ApartmentsPerFloor = null,
+    byte[]? RowVersion = null);
 
 public record CreatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -216,7 +217,8 @@ public record UpdatePropertyRequest(
     int? ApartmentsPerFloor = null,
     int? FinishedApartments = null,
     int? SemiFinishedApartments = null,
-    int? CoreShellApartments = null);
+    int? CoreShellApartments = null,
+    byte[]? RowVersion = null);
 
 public record AddPropertyMediaRequest(
     string MediaType,
@@ -413,3 +415,13 @@ public record AddPackageMediaRequest(
     int SortOrder);
 
 public record MediaUploadResult(string PublicId, string Url, string MediaType);
+
+public record LoginRequest(
+    [Required] string Username,
+    [Required] string Password);
+
+public record AuthResponseDto(
+    string Token,
+    string Username,
+    string Role,
+    DateTime ExpiresAt);

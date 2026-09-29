@@ -1,0 +1,48 @@
+name: Backend CI Pipeline
+
+on:
+  push:
+    branches: [ "main", "master" ]
+    paths:
+      - 'AqarCare/**'
+      - 'AqarCare.Tests/**'
+      - 'AqarCare.sln'
+      - '.github/workflows/backend-ci.yml'
+  pull_request:
+    branches: [ "main", "master" ]
+    paths:
+      - 'AqarCare/**'
+      - 'AqarCare.Tests/**'
+      - 'AqarCare.sln'
+      - '.github/workflows/backend-ci.yml'
+
+jobs:
+  build-and-test:
+    name: Build & Test (.NET 8.0)
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 8 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+
+    - name: Cache NuGet Packages
+      uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          ${{ runner.os }}-nuget-
+
+    - name: Restore Dependencies
+      run: dotnet restore AqarCare.sln
+
+    - name: Build Solution
+      run: dotnet build AqarCare.sln --no-restore --configuration Release
+
+    - name: Execute Automated Test Suite
+      run: dotnet test AqarCare.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"

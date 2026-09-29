@@ -21,6 +21,7 @@ public class PropertyUnitConfiguration : IEntityTypeConfiguration<PropertyUnit>
         builder.Property(x => x.SoldPrice).HasPrecision(18, 2);
         builder.Property(x => x.AreaSqm).HasPrecision(18, 2);
         builder.Property(x => x.IsUnderConstruction).HasDefaultValue(false);
+        builder.Property(x => x.RowVersion).IsRowVersion();
         builder.HasIndex(x => x.IsPublished);
         builder.HasIndex(x => x.City);
         builder.HasIndex(x => x.PropertyType);

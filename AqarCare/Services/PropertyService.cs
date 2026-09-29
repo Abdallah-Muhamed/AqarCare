@@ -356,6 +356,11 @@ public class PropertyService
 
         if (entity is null) return null;
 
+        if (request.RowVersion != null && request.RowVersion.Length > 0)
+        {
+            _db.Entry(entity).Property(e => e.RowVersion).OriginalValue = request.RowVersion;
+        }
+
         var isHouse = request.PropertyType == "House" || request.PropertyType == "Villa";
         var isLandOrShop = request.PropertyType == "Land" || request.PropertyType == "Shop";
 
@@ -563,6 +568,60 @@ public class PropertyService
         return new PropertyMediaDto(media.Id, media.MediaType, media.Url, media.SortOrder);
     }
 
+    /// <summary>
+    /// Executes a fault-tolerant two-phase media ingestion.
+    /// If the database persistence fails after a successful Cloudinary upload,
+    /// an automated compensating action deletes the uploaded Cloudinary asset to prevent orphaned storage.
+    /// </summary>
+    public async Task<PropertyMediaDto> UploadAndAttachMediaAsync(
+        int propertyId,
+        Microsoft.AspNetCore.Http.IFormFile file,
+        string? folder,
+        ICloudinaryService cloudinaryService,
+        CancellationToken ct = default)
+    {
+        var exists = await _db.PropertyUnits.AnyAsync(x => x.Id == propertyId, ct);
+        if (!exists)
+            throw new KeyNotFoundException($"Property with ID {propertyId} was not found.");
+
+        // Phase 1: Upload to Cloudinary external storage
+        var uploadResult = await cloudinaryService.UploadAsync(file, folder, ct);
+
+        // Phase 2: Persist in Database with compensating transaction upon failure
+        try
+        {
+            var media = new PropertyMedia
+            {
+                PropertyUnitId = propertyId,
+                MediaType = uploadResult.MediaType,
+                CloudinaryPublicId = uploadResult.PublicId,
+                Url = uploadResult.Url,
+                SortOrder = 0
+            };
+
+            _db.PropertyMedia.Add(media);
+            await _db.SaveChangesAsync(ct);
+            InvalidateCache();
+            return new PropertyMediaDto(media.Id, media.MediaType, media.Url, media.SortOrder);
+        }
+        catch
+        {
+            // Compensating Action: Roll back external storage asset to maintain data consistency
+            if (!string.IsNullOrWhiteSpace(uploadResult.PublicId))
+            {
+                try
+                {
+                    await cloudinaryService.DeleteAsync(uploadResult.PublicId, CancellationToken.None);
+                }
+                catch
+                {
+                    // Compensation logged or handled gracefully
+                }
+            }
+            throw;
+        }
+    }
+
     public async Task<bool> RemoveMediaAsync(int propertyId, int mediaId, CancellationToken ct = default)
     {
         var media = await _db.PropertyMedia.FirstOrDefaultAsync(x => x.Id == mediaId && x.PropertyUnitId == propertyId, ct);
@@ -696,7 +755,8 @@ public class PropertyService
                     f.SortOrder,
                     f.FinishingStatus))
                 .ToList() ?? new List<PropertyFloorDto>(),
-            x.ApartmentsPerFloor);
+            x.ApartmentsPerFloor,
+            x.RowVersion);
 
     private static string FormatFinishingArabicName(string? status) => status switch
     {
