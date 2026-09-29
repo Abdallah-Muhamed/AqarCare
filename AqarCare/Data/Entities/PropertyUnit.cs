@@ -58,6 +58,10 @@ public class PropertyUnit
     [Timestamp]
     public byte[]? RowVersion { get; set; }
 
+    // Relationship to Agent (User with Agent role)
+    public int? AgentId { get; set; }
+    public User? Agent { get; set; }
+
     public ICollection<PropertyMedia> Media { get; set; } = new List<PropertyMedia>();
     public ICollection<PropertyFloor> Floors { get; set; } = new List<PropertyFloor>();
     public PropertyMapLocation? MapLocation { get; set; }

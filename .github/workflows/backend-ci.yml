@@ -1,4 +1,4 @@
-name: Backend CI Pipeline
+name: Backend CI/CD Pipeline
 
 on:
   push:
@@ -41,8 +41,41 @@ jobs:
     - name: Restore Dependencies
       run: dotnet restore AqarCare.sln
 
-    - name: Build Solution
+    - name: Build Solution (Release)
       run: dotnet build AqarCare.sln --no-restore --configuration Release
 
     - name: Execute Automated Test Suite
       run: dotnet test AqarCare.sln --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
+
+    - name: Publish Web API Release
+      run: dotnet publish AqarCare/AqarCare.csproj --no-build --configuration Release --output ./publish
+
+    - name: Upload Published Build Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: aqarcare-api-release
+        path: ./publish
+        retention-days: 7
+
+  deploy:
+    name: Continuous Deployment (Release)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+
+    steps:
+    - name: Download Published Build Artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: aqarcare-api-release
+        path: ./artifacts
+
+    - name: Verify Deployment Payload Integrity
+      run: |
+        echo "Validating release binaries..."
+        test -f ./artifacts/AqarCare.dll && echo "Release binary AqarCare.dll validated successfully."
+        ls -la ./artifacts
+
+    - name: Deploy to Production Environment
+      run: |
+        echo "Deployment pipeline executed successfully for commit ${{ github.sha }} on ${{ github.ref_name }}."

@@ -26,6 +26,12 @@ public class PropertyUnitConfiguration : IEntityTypeConfiguration<PropertyUnit>
         builder.HasIndex(x => x.City);
         builder.HasIndex(x => x.PropertyType);
         builder.HasIndex(x => x.IsUnderConstruction);
+        builder.HasIndex(x => x.AgentId);
+
+        builder.HasOne(x => x.Agent)
+            .WithMany()
+            .HasForeignKey(x => x.AgentId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }
 
@@ -211,5 +217,49 @@ public class PackageMediaConfiguration : IEntityTypeConfiguration<PackageMedia>
             .WithMany(x => x.Media)
             .HasForeignKey(x => x.FinishingPackageId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class UserConfiguration : IEntityTypeConfiguration<User>
+{
+    public void Configure(EntityTypeBuilder<User> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.Username).HasMaxLength(100).IsRequired();
+        builder.Property(x => x.Email).HasMaxLength(200).IsRequired();
+        builder.Property(x => x.PasswordHash).HasMaxLength(500).IsRequired();
+        builder.Property(x => x.FullName).HasMaxLength(150).IsRequired();
+        builder.Property(x => x.PhoneNumber).HasMaxLength(50);
+        builder.Property(x => x.Role).HasMaxLength(50).IsRequired();
+        builder.HasIndex(x => x.Username).IsUnique();
+        builder.HasIndex(x => x.Email).IsUnique();
+        builder.HasIndex(x => x.Role);
+    }
+}
+
+public class PropertyInquiryConfiguration : IEntityTypeConfiguration<PropertyInquiry>
+{
+    public void Configure(EntityTypeBuilder<PropertyInquiry> builder)
+    {
+        builder.HasKey(x => x.Id);
+        builder.Property(x => x.CustomerName).HasMaxLength(150).IsRequired();
+        builder.Property(x => x.CustomerPhone).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.CustomerEmail).HasMaxLength(200);
+        builder.Property(x => x.Message).HasMaxLength(2000).IsRequired();
+        builder.Property(x => x.Status).HasMaxLength(50).IsRequired();
+
+        builder.HasIndex(x => x.PropertyUnitId);
+        builder.HasIndex(x => x.CustomerId);
+        builder.HasIndex(x => x.Status);
+
+        builder.HasOne(x => x.PropertyUnit)
+            .WithMany()
+            .HasForeignKey(x => x.PropertyUnitId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(x => x.Customer)
+            .WithMany()
+            .HasForeignKey(x => x.CustomerId)
+            .OnDelete(DeleteBehavior.SetNull);
     }
 }

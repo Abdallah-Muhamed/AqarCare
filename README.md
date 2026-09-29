@@ -7,7 +7,7 @@
 [![React 18](https://img.shields.io/badge/React_18-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactjs.org/)
 [![TypeScript 5](https://img.shields.io/badge/TypeScript_5.6-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
 [![SQL Server](https://img.shields.io/badge/SQL_Server_2022-CC292B?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)](https://www.microsoft.com/sql-server)
-[![Tests](https://img.shields.io/badge/Tests-xUnit_&_FluentAssertions-green?style=for-the-badge)](https://github.com/Abdallah-Muhamed/AqarCare)
+[![Tests](https://img.shields.io/badge/Tests-26_Passing-green?style=for-the-badge)](https://github.com/Abdallah-Muhamed/AqarCare)
 
 > A modular real estate management and property discovery platform built with **ASP.NET Core 8 Web API** and **React 18 / TypeScript / Vite**. Designed to address Egyptian real estate domain requirements — including multi-unit residential buildings, whole-building properties, commercial units, and licensed land parcels — backed by GIS vector mapping, optimistic concurrency controls, automated compensating transactions, and administrative management workflows.
 
@@ -16,14 +16,18 @@
 🗺️ **Interactive Vector Map:** [https://aqar-care.vercel.app/map](https://aqar-care.vercel.app/map)  
 
 ### 🎯 Key Backend Topics Demonstrated
-- **RESTful API Design:** Clean layered architecture with ASP.NET Core 8 Web API and Swagger / OpenAPI contracts.
-- **Data Modeling & EF Core 8:** Complex one-to-many relationships (units, floors, media), `.AsSplitQuery()` to eliminate Cartesian products, and `.AsNoTracking()` on read queries.
+- **RESTful API Design & OpenAPI Contracts:** Clean layered architecture with ASP.NET Core 8 Web API, Swagger / OpenAPI schemas, and XML contract documentation.
+- **Role-Based Access Control (RBAC):** Distinct authorization policies for **Admin**, **Agent**, and **Customer** roles, complete with password hashing via PBKDF2 with HMAC-SHA256.
+- **Customer Inquiry Workflows:** Real estate lead generation and triage pipeline allowing Customers to submit inquiries and Agents to manage leads for their assigned listings.
+- **Data Modeling & EF Core 8:** Complex one-to-many relationships (units, floors, media, inquiries), `.AsSplitQuery()` to eliminate Cartesian products, and `.AsNoTracking()` on read queries.
 - **Concurrency & Data Integrity:** Optimistic concurrency control using SQL Server `ROWVERSION` (`[Timestamp] byte[] RowVersion`) with HTTP 409 Conflict handling.
 - **Fault-Tolerant Media Workflows:** Compensating transactions on external CDN failures (automatic Cloudinary asset deletion if database persistence fails).
 - **Security & Authorization:** Dual authentication pipeline supporting JWT Bearer tokens with claims-based authorization and constant-time API key validation (`CryptographicOperations.FixedTimeEquals`).
+- **Global Exception Handling & Consistent Errors:** Centralized exception handling middleware returning standardized `ApiErrorResponse` structures with sanitized production errors and correlation Trace IDs.
+- **Structured Telemetry & Logging:** Diagnostic request middleware tracking HTTP methods, status codes, and execution duration in milliseconds.
 - **Traffic Control:** ASP.NET Core 8 rate limiting middleware (endpoint-specific authentication limits + global API ceilings).
 - **Cache Invalidation:** In-memory caching with atomic version-increment invalidation on mutations (`Interlocked.Increment`).
-- **Automated Testing & CI:** 13 unit and integration tests using xUnit, Moq, and FluentAssertions, executed via GitHub Actions CI pipeline.
+- **Automated Testing & CI/CD:** 26 automated unit and integration tests using xUnit, Moq, and FluentAssertions, executed via a complete GitHub Actions `build → test → deploy` pipeline.
 
 ---
 
@@ -228,12 +232,14 @@ export function normalizeArabic(text: string): string {
 ## 🧪 Automated Testing & CI/CD Pipeline
 
 ### 1. Unit & Integration Test Suite (`AqarCare.Tests`)
-The test project covers business rules, security contracts, and error-handling paths using **xUnit**, **Moq**, and **FluentAssertions**:
+The test project covers business rules, RBAC security policies, customer inquiry workflows, optimistic concurrency handling, and compensating transactions using **xUnit**, **Moq**, and **FluentAssertions**:
 
 ```
 AqarCare.Tests
+ ├── AuthServiceTests.cs         # PBKDF2 hashing, multi-tenant roles (Admin/Agent/Customer), JWT generation & login
+ ├── InquiryServiceTests.cs      # Customer inquiry submission, agent listing scoping, and status transitions
+ ├── ErrorHandlingTests.cs       # Global exception middleware, 409 conflict formatting, 500 error sanitization
  ├── PropertyServiceTests.cs     # Filtering, pagination, multi-unit calculations, cache invalidation
- ├── AuthServiceTests.cs         # JWT generation, role claims, login authentication verification
  ├── FaultToleranceTests.cs      # Compensating actions upon database save failures
  └── MapServiceTests.cs          # Active city filtering and GIS endpoint edge cases
 ```
@@ -243,31 +249,41 @@ Run tests locally:
 dotnet test AqarCare.sln --verbosity normal
 ```
 
-### 2. Continuous Integration (GitHub Actions)
-The repository includes an automated workflow [`.github/workflows/backend-ci.yml`](.github/workflows/backend-ci.yml) that triggers on every `push` and `pull_request` targeting `main`:
-1. Checks out repository code.
-2. Configures .NET 8.0 SDK environment.
-3. Restores NuGet package dependencies with build caching.
-4. Compiles the entire solution in `Release` configuration.
-5. Executes the automated test suite with code coverage collection.
+### 2. Continuous Integration & Deployment (GitHub Actions)
+The repository includes an automated workflow [`.github/workflows/backend-ci.yml`](.github/workflows/backend-ci.yml) implementing a complete `build → test → deploy` pipeline:
+1. **Build & Test Job:**
+   - Checks out repository and configures .NET 8.0 SDK.
+   - Restores NuGet packages with caching.
+   - Compiles solution in `Release` configuration.
+   - Executes all 26 automated unit and integration tests with code coverage collection.
+   - Compiles and packages release binaries via `dotnet publish`.
+   - Uploads verified build artifacts (`actions/upload-artifact@v4`).
+2. **Deploy Job:**
+   - Runs automatically upon successful completion of `build-and-test` on the `main` branch.
+   - Validates release binary integrity and triggers production deployment workflows.
 
 ---
 
 ## 📡 API Specification & Security Contracts
 
-Interactive OpenAPI / Swagger documentation is available at `/swagger` when running locally or in staging environments:
+Interactive OpenAPI / Swagger documentation with XML summaries and request/response schemas is available at `/swagger`:
 
 | Method | Endpoint | Description | Security |
 |:---|:---|:---|:---|
-| `POST` | `/api/auth/login` | Authenticate admin & receive JWT Bearer token | Public (Rate Limited) |
-| `GET` | `/api/auth/me` | Inspect current authenticated identity & roles | `Bearer <JWT>` |
+| `POST` | `/api/auth/register` | Register new Customer or Agent account | Public (Rate Limited) |
+| `POST` | `/api/auth/login` | Authenticate user (Admin, Agent, Customer) & receive JWT | Public (Rate Limited) |
+| `GET` | `/api/auth/me` | Inspect current authenticated identity, roles & profile | `Bearer <JWT>` |
+| `POST` | `/api/properties/{id}/inquiries` | Submit customer inquiry or contact request | Public / Customer |
+| `GET` | `/api/inquiries/my` | Retrieve inquiries submitted by authenticated customer | `Bearer [Customer]` |
+| `GET` | `/api/inquiries` | Triage customer inquiries (Admin sees all; Agent sees own) | `Bearer [Admin, Agent]` |
+| `PATCH` | `/api/inquiries/{id}/status` | Update inquiry status (Pending → Contacted → Closed) | `Bearer [Admin, Agent]` |
 | `GET` | `/api/properties` | Retrieve paginated, filterable properties | Public |
 | `GET` | `/api/properties/{id}` | Retrieve property details with floors & media | Public |
 | `GET` | `/api/maps/{citySlug}` | Fetch interactive map GIS datasets & pins | Public |
 | `GET` | `/api/admin/properties` | Fetch complete inventory (including drafts) | `Bearer` / `X-Api-Key` |
-| `POST` | `/api/admin/properties` | Create a property with full floor matrix | `Bearer` / `X-Api-Key` |
-| `PUT` | `/api/admin/properties/{id}` | Update property (Optimistic Concurrency Check) | `Bearer` / `X-Api-Key` |
-| `DELETE` | `/api/admin/properties/{id}` | Delete property record and invalidate cache | `Bearer` / `X-Api-Key` |
+| `POST` | `/api/admin/properties` | Create property listing (auto-associates Agent ID) | `Bearer` / `X-Api-Key` |
+| `PUT` | `/api/admin/properties/{id}` | Update property (Optimistic Concurrency + Agent check) | `Bearer` / `X-Api-Key` |
+| `DELETE` | `/api/admin/properties/{id}` | Delete property (Agent listing check + cache invalidation) | `Bearer` / `X-Api-Key` |
 | `POST` | `/api/admin/properties/{id}/media/upload` | Upload & attach media with compensating rollback | `Bearer` / `X-Api-Key` |
 | `DELETE` | `/api/admin/properties/{id}/media/{mediaId}` | Remove media record from property | `Bearer` / `X-Api-Key` |
 

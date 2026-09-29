@@ -75,7 +75,8 @@ public record PropertyListItemDto(
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorDto>? Floors = null,
     bool IsPublished = true,
-    int? ApartmentsPerFloor = null);
+    int? ApartmentsPerFloor = null,
+    int? AgentId = null);
 
 public record PropertyDetailDto(
     int Id,
@@ -126,7 +127,8 @@ public record PropertyDetailDto(
     bool IsUnderConstruction = false,
     IReadOnlyList<PropertyFloorDto>? Floors = null,
     int? ApartmentsPerFloor = null,
-    byte[]? RowVersion = null);
+    byte[]? RowVersion = null,
+    int? AgentId = null);
 
 public record CreatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -171,7 +173,8 @@ public record CreatePropertyRequest(
     int? ApartmentsPerFloor = null,
     int? FinishedApartments = null,
     int? SemiFinishedApartments = null,
-    int? CoreShellApartments = null);
+    int? CoreShellApartments = null,
+    int? AgentId = null);
 
 public record UpdatePropertyRequest(
     [MaxLength(200)] string? Title,
@@ -218,7 +221,8 @@ public record UpdatePropertyRequest(
     int? FinishedApartments = null,
     int? SemiFinishedApartments = null,
     int? CoreShellApartments = null,
-    byte[]? RowVersion = null);
+    byte[]? RowVersion = null,
+    int? AgentId = null);
 
 public record AddPropertyMediaRequest(
     string MediaType,
@@ -420,8 +424,58 @@ public record LoginRequest(
     [Required] string Username,
     [Required] string Password);
 
+public record RegisterRequest(
+    [Required][MaxLength(100)] string Username,
+    [Required][EmailAddress][MaxLength(200)] string Email,
+    [Required][MinLength(6)][MaxLength(100)] string Password,
+    [Required][MaxLength(150)] string FullName,
+    [MaxLength(50)] string? PhoneNumber = null,
+    string Role = "Customer");
+
+public record UserProfileDto(
+    int Id,
+    string Username,
+    string Email,
+    string FullName,
+    string? PhoneNumber,
+    string Role,
+    bool IsActive,
+    DateTime CreatedAt);
+
 public record AuthResponseDto(
     string Token,
     string Username,
     string Role,
-    DateTime ExpiresAt);
+    DateTime ExpiresAt,
+    int? UserId = null,
+    string? FullName = null);
+
+public record CreateInquiryRequest(
+    [Required][MaxLength(150)] string CustomerName,
+    [Required][MaxLength(50)] string CustomerPhone,
+    [EmailAddress][MaxLength(200)] string? CustomerEmail,
+    [Required][MaxLength(2000)] string Message);
+
+public record UpdateInquiryStatusRequest(
+    [Required] string Status);
+
+public record PropertyInquiryDto(
+    int Id,
+    int PropertyUnitId,
+    string? PropertyTitle,
+    int? CustomerId,
+    string CustomerName,
+    string CustomerPhone,
+    string? CustomerEmail,
+    string Message,
+    string Status,
+    DateTime CreatedAt);
+
+public record ApiErrorResponse(
+    int StatusCode,
+    string Message,
+    string? Details = null,
+    string? TraceId = null,
+    DateTime? Timestamp = null,
+    IDictionary<string, string[]>? ValidationErrors = null);
+

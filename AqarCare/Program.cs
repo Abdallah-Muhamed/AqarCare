@@ -1,10 +1,16 @@
-
+using System.Reflection;
 using System.Text;
 using System.Threading.RateLimiting;
 using AqarCare.Data;
+using AqarCare.Data.Entities;
+using AqarCare.Data.Seed;
+using AqarCare.DTOs;
 using AqarCare.Middleware;
 using AqarCare.Services;
+using AqarCare.Services.Auth;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -17,7 +23,30 @@ namespace AqarCare
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            builder.Services.AddControllers();
+            // Controllers & Standardized API Validation Response
+            builder.Services.AddControllers()
+                .ConfigureApiBehaviorOptions(options =>
+                {
+                    options.InvalidModelStateResponseFactory = context =>
+                    {
+                        var errors = context.ModelState
+                            .Where(e => e.Value?.Errors.Count > 0)
+                            .ToDictionary(
+                                kvp => kvp.Key,
+                                kvp => kvp.Value!.Errors.Select(er => er.ErrorMessage).ToArray()
+                            );
+
+                        var response = new ApiErrorResponse(
+                            StatusCode: StatusCodes.Status400BadRequest,
+                            Message: "Validation failed for one or more request fields.",
+                            TraceId: context.HttpContext.TraceIdentifier,
+                            Timestamp: DateTime.UtcNow,
+                            ValidationErrors: errors);
+
+                        return new BadRequestObjectResult(response);
+                    };
+                });
+
             builder.Services.AddMemoryCache();
             builder.Services.AddResponseCompression(options =>
             {
@@ -29,6 +58,9 @@ namespace AqarCare
                 .Get<JwtSettings>() ?? new JwtSettings();
             builder.Services.AddSingleton(jwtSettings);
             builder.Services.AddSingleton<IJwtTokenService, JwtTokenService>();
+            builder.Services.AddSingleton<IPasswordHasher, PasswordHasher>();
+            builder.Services.AddScoped<IAuthService, AuthService>();
+            builder.Services.AddScoped<IInquiryService, InquiryService>();
 
             builder.Services.AddAuthentication(options =>
             {
@@ -52,7 +84,14 @@ namespace AqarCare
                 };
             });
 
-            builder.Services.AddAuthorization();
+            // Role-Based Authorization Policies
+            builder.Services.AddAuthorization(options =>
+            {
+                options.AddPolicy("RequireAdmin", policy => policy.RequireRole(UserRoles.Admin));
+                options.AddPolicy("RequireAgent", policy => policy.RequireRole(UserRoles.Agent));
+                options.AddPolicy("RequireCustomer", policy => policy.RequireRole(UserRoles.Customer));
+                options.AddPolicy("RequireAgentOrAdmin", policy => policy.RequireRole(UserRoles.Admin, UserRoles.Agent));
+            });
 
             // Rate Limiting
             builder.Services.AddRateLimiter(options =>
@@ -60,7 +99,7 @@ namespace AqarCare
                 options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
                 options.AddFixedWindowLimiter("AuthLimiter", opt =>
                 {
-                    opt.PermitLimit = 5;
+                    opt.PermitLimit = 10;
                     opt.Window = TimeSpan.FromMinutes(1);
                     opt.QueueLimit = 0;
                 });
@@ -75,6 +114,25 @@ namespace AqarCare
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen(options =>
             {
+                options.SwaggerDoc("v1", new Microsoft.OpenApi.Models.OpenApiInfo
+                {
+                    Title = "AqarCare Real Estate API",
+                    Version = "v1",
+                    Description = "RESTful API for real estate property lifecycle, customer inquiries, and GIS exploration.",
+                    Contact = new Microsoft.OpenApi.Models.OpenApiContact
+                    {
+                        Name = "AqarCare Team",
+                        Url = new Uri("https://aqar-care.vercel.app")
+                    }
+                });
+
+                var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+                if (File.Exists(xmlPath))
+                {
+                    options.IncludeXmlComments(xmlPath);
+                }
+
                 options.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
                     Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
@@ -86,7 +144,7 @@ namespace AqarCare
 
                 options.AddSecurityDefinition("ApiKey", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
                 {
-                    Description = "Admin API Key header. Example: \"X-Api-Key: {key}\"",
+                    Description = "Admin API Key header for Machine-to-Machine operations. Example: \"X-Api-Key: {key}\"",
                     Name = "X-Api-Key",
                     In = Microsoft.OpenApi.Models.ParameterLocation.Header,
                     Type = Microsoft.OpenApi.Models.SecuritySchemeType.ApiKey
@@ -138,8 +196,7 @@ namespace AqarCare
 
             builder.Services.Configure<ForwardedHeadersOptions>(options =>
             {
-                options.ForwardedHeaders = Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedFor |
-                                           Microsoft.AspNetCore.HttpOverrides.ForwardedHeaders.XForwardedProto;
+                options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
                 options.KnownNetworks.Clear();
                 options.KnownProxies.Clear();
             });
@@ -163,6 +220,10 @@ namespace AqarCare
             {
                 var db = scope.ServiceProvider.GetRequiredService<AqarCareDbContext>();
                 db.Database.Migrate();
+
+                var passwordHasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+                var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+                UserSeeder.SeedUsersAsync(db, passwordHasher, app.Configuration, logger).GetAwaiter().GetResult();
             }
 
             if (args.Contains("--fix-house-properties", StringComparer.OrdinalIgnoreCase))
@@ -221,7 +282,7 @@ namespace AqarCare
                     var prodCity = prodDb.MapCities.FirstOrDefault(c => c.Slug == "mansheyat-el-bakry");
                     if (prodCity == null)
                     {
-                        prodCity = new AqarCare.Data.Entities.MapCity
+                        prodCity = new MapCity
                         {
                             Name = localCity.Name,
                             Slug = localCity.Slug,
@@ -237,7 +298,7 @@ namespace AqarCare
                     foreach (var s in localCity.Streets)
                     {
                         if (existingNames.Contains(s.Name)) continue;
-                        var newStreet = new AqarCare.Data.Entities.MapStreet
+                        var newStreet = new MapStreet
                         {
                             MapCityId = prodCity.Id,
                             Name = s.Name,
@@ -256,7 +317,7 @@ namespace AqarCare
                         };
                         foreach (var a in s.Aliases)
                         {
-                            newStreet.Aliases.Add(new AqarCare.Data.Entities.MapStreetAlias { Name = a.Name });
+                            newStreet.Aliases.Add(new MapStreetAlias { Name = a.Name });
                         }
                         prodDb.MapStreets.Add(newStreet);
                     }
@@ -276,8 +337,15 @@ namespace AqarCare
             }
 
             app.UseForwardedHeaders();
+            app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+            app.UseMiddleware<RequestLoggingMiddleware>();
+
             app.UseSwagger();
-            app.UseSwaggerUI();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "AqarCare API v1");
+                c.RoutePrefix = "swagger";
+            });
 
             if (app.Environment.IsDevelopment())
             {

@@ -23,6 +23,8 @@ public class AqarCareDbContext : DbContext
     public DbSet<PackageFeatureItem> PackageFeatureItems => Set<PackageFeatureItem>();
     public DbSet<PackageNote> PackageNotes => Set<PackageNote>();
     public DbSet<PackageMedia> PackageMedia => Set<PackageMedia>();
+    public DbSet<User> Users => Set<User>();
+    public DbSet<PropertyInquiry> PropertyInquiries => Set<PropertyInquiry>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

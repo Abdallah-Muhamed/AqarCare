@@ -10,12 +10,14 @@ public class PropertyService
 {
     private readonly AqarCareDbContext _db;
     private readonly IMemoryCache _cache;
+    private readonly ILogger<PropertyService>? _logger;
     private static long _cacheVersion = 1;
 
-    public PropertyService(AqarCareDbContext db, IMemoryCache cache)
+    public PropertyService(AqarCareDbContext db, IMemoryCache cache, ILogger<PropertyService>? logger = null)
     {
         _db = db;
         _cache = cache;
+        _logger = logger;
     }
 
     public static void InvalidateCache()
@@ -245,6 +247,7 @@ public class PropertyService
             HasWater = request.HasWater,
             HasSewerage = request.HasSewerage,
             HasGas = request.HasGas,
+            AgentId = request.AgentId,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
@@ -338,6 +341,9 @@ public class PropertyService
         await _db.SaveChangesAsync(ct);
         InvalidateCache();
 
+        _logger?.LogInformation("Property {PropertyId} ('{Title}') created successfully [AgentId: {AgentId}]",
+            entity.Id, entity.Title, entity.AgentId);
+
         // Reload with all navigations so the response is complete
         var created = await _db.PropertyUnits
             .AsNoTracking()
@@ -407,6 +413,10 @@ public class PropertyService
         entity.HasWater = request.HasWater;
         entity.HasSewerage = request.HasSewerage;
         entity.HasGas = request.HasGas;
+        if (request.AgentId.HasValue)
+        {
+            entity.AgentId = request.AgentId.Value;
+        }
         entity.UpdatedAt = DateTime.UtcNow;
 
         if (isLandOrShop || isHouse)
@@ -527,6 +537,8 @@ public class PropertyService
         await _db.SaveChangesAsync(ct);
         InvalidateCache();
 
+        _logger?.LogInformation("Property {PropertyId} updated successfully", id);
+
         // Reload with all navigations so the response is complete
         var updated = await _db.PropertyUnits
             .AsNoTracking()
@@ -545,6 +557,8 @@ public class PropertyService
         _db.PropertyUnits.Remove(entity);
         await _db.SaveChangesAsync(ct);
         InvalidateCache();
+
+        _logger?.LogInformation("Property {PropertyId} deleted successfully and cache invalidated", id);
         return true;
     }
 
@@ -602,6 +616,10 @@ public class PropertyService
             _db.PropertyMedia.Add(media);
             await _db.SaveChangesAsync(ct);
             InvalidateCache();
+
+            _logger?.LogInformation("Media {MediaId} attached to Property {PropertyId} [PublicId: {PublicId}]",
+                media.Id, propertyId, uploadResult.PublicId);
+
             return new PropertyMediaDto(media.Id, media.MediaType, media.Url, media.SortOrder);
         }
         catch
@@ -612,10 +630,13 @@ public class PropertyService
                 try
                 {
                     await cloudinaryService.DeleteAsync(uploadResult.PublicId, CancellationToken.None);
+                    _logger?.LogWarning("Compensating action executed: deleted Cloudinary asset {PublicId} following database failure",
+                        uploadResult.PublicId);
                 }
-                catch
+                catch (Exception compEx)
                 {
-                    // Compensation logged or handled gracefully
+                    _logger?.LogError(compEx, "Failed to delete Cloudinary asset {PublicId} during compensating transaction",
+                        uploadResult.PublicId);
                 }
             }
             throw;
@@ -689,7 +710,8 @@ public class PropertyService
                     f.FinishingStatus))
                 .ToList(),
             x.IsPublished,
-            x.ApartmentsPerFloor);
+            x.ApartmentsPerFloor,
+            x.AgentId);
 
     private static PropertyDetailDto ToDetail(PropertyUnit x) =>
         new(
@@ -756,7 +778,8 @@ public class PropertyService
                     f.FinishingStatus))
                 .ToList() ?? new List<PropertyFloorDto>(),
             x.ApartmentsPerFloor,
-            x.RowVersion);
+            x.RowVersion,
+            x.AgentId);
 
     private static string FormatFinishingArabicName(string? status) => status switch
     {

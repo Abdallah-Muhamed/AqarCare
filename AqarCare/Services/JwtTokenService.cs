@@ -17,6 +17,7 @@ public class JwtSettings
 public interface IJwtTokenService
 {
     string GenerateToken(string username, string role, IEnumerable<Claim>? extraClaims = null);
+    string GenerateToken(int userId, string username, string role, string? email = null, IEnumerable<Claim>? extraClaims = null);
 }
 
 public class JwtTokenService : IJwtTokenService
@@ -30,6 +31,11 @@ public class JwtTokenService : IJwtTokenService
 
     public string GenerateToken(string username, string role, IEnumerable<Claim>? extraClaims = null)
     {
+        return GenerateToken(0, username, role, null, extraClaims);
+    }
+
+    public string GenerateToken(int userId, string username, string role, string? email = null, IEnumerable<Claim>? extraClaims = null)
+    {
         var tokenHandler = new JwtSecurityTokenHandler();
         var key = Encoding.UTF8.GetBytes(_settings.SecretKey);
 
@@ -37,9 +43,16 @@ public class JwtTokenService : IJwtTokenService
         {
             new(JwtRegisteredClaimNames.Sub, username),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+            new(ClaimTypes.NameIdentifier, userId > 0 ? userId.ToString() : username),
             new(ClaimTypes.Name, username),
             new(ClaimTypes.Role, role)
         };
+
+        if (!string.IsNullOrWhiteSpace(email))
+        {
+            claims.Add(new Claim(JwtRegisteredClaimNames.Email, email));
+            claims.Add(new Claim(ClaimTypes.Email, email));
+        }
 
         if (extraClaims != null)
         {
