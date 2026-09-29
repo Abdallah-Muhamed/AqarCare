@@ -1,4 +1,4 @@
-# 🏢 AqarCare (عقار كير) – Real Estate Management Platform
+# 🏢 AqarCare — Real Estate Management & Property Discovery Platform
 
 [![Production Deployment](https://img.shields.io/badge/Production-Live-00C781?style=for-the-badge&logo=vercel&logoColor=white)](https://aqar-care.vercel.app)
 [![Backend CI Pipeline](https://img.shields.io/badge/CI-GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)](https://github.com/Abdallah-Muhamed/AqarCare/actions)
@@ -9,24 +9,35 @@
 [![SQL Server](https://img.shields.io/badge/SQL_Server_2022-CC292B?style=for-the-badge&logo=microsoft-sql-server&logoColor=white)](https://www.microsoft.com/sql-server)
 [![Tests](https://img.shields.io/badge/Tests-xUnit_&_FluentAssertions-green?style=for-the-badge)](https://github.com/Abdallah-Muhamed/AqarCare)
 
-> A full-stack real estate management and GIS property exploration platform engineered with **ASP.NET Core 8 Web API** and **React 18 / TypeScript / Vite**. Designed to model complex Egyptian real estate domain requirements, including multi-unit residential towers, whole-building houses, commercial stores, and licensed land parcels, alongside georeferenced spatial vector mapping and administrative property operations.
+> A modular real estate management and property discovery platform built with **ASP.NET Core 8 Web API** and **React 18 / TypeScript / Vite**. Designed to address Egyptian real estate domain requirements — including multi-unit residential buildings, whole-building properties, commercial units, and licensed land parcels — backed by GIS vector mapping, optimistic concurrency controls, automated compensating transactions, and administrative management workflows.
 
 🔗 **Live Production System:** [https://aqar-care.vercel.app](https://aqar-care.vercel.app)  
 🏙️ **Browse Properties:** [https://aqar-care.vercel.app/properties](https://aqar-care.vercel.app/properties)  
 🗺️ **Interactive Vector Map:** [https://aqar-care.vercel.app/map](https://aqar-care.vercel.app/map)  
 
+### 🎯 Key Backend Topics Demonstrated
+- **RESTful API Design:** Clean layered architecture with ASP.NET Core 8 Web API and Swagger / OpenAPI contracts.
+- **Data Modeling & EF Core 8:** Complex one-to-many relationships (units, floors, media), `.AsSplitQuery()` to eliminate Cartesian products, and `.AsNoTracking()` on read queries.
+- **Concurrency & Data Integrity:** Optimistic concurrency control using SQL Server `ROWVERSION` (`[Timestamp] byte[] RowVersion`) with HTTP 409 Conflict handling.
+- **Fault-Tolerant Media Workflows:** Compensating transactions on external CDN failures (automatic Cloudinary asset deletion if database persistence fails).
+- **Security & Authorization:** Dual authentication pipeline supporting JWT Bearer tokens with claims-based authorization and constant-time API key validation (`CryptographicOperations.FixedTimeEquals`).
+- **Traffic Control:** ASP.NET Core 8 rate limiting middleware (endpoint-specific authentication limits + global API ceilings).
+- **Cache Invalidation:** In-memory caching with atomic version-increment invalidation on mutations (`Interlocked.Increment`).
+- **Automated Testing & CI:** 13 unit and integration tests using xUnit, Moq, and FluentAssertions, executed via GitHub Actions CI pipeline.
+
 ---
 
 ## 📑 Table of Contents
-1. [Architecture & System Design](#-architecture--system-design)
-2. [Authentication, Authorization & Security](#-authentication-authorization--security)
-3. [Resilience & Engineering Trade-offs (FAQ)](#-resilience--engineering-trade-offs)
-4. [Domain Modeling & Data Architecture](#-domain-modeling--data-architecture)
-5. [GIS Vector Engine & Arabic Linguistic Search](#-gis-vector-engine--arabic-linguistic-search)
-6. [Automated Testing & CI/CD Pipeline](#-automated-testing--cicd-pipeline)
-7. [API Specification & Security Contracts](#-api-specification--security-contracts)
-8. [Local Setup & Environment Configuration](#-local-setup--environment-configuration)
-9. [Author](#-author)
+1. [Key Backend Topics](#-key-backend-topics-demonstrated)
+2. [Architecture & System Design](#-architecture--system-design)
+3. [Authentication, Authorization & Security](#-authentication-authorization--security)
+4. [Resilience & Engineering Decisions](#-resilience--engineering-decisions)
+5. [Domain Modeling & Data Architecture](#-domain-modeling--data-architecture)
+6. [GIS Vector Engine & Arabic Property Search](#-gis-vector-engine--arabic-property-search)
+7. [Automated Testing & CI/CD Pipeline](#-automated-testing--cicd-pipeline)
+8. [API Specification & Security Contracts](#-api-specification--security-contracts)
+9. [Local Setup & Environment Configuration](#-local-setup--environment-configuration)
+10. [Author](#-author)
 
 ---
 
@@ -91,7 +102,7 @@ Administrative operations are protected using industry-standard ASP.NET Core sec
 
 ---
 
-## 🛡️ Resilience & Engineering Trade-offs
+## 🛡️ Resilience & Engineering Decisions
 
 Here is how the architecture addresses real-world engineering failure modes and concurrency challenges:
 
@@ -184,7 +195,7 @@ Here is how the architecture addresses real-world engineering failure modes and 
 
 ---
 
-## 🗺️ GIS Vector Engine & Arabic Linguistic Search
+## 🗺️ GIS Vector Engine & Arabic Property Search
 
 ### 1. Vector Mapping with MapLibre GL
 - Hardware-accelerated WebGL vector map rendering supporting interactive navigation across administrative zones.
@@ -194,7 +205,7 @@ Here is how the architecture addresses real-world engineering failure modes and 
   - **Shops (`محل`):** Commercial storefront icon.
   - **Apartments (`شقة`):** Floor-based residential markers with finishing level badges.
 
-### 2. Arabic Fuzzy Search Normalization
+### 2. Arabic Search Normalization
 Arabic search inputs encounter varied spelling conventions. The client-side normalization pipeline unifies these orthographic variations prior to matching:
 
 ```typescript
@@ -309,6 +320,6 @@ dotnet test AqarCare.sln
 ## 👨‍💻 Author
 
 **Abdallah Mohamed**  
-*Software Engineer*  
+*Backend Developer — ASP.NET Core / C#*  
 - **GitHub:** [@Abdallah-Muhamed](https://github.com/Abdallah-Muhamed)  
 - **Repository:** [AqarCare](https://github.com/Abdallah-Muhamed/AqarCare)  
