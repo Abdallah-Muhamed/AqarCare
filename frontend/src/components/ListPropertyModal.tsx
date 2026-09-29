@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
-import { X, Building2, UserCheck, Briefcase, Phone, CheckCircle2, MessageCircle, Sparkles, ArrowRight } from 'lucide-react'
+import { X, Building2, Phone, CheckCircle2, MessageCircle, Sparkles, ArrowRight, LayoutDashboard } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import './ListPropertyModal.css'
 
 interface Props {
   isOpen: boolean
   onClose: () => void
-  initialRole?: 'owner' | 'agent'
+  initialRole?: string
 }
 
 const DISTRICT_OPTIONS = [
@@ -23,8 +23,7 @@ const DISTRICT_OPTIONS = [
   'خارج المحلة',
 ]
 
-export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owner' }: Props) {
-  const [role, setRole] = useState<'owner' | 'agent'>(initialRole)
+export default function ListPropertyModal({ isOpen, onClose }: Props) {
   const [listingType, setListingType] = useState<'Sale' | 'Rent'>('Sale')
   const [propertyType, setPropertyType] = useState('شقة سكنية')
   const [fullName, setFullName] = useState('')
@@ -37,15 +36,13 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
 
   useEffect(() => {
     if (isOpen) {
-      setRole(initialRole)
       setSubmitted(false)
     }
-  }, [isOpen, initialRole])
+  }, [isOpen])
 
   if (!isOpen) return null
 
   const cleanPhone = phone.trim()
-  const roleText = role === 'owner' ? 'مالك العقار' : 'وسيط عقاري'
   const listingTypeText = listingType === 'Sale' ? 'للبيع' : 'للإيجار'
 
   const buildWhatsAppMessage = () => {
@@ -53,7 +50,7 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
       `السلام عليكم ورحمة الله، شركة عقار كير،`,
       `أرغب في عرض عقار لديكم على المنصة:`,
       `━━━━━━━━━━━━━━━━━━`,
-      `👤 *الصفة:* ${roleText}`,
+      `👤 *الصفة:* مالك العقار`,
       `🏷️ *الاسم:* ${fullName.trim() || 'غير محدد'}`,
       `📞 *رقم التواصل:* ${cleanPhone || 'غير محدد'}`,
       `📌 *نوع العرض:* ${listingTypeText}`,
@@ -90,11 +87,11 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
           <div className="list-modal__title-box">
             <span className="list-modal__badge">
               <Sparkles size={13} />
-              تسويق فوري مع عقار كير
+              تسويق فوري مع شركة عقار كير
             </span>
-            <h2 className="list-modal__title">اعرض عقارك معنا</h2>
+            <h2 className="list-modal__title">اعرض عقارك معنا كمالك</h2>
             <p className="list-modal__subtitle">
-              نصل بعقارك لآلاف المشترين الجادين بالمحلة الكبرى عبر قنواتنا الرسمية المعتمدة.
+              نصل بعقارك لآلاف المشترين الجادين بالمحلة الكبرى عبر قنواتنا الرسمية المعتمدة والتواصل يتم حصرياً عبر شركتنا.
             </p>
           </div>
           <button type="button" className="list-modal__close" onClick={onClose} aria-label="إغلاق">
@@ -109,7 +106,7 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
             </div>
             <h3 className="list-modal__success-title">تم إرسال بيانات عقارك بنجاح!</h3>
             <p className="list-modal__success-desc">
-              تم فتح محادثة مباشرة مع فريق مبيعات وتسويق شركة <strong>عقار كير</strong> عبر واتساب. سيقوم مستشارنا العقاري بالتواصل معك لترتيب المعاينة وإدراج الوحدة.
+              تم فتح محادثة مباشرة مع فريق مبيعات وتسويق شركة <strong>عقار كير</strong> عبر واتساب. سيقوم مستشارنا العقاري بالتواصل معك لترتيب المعاينة وتدقيق البيانات.
             </p>
 
             <div className="list-modal__success-actions">
@@ -130,6 +127,11 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
                 اتصال هاتفي مباشر (01055937687)
               </a>
 
+              <Link to="/my-properties" onClick={onClose} className="btn btn-gold list-modal__success-btn">
+                <LayoutDashboard size={18} />
+                لوحة عقاراتي (إدارة وحداتك)
+              </Link>
+
               <button type="button" className="btn btn-ghost" onClick={onClose}>
                 إغلاق النافذة
               </button>
@@ -137,42 +139,18 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="list-modal__form">
-            {/* Role Switcher Tabs */}
-            <div className="list-modal__role-tabs">
-              <button
-                type="button"
-                className={`list-modal__role-tab ${role === 'owner' ? 'active' : ''}`}
-                onClick={() => setRole('owner')}
-              >
-                <UserCheck size={18} />
-                <div className="list-modal__role-text">
-                  <strong>أنا مالك العقار</strong>
-                  <span>بيع أو تأجير عقارك بأعلى عائد</span>
-                </div>
-              </button>
-
-              <button
-                type="button"
-                className={`list-modal__role-tab ${role === 'agent' ? 'active' : ''}`}
-                onClick={() => setRole('agent')}
-              >
-                <Briefcase size={18} />
-                <div className="list-modal__role-text">
-                  <strong>أنا وسيط عقاري</strong>
-                  <span>سوّق وحداتك لعملاء موثوقين</span>
-                </div>
-              </button>
-            </div>
-
-            {/* Quick Agent Banner */}
-            {role === 'agent' && (
-              <div className="list-modal__agent-callout">
-                <span>هل أنت وسيط عقاري وتريد إضافة وإدارة عقاراتك بنفسك؟</span>
-                <Link to="/login" onClick={onClose} className="list-modal__agent-link">
-                  سجّل حساب وسيط مجاناً <ArrowRight size={14} />
-                </Link>
+            {/* Customer Self-Service Callout */}
+            <div className="list-modal__agent-callout" style={{ background: 'rgba(30,58,138,0.06)', border: '1px solid rgba(30,58,138,0.15)', borderRadius: '10px', padding: '12px 16px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <LayoutDashboard size={20} color="var(--clr-primary, #1e3a8a)" />
+                <span style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--clr-text)' }}>
+                  تريد رفع صور وحدتك والتحكم في بياناتها ومتابعة اعتماد الإدارة؟
+                </span>
               </div>
-            )}
+              <Link to="/my-properties" onClick={onClose} className="list-modal__agent-link" style={{ fontWeight: 700, display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--clr-primary, #1e3a8a)' }}>
+                افتح لوحة عقاراتي <ArrowRight size={14} />
+              </Link>
+            </div>
 
             {/* Form Fields Grid */}
             <div className="list-modal__grid">
@@ -275,7 +253,7 @@ export default function ListPropertyModal({ isOpen, onClose, initialRole = 'owne
             <div className="list-modal__trust-box">
               <Building2 size={16} />
               <span>
-                جميع عمليات التواصل والتسويق تتم بإشراف وإدارة فريق <strong>شركة عقار كير الرسمي</strong> لضمان أقصى درجات المصداقية والجدية.
+                جميع عمليات التواصل والتسويق والمعاينات تتم رسمياً وبإشراف فريق <strong>شركة عقار كير</strong> لحفظ حقوقك وخصوصيتك دون نشر رقمك الشخصي للعامة.
               </span>
             </div>
 

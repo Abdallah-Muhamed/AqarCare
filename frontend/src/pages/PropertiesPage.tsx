@@ -101,7 +101,6 @@ export default function PropertiesPage() {
   const [loading, setLoading]   = useState(true)
   const [showFilters, setShowFilters] = useState(false)
   const [listModalOpen, setListModalOpen] = useState(false)
-  const [listModalRole, setListModalRole] = useState<'owner' | 'agent'>('owner')
   const [query, setQuery]       = useState<PropertyQuery>({ sortBy: 'newest' })
   const setPage = (_?: number) => {}
 
@@ -927,31 +926,26 @@ export default function PropertiesPage() {
       <div className="props-list-banner">
         <div className="container props-list-banner__inner">
           <div className="props-list-banner__text">
-            <strong>هل تملك عقاراً أو تعمل كوسيط بالمحلة الكبرى؟</strong>
-            <span>اعرض عقارك معنا كمالك أو انضم كوسيط وسوّق وحداتك مباشرة عبر عقار كير</span>
+            <strong>هل تملك عقاراً وترغب في بيعه أو تأجيره بالمحلة الكبرى؟</strong>
+            <span>اعرض عقارك معنا كمالك ليتم مراجعته واعتماده ونشره رسمياً عبر منصة عقار كير</span>
           </div>
           <div className="props-list-banner__actions">
             <button
               type="button"
               className="btn btn-primary props-list-banner__btn"
               onClick={() => {
-                setListModalRole('owner')
                 setListModalOpen(true)
               }}
             >
               <PlusCircle size={15} />
               اعرض كمالك (مجاناً)
             </button>
-            <button
-              type="button"
+            <Link
+              to="/my-properties"
               className="btn btn-gold props-list-banner__btn"
-              onClick={() => {
-                setListModalRole('agent')
-                setListModalOpen(true)
-              }}
             >
-              اعرض كوسيط عقاري
-            </button>
+              لوحة عقاراتي (إدارة وحداتك)
+            </Link>
           </div>
         </div>
       </div>
@@ -992,7 +986,6 @@ export default function PropertiesPage() {
       <ListPropertyModal
         isOpen={listModalOpen}
         onClose={() => setListModalOpen(false)}
-        initialRole={listModalRole}
       />
     </div>
   )

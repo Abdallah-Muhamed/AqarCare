@@ -479,3 +479,4 @@ public record ApiErrorResponse(
     DateTime? Timestamp = null,
     IDictionary<string, string[]>? ValidationErrors = null);
 
+public record SetPublishedRequest(bool IsPublished);

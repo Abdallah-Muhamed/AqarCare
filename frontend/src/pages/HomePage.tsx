@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
-import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield, Sparkles, PlusCircle, UserCheck, Briefcase, CheckCircle } from 'lucide-react'
+import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield, Sparkles, PlusCircle, UserCheck, CheckCircle } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem } from '../types'
 import { setPageSeo } from '../utils/seo'
@@ -14,10 +14,8 @@ export default function HomePage() {
   const [featuredProps, setFeaturedProps] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [listModalOpen, setListModalOpen] = useState(false)
-  const [listModalRole, setListModalRole] = useState<'owner' | 'agent'>('owner')
 
-  const handleOpenListModal = (role: 'owner' | 'agent' = 'owner') => {
-    setListModalRole(role)
+  const handleOpenListModal = () => {
     setListModalOpen(true)
   }
 
@@ -73,7 +71,7 @@ export default function HomePage() {
             <button
               type="button"
               className="btn btn-gold hero__list-btn"
-              onClick={() => handleOpenListModal('owner')}
+              onClick={handleOpenListModal}
             >
               <PlusCircle size={18} />
               اعرض عقارك معنا
@@ -203,27 +201,27 @@ export default function HomePage() {
         </section>
       )}
 
-      {/* ── Owner & Broker Marketing Section ──────────────────────── */}
+      {/* ── Owner & Customer Marketing Section ──────────────────────── */}
       <section className="section owner-agent-section">
         <div className="container">
           <div className="section-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <span className="gold-line" style={{ margin: '0 auto 10px' }} />
             <h2 className="section-title">اعرض عقارك معنا في <span>عقار كير</span></h2>
             <p className="section-subtitle">
-              منصة متخصصة تدعم ملاك العقارات والوسطاء العقاريين بالمحلة الكبرى لتحقيق أسرع بيع وأفضل عائد
+              منصة متخصصة تدعم ملاك العقارات والعملاء بالمحلة الكبرى لتحقيق أسرع بيع وأفضل عائد بإشراف رسمي كامل
             </p>
           </div>
 
           <div className="owner-agent-grid">
-            {/* Card 1: For Owners (الزبون / المالك) */}
+            {/* Card 1: For Owners - Quick WhatsApp Request */}
             <div className="owner-card">
               <div className="owner-card__badge">
                 <UserCheck size={14} />
-                <span>للملاك وأصحاب العقارات</span>
+                <span>طلب معاينة وتقييم سريع</span>
               </div>
               <h3 className="owner-card__title">هل تملك عقاراً وترغب في بيعه أو تأجيره؟</h3>
               <p className="owner-card__desc">
-                اعرض وحدتك مباشرة أمام آلاف المشترين الجادين مع تسويق متكامل، ومعاينات منظمة، وحفظ كامل لخصوصيتك دون إزعاج.
+                تواصل مباشرة مع فريق شركة عقار كير لترتيب المعاينة والتقييم السعري. نقوم بتسويق وحدتك دون إزعاج وبحفظ كامل لخصوصيتك.
               </p>
 
               <ul className="owner-card__features">
@@ -245,51 +243,47 @@ export default function HomePage() {
                 <button
                   type="button"
                   className="btn btn-primary owner-card__btn"
-                  onClick={() => handleOpenListModal('owner')}
+                  onClick={handleOpenListModal}
                 >
                   <PlusCircle size={17} />
-                  اعرض عقارك كمالك (مجاناً)
+                  اعرض عقارك كمالك (واتساب سريع)
                 </button>
               </div>
             </div>
 
-            {/* Card 2: For Agents (الوسيط والمسوق) */}
+            {/* Card 2: Customer Self-Service Properties Panel */}
             <div className="agent-card">
-              <div className="agent-card__badge">
-                <Briefcase size={14} />
-                <span>للوسطاء والمسوقين العقاريين</span>
+              <div className="agent-card__badge" style={{ background: 'rgba(30,58,138,0.1)', color: '#1e3a8a', borderColor: 'rgba(30,58,138,0.2)' }}>
+                <Sparkles size={14} />
+                <span>لوحة عقاراتي (إدارة ذاتية)</span>
               </div>
-              <h3 className="agent-card__title">هل أنت وسيط عقاري تبحث عن صفقات أسرع؟</h3>
+              <h3 className="agent-card__title">أضف وتحكّم في عقاراتك بنفسك من حسابك</h3>
               <p className="agent-card__desc">
-                انضم إلى شبكة وسطاء عقار كير الرسمية. نوفر لك مشترين جاهزين كاش، ونتعاون معك بنظام عمولات واضح ومحمي بالكامل.
+                أنشئ حساب عميل مجاناً وتمتع بلوحة تحكم خاصة لعرض عقاراتك وتعديل الأسعار وإرفاق الصور. تخضع جميع الوحدات لمراجعة واعتماد الإدارة قبل نشرها رسمياً.
               </p>
 
               <ul className="owner-card__features">
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>قاعدة مشترين كاش:</strong> طلبات شراء يومية في منشية البكري، الشعبية، شكري القوتلي وكافة الأحياء.</span>
+                  <span><strong>حساب عميل مجاني:</strong> تسجيل فوري وبسيط لإدارة كافة وحداتك المعروضة في مكان واحد.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>تعاون رسمي وعمولات مضمونة:</strong> شراكة معلنة تحمي حقوق جميع الأطراف بعقود واضحة.</span>
+                  <span><strong>اعتماد ومراجعة رسمية:</strong> تراجع الإدارة بيانات العقار قبل النشر لضمان المصداقية العالية.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>إدارة العقارات رقمياً:</strong> لوحة تحكم متطورة لإضافة الوحدات وتعديل الأسعار ومتابعة الطلبات.</span>
+                  <span><strong>التواصل حصرياً عبر شركتنا:</strong> فريق عقار كير يتولى الرد والتفاوض نيابةً عنك لحمايتك التامة.</span>
                 </li>
               </ul>
 
               <div className="agent-card__cta">
-                <button
-                  type="button"
-                  className="btn btn-gold owner-card__btn"
-                  onClick={() => handleOpenListModal('agent')}
-                >
-                  <Briefcase size={17} />
-                  انضم واعرض عقاراتك كوسيط
-                </button>
+                <Link to="/my-properties" className="btn btn-gold owner-card__btn">
+                  <PlusCircle size={17} />
+                  الدخول إلى لوحة عقاراتي
+                </Link>
                 <Link to="/login" className="agent-card__login-link">
-                  لديك حساب بالفعل أو تريد تسجيل حساب وسيط؟ سجل الآن ←
+                  ليس لديك حساب؟ أنشئ حسابك كعميل الآن مجاناً ←
                 </Link>
               </div>
             </div>
@@ -309,9 +303,9 @@ export default function HomePage() {
               <button
                 type="button"
                 className="btn btn-gold"
-                onClick={() => handleOpenListModal('owner')}
+                onClick={handleOpenListModal}
               >
-                اعرض عقارك معنا (مالك / وسيط)
+                اعرض عقارك كمالك
               </button>
               <Link to="/map" className="btn btn-ghost">
                 <Map size={16} /> استكشف الخريطة
@@ -324,7 +318,6 @@ export default function HomePage() {
       <ListPropertyModal
         isOpen={listModalOpen}
         onClose={() => setListModalOpen(false)}
-        initialRole={listModalRole}
       />
     </div>
   )

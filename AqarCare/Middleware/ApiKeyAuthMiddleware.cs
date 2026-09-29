@@ -41,18 +41,9 @@ public class ApiKeyAuthMiddleware
             if (context.User.Identity?.IsAuthenticated == true)
             {
                 var isAdmin = context.User.IsInRole(UserRoles.Admin);
-                var isAgent = context.User.IsInRole(UserRoles.Agent);
 
                 // Admin has full access to all /api/admin paths
                 if (isAdmin)
-                {
-                    await _next(context);
-                    return;
-                }
-
-                // Agent has access to properties and inquiries endpoints
-                if (isAgent && (context.Request.Path.StartsWithSegments("/api/admin/properties", StringComparison.OrdinalIgnoreCase)
-                    || context.Request.Path.StartsWithSegments("/api/inquiries", StringComparison.OrdinalIgnoreCase)))
                 {
                     await _next(context);
                     return;

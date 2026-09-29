@@ -161,6 +161,32 @@ public class AdminPropertiesController : ControllerBase
     }
 
     /// <summary>
+    /// Approves or updates the publication status of a property (Admin approval workflow).
+    /// </summary>
+    /// <param name="id">Property identifier.</param>
+    /// <param name="request">Publication flag.</param>
+    /// <param name="ct">Cancellation token.</param>
+    /// <response code="200">Property publication status updated successfully.</response>
+    /// <response code="404">Property not found.</response>
+    [HttpPatch("{id:int}/publish")]
+    [ProducesResponseType(typeof(PropertyDetailDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status404NotFound)]
+    public async Task<ActionResult<PropertyDetailDto>> SetPublished(int id, [FromBody] SetPublishedRequest request, CancellationToken ct)
+    {
+        var result = await _propertyService.SetPublishedAsync(id, request.IsPublished, ct);
+        if (result is null)
+        {
+            return NotFound(new ApiErrorResponse(
+                StatusCode: StatusCodes.Status404NotFound,
+                Message: $"Property with ID {id} was not found.",
+                TraceId: HttpContext.TraceIdentifier));
+        }
+
+        _logger.LogInformation("Property {PropertyId} publication status updated to {IsPublished}", id, request.IsPublished);
+        return Ok(result);
+    }
+
+    /// <summary>
     /// Deletes a property record and invalidates active cache partitions.
     /// </summary>
     /// <param name="id">Property identifier.</param>

@@ -22,7 +22,6 @@ export default function LoginPage() {
   const [regEmail, setRegEmail] = useState('')
   const [regPhone, setRegPhone] = useState('')
   const [regPassword, setRegPassword] = useState('')
-  const [regRole, setRegRole] = useState<'Customer' | 'Agent'>('Customer')
 
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -45,7 +44,7 @@ export default function LoginPage() {
         if (auth.role === 'Admin') {
           navigate('/admin')
         } else {
-          navigate(from)
+          navigate(from === '/' ? '/my-properties' : from)
         }
       }, 700)
     } catch (err: any) {
@@ -68,7 +67,7 @@ export default function LoginPage() {
         email: regEmail.trim(),
         phoneNumber: regPhone.trim() || undefined,
         password: regPassword,
-        role: regRole,
+        role: 'Customer',
       })
 
       setSuccessMsg(`تم إنشاء الحساب بنجاح! مرحباً بك، ${auth.fullName || auth.username}`)
@@ -76,7 +75,7 @@ export default function LoginPage() {
         if (auth.role === 'Admin') {
           navigate('/admin')
         } else {
-          navigate(from)
+          navigate(from === '/' ? '/my-properties' : from)
         }
       }, 700)
     } catch (err: any) {
@@ -99,13 +98,17 @@ export default function LoginPage() {
           <div className="login-card__header">
             <span className="badge badge-green"><CheckCircle2 size={13} /> جلسة نشطة</span>
             <h1 className="login-card__title">أهلاً بك، {currentUser.fullName}</h1>
-            <p className="login-card__subtitle">أنت مسجل الدخول حالياً بصلاحية ({currentUser.role === 'Admin' ? 'مدير النظام' : currentUser.role === 'Agent' ? 'وسيط عقاري' : 'عميل'}).</p>
+            <p className="login-card__subtitle">أنت مسجل الدخول حالياً بصلاحية ({currentUser.role === 'Admin' ? 'مدير النظام' : 'عميل مسجل'}).</p>
           </div>
 
           <div className="login-card__actions" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-            {(currentUser.role === 'Admin' || currentUser.role === 'Agent') && (
+            {currentUser.role === 'Admin' ? (
               <Link to="/admin" className="btn btn-primary">
-                {currentUser.role === 'Admin' ? 'الانتقال إلى لوحة الإدارة' : 'لوحة إدارة وإضافة العقارات'}
+                الانتقال إلى لوحة الإدارة
+              </Link>
+            ) : (
+              <Link to="/my-properties" className="btn btn-primary">
+                عقاراتي المعروضة (إضافة وتعديل عقارات)
               </Link>
             )}
             <Link to="/my-inquiries" className="btn btn-outline">
@@ -204,33 +207,7 @@ export default function LoginPage() {
           <form onSubmit={handleRegister} className="auth-form">
             <div className="login-card__header">
               <h1 className="login-card__title">إنشاء حساب جديد</h1>
-              <p className="login-card__subtitle">انضم لمنصة عقار كير للتواصل المباشر ومتابعة العقارات</p>
-            </div>
-
-            <div className="form-group">
-              <label>نوع الحساب</label>
-              <div className="role-selector">
-                <label className={`role-pill ${regRole === 'Customer' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="Customer"
-                    checked={regRole === 'Customer'}
-                    onChange={() => setRegRole('Customer')}
-                  />
-                  عميل باحث عن عقار / مالك
-                </label>
-                <label className={`role-pill ${regRole === 'Agent' ? 'active' : ''}`}>
-                  <input
-                    type="radio"
-                    name="role"
-                    value="Agent"
-                    checked={regRole === 'Agent'}
-                    onChange={() => setRegRole('Agent')}
-                  />
-                  وسيط عقاري (إضافة وتسويق عقارات)
-                </label>
-              </div>
+              <p className="login-card__subtitle">أنشئ حسابك لإضافة وإدارة عقاراتك على عقار كير ومتابعة طلباتك</p>
             </div>
 
             <div className="form-group">

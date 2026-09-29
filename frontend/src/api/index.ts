@@ -200,4 +200,56 @@ export const api = {
       body: JSON.stringify({ status }),
     }, true)
   },
+
+  // ── Customer Properties ─────────────────────────────────────────
+  getMyProperties(): Promise<PropertyListItem[]> {
+    return request<PropertyListItem[]>(`${BASE}/properties/my`, { method: 'GET' }, true)
+  },
+
+  getMyProperty(id: number): Promise<PropertyDetail> {
+    return request<PropertyDetail>(`${BASE}/properties/my/${id}`, { method: 'GET' }, true)
+  },
+
+  createMyProperty(payload: any): Promise<PropertyDetail> {
+    return request<PropertyDetail>(`${BASE}/properties/my`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }, true)
+  },
+
+  updateMyProperty(id: number, payload: any): Promise<PropertyDetail> {
+    return request<PropertyDetail>(`${BASE}/properties/my/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }, true)
+  },
+
+  deleteMyProperty(id: number): Promise<void> {
+    return request<void>(`${BASE}/properties/my/${id}`, {
+      method: 'DELETE',
+    }, true)
+  },
+
+  async uploadMyPropertyMedia(id: number, file: File): Promise<any> {
+    const fd = new FormData()
+    fd.append('file', file)
+    return request<any>(`${BASE}/properties/my/${id}/media/upload`, {
+      method: 'POST',
+      body: fd,
+    }, true)
+  },
+
+  removeMyPropertyMedia(id: number, mediaId: number): Promise<void> {
+    return request<void>(`${BASE}/properties/my/${id}/media/${mediaId}`, {
+      method: 'DELETE',
+    }, true)
+  },
+
+  // ── Admin Property Moderation / Approval ────────────────────────
+  adminSetPublished(id: number, isPublished: boolean): Promise<PropertyDetail> {
+    return request<PropertyDetail>(`${BASE}/admin/properties/${id}/publish`, {
+      method: 'PATCH',
+      body: JSON.stringify({ isPublished }),
+    }, true)
+  },
 }

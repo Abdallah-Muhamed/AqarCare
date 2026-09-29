@@ -6,10 +6,10 @@ namespace AqarCare.Data.Entities;
 public static class UserRoles
 {
     public const string Admin = "Admin";
-    public const string Agent = "Agent";
     public const string Customer = "Customer";
+    public const string Agent = "Customer"; // legacy fallback
 
-    public static readonly IReadOnlyList<string> All = [Admin, Agent, Customer];
+    public static readonly IReadOnlyList<string> All = [Admin, Customer];
 
     public static bool IsValidRole(string role) => All.Contains(role, StringComparer.OrdinalIgnoreCase);
 }

@@ -87,7 +87,7 @@ export default function AdminPanelPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold' | 'pending'>('all');
   const [adminSection, setAdminSection] = useState<'properties' | 'inquiries'>('properties');
   const [floorViewMode, setFloorViewMode] = useState<'cards' | 'table'>('cards');
 
@@ -897,6 +897,30 @@ export default function AdminPanelPage() {
     window.location.href = '/';
   };
 
+  const handleTogglePublish = async (id: number, currentPublished: boolean) => {
+    const actionName = currentPublished ? 'إلغاء نشر' : 'اعتماد ونشر';
+    if (!window.confirm(`هل أنت متأكد من ${actionName} هذا العقار؟`)) {
+      return;
+    }
+    try {
+      const res = await adminFetch(`/api/admin/properties/${id}/publish`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPublished: !currentPublished }),
+      });
+      if (res.ok) {
+        setProperties(prev => prev.map(p => p.id === id ? { ...p, isPublished: !currentPublished } : p));
+        setSuccessMsg(!currentPublished ? 'تم اعتماد ونشر العقار بنجاح على المنصة ✅' : 'تم إلغاء نشر العقار بنجاح');
+        setTimeout(() => setSuccessMsg(''), 4000);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        setError(err.message || 'فشل تحديث حالة نشر العقار');
+      }
+    } catch {
+      setError('فشل الاتصال بالخادم لتحديث حالة النشر');
+    }
+  };
+
   // ── stats ─────────────────────────────────────────────────────────────────────
 
   const totalFloorUnits = properties.reduce((acc, p) => acc + (p.floors?.length || 1), 0);
@@ -922,6 +946,7 @@ export default function AdminPanelPage() {
     sold: properties.filter(p => p.status === 'Sold').length,
     rented: properties.filter(p => p.status === 'Rented').length,
     featured: properties.filter(p => p.isFeatured).length,
+    pending: properties.filter(p => !p.isPublished).length,
     totalUnits: totalFloorUnits,
     totalSoldUnits: totalSoldUnits,
     revenue: totalSoldRevenue,
@@ -930,6 +955,7 @@ export default function AdminPanelPage() {
   const filteredProperties = properties.filter(p => {
     if (activeTab === 'available') return p.status === 'Available';
     if (activeTab === 'sold') return p.status === 'Sold' || p.status === 'Rented';
+    if (activeTab === 'pending') return !p.isPublished;
     return true;
   });
 
@@ -2260,6 +2286,13 @@ export default function AdminPanelPage() {
                   >
                     مباعة/مؤجرة ({stats.sold + stats.rented})
                   </button>
+                  <button
+                    className={`filter-tab ${activeTab === 'pending' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('pending')}
+                    style={stats.pending > 0 ? { borderColor: '#f59e0b', color: '#d97706', fontWeight: 800 } : {}}
+                  >
+                    ⏳ قيد الاعتماد ({stats.pending})
+                  </button>
                 </div>
               </div>
 
@@ -2426,6 +2459,26 @@ export default function AdminPanelPage() {
                         </div>
 
                         <div className="property-actions">
+                          <button
+                            className="btn-publish-toggle"
+                            onClick={() => handleTogglePublish(property.id, property.isPublished)}
+                            title={property.isPublished ? 'إلغاء نشر العقار' : 'اعتماد ونشر العقار على المنصة'}
+                            style={{
+                              background: property.isPublished ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.15)',
+                              color: property.isPublished ? '#dc2626' : '#059669',
+                              border: `1px solid ${property.isPublished ? '#fca5a5' : '#6ee7b7'}`,
+                              padding: '6px 12px',
+                              borderRadius: '6px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              fontSize: '0.82rem'
+                            }}
+                          >
+                            {property.isPublished ? '🔒 إلغاء النشر' : '✅ اعتماد ونشر'}
+                          </button>
                           <button className="btn-edit" onClick={() => handleEdit(property)}>✏️ تعديل</button>
                           <button className="btn-map" onClick={() => setMapPickerProperty(property)}>📍 الخريطة</button>
                           <button className="btn-delete" onClick={() => handleDelete(property.id)}>🗑 حذف</button>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, User, LogOut, MessageSquare, Shield, PlusCircle } from 'lucide-react'
+import { Menu, X, User, LogOut, MessageSquare, Shield, PlusCircle, Building2 } from 'lucide-react'
 import { getStoredUser, clearAuth, getAuthToken } from '../api'
 import ListPropertyModal from './ListPropertyModal'
 import './Navbar.css'
@@ -41,7 +41,7 @@ export default function Navbar() {
   ]
 
   const userInitial = (user?.fullName || user?.username || 'U').charAt(0).toUpperCase()
-  const roleLabel = user?.role === 'Admin' ? 'مدير' : user?.role === 'Agent' ? 'وسيط' : 'عميل'
+  const roleLabel = user?.role === 'Admin' ? 'مدير' : 'عميل'
 
   return (
     <header className={`navbar ${scrolled ? 'navbar--scrolled' : ''}`}>
@@ -64,6 +64,16 @@ export default function Navbar() {
               </Link>
             ))}
 
+            {hasToken && user?.role !== 'Admin' && (
+              <Link
+                to="/my-properties"
+                className={`navbar__link ${location.pathname === '/my-properties' ? 'active' : ''}`}
+              >
+                <Building2 size={15} />
+                <span>عقاراتي</span>
+              </Link>
+            )}
+
             {hasToken && (
               <Link
                 to="/my-inquiries"
@@ -74,7 +84,7 @@ export default function Navbar() {
               </Link>
             )}
 
-            {(user?.role === 'Admin' || user?.role === 'Agent') && (
+            {user?.role === 'Admin' && (
               <Link
                 to="/admin"
                 className={`navbar__link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}
@@ -88,18 +98,20 @@ export default function Navbar() {
 
         {/* Auth Actions (Desktop & Mobile) */}
         <div className="navbar__actions">
-          {/* List Property CTA for owners & brokers */}
+          {/* List Property CTA */}
           <button
             type="button"
             className="navbar__cta-btn"
             onClick={() => {
-              if (user?.role === 'Admin' || user?.role === 'Agent') {
+              if (user?.role === 'Admin') {
                 navigate('/admin')
+              } else if (hasToken) {
+                navigate('/my-properties')
               } else {
                 setListModalOpen(true)
               }
             }}
-            title="اعرض عقارك للبيع أو الإيجار معنا كمالك أو وسيط"
+            title="اعرض عقارك للبيع أو الإيجار بعد اعتماده من الإدارة"
           >
             <PlusCircle size={15} />
             <span>اعرض عقارك</span>
@@ -151,7 +163,7 @@ export default function Navbar() {
               <div>
                 <div className="navbar__drawer-user-name">{user.fullName || user.username}</div>
                 <div className="navbar__drawer-user-role">
-                  {user.role === 'Admin' ? 'مدير النظام' : user.role === 'Agent' ? 'وسيط عقاري' : 'عميل مسجل'}
+                  {user.role === 'Admin' ? 'مدير النظام' : 'عميل مسجل'}
                 </div>
               </div>
             </div>
@@ -179,15 +191,17 @@ export default function Navbar() {
             className="navbar__drawer-cta-btn"
             onClick={() => {
               setOpen(false)
-              if (user?.role === 'Admin' || user?.role === 'Agent') {
+              if (user?.role === 'Admin') {
                 navigate('/admin')
+              } else if (hasToken) {
+                navigate('/my-properties')
               } else {
                 setListModalOpen(true)
               }
             }}
           >
             <PlusCircle size={16} />
-            <span>اعرض عقارك معنا (مالك / وسيط)</span>
+            <span>اعرض عقارك معنا (مراجعة واعتماد)</span>
           </button>
         </div>
 
@@ -202,6 +216,16 @@ export default function Navbar() {
             </Link>
           ))}
 
+          {hasToken && user?.role !== 'Admin' && (
+            <Link
+              to="/my-properties"
+              className={`navbar__drawer-link ${location.pathname === '/my-properties' ? 'active' : ''}`}
+            >
+              <Building2 size={16} />
+              عقاراتي المعروضة
+            </Link>
+          )}
+
           {hasToken && (
             <Link
               to="/my-inquiries"
@@ -212,7 +236,7 @@ export default function Navbar() {
             </Link>
           )}
 
-          {(user?.role === 'Admin' || user?.role === 'Agent') && (
+          {user?.role === 'Admin' && (
             <Link
               to="/admin"
               className={`navbar__drawer-link ${location.pathname.startsWith('/admin') ? 'active' : ''}`}

@@ -549,6 +549,38 @@ public class PropertyService
         return ToDetail(updated);
     }
 
+    public async Task<PropertyDetailDto?> SetPublishedAsync(int id, bool isPublished, CancellationToken ct = default)
+    {
+        var entity = await _db.PropertyUnits.FindAsync([id], ct);
+        if (entity is null) return null;
+
+        entity.IsPublished = isPublished;
+        entity.UpdatedAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync(ct);
+        InvalidateCache();
+
+        var updated = await _db.PropertyUnits
+            .AsNoTracking()
+            .Include(x => x.Media.OrderBy(m => m.SortOrder))
+            .Include(x => x.FinishingPackage)
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
+            .FirstAsync(x => x.Id == id, ct);
+        return ToDetail(updated);
+    }
+
+    public async Task<IReadOnlyList<PropertyListItemDto>> GetCustomerPropertiesAsync(int customerId, CancellationToken ct = default)
+    {
+        var entities = await _db.PropertyUnits
+            .AsNoTracking()
+            .Include(x => x.Media.OrderBy(m => m.SortOrder))
+            .Include(x => x.Floors.OrderBy(f => f.SortOrder))
+            .Where(x => x.AgentId == customerId)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync(ct);
+
+        return entities.Select(ToListItem).ToList();
+    }
+
     public async Task<bool> DeleteAsync(int id, CancellationToken ct = default)
     {
         var entity = await _db.PropertyUnits.FindAsync([id], ct);

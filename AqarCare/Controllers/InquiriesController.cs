@@ -98,34 +98,14 @@ public class InquiriesController : ControllerBase
     /// <response code="200">List of accessible inquiries.</response>
     /// <response code="403">Caller does not have Admin or Agent role.</response>
     [AdminApiKey]
-    [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Agent}")]
+    [Authorize(Roles = UserRoles.Admin)]
     [HttpGet("inquiries")]
     [ProducesResponseType(typeof(IReadOnlyList<PropertyInquiryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<ActionResult<IReadOnlyList<PropertyInquiryDto>>> GetInquiries([FromQuery] string? status, CancellationToken ct)
     {
-        var role = User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
-        var isAdmin = string.Equals(role, UserRoles.Admin, StringComparison.OrdinalIgnoreCase);
-
-        if (isAdmin)
-        {
-            var inquiries = await _inquiryService.GetAllInquiriesAsync(status, ct);
-            return Ok(inquiries);
-        }
-
-        // For Agent: retrieve inquiries for their properties
-        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (int.TryParse(idClaim, out var agentId))
-        {
-            var inquiries = await _inquiryService.GetAgentInquiriesAsync(agentId, ct);
-            if (!string.IsNullOrWhiteSpace(status))
-            {
-                inquiries = inquiries.Where(i => string.Equals(i.Status, status, StringComparison.OrdinalIgnoreCase)).ToList();
-            }
-            return Ok(inquiries);
-        }
-
-        return Ok(Array.Empty<PropertyInquiryDto>());
+        var inquiries = await _inquiryService.GetAllInquiriesAsync(status, ct);
+        return Ok(inquiries);
     }
 
     /// <summary>
@@ -139,7 +119,7 @@ public class InquiriesController : ControllerBase
     /// <response code="403">Insufficient permissions to manage this inquiry.</response>
     /// <response code="404">Inquiry not found.</response>
     [AdminApiKey]
-    [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Agent}")]
+    [Authorize(Roles = UserRoles.Admin)]
     [HttpPatch("inquiries/{id:int}/status")]
     [ProducesResponseType(typeof(PropertyInquiryDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ApiErrorResponse), StatusCodes.Status400BadRequest)]
