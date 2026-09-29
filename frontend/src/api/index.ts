@@ -90,6 +90,15 @@ async function request<T>(path: string, options: RequestInit = {}, includeAuth =
   })
 
   if (!res.ok) {
+    if (res.status === 401 && includeAuth) {
+      clearAuth()
+      if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+        const fromUrl = window.location.pathname + window.location.search
+        window.location.href = `/login?from=${encodeURIComponent(fromUrl)}`
+        return new Promise(() => {}) as Promise<T>
+      }
+    }
+
     let errBody: ApiError | null = null
     try {
       errBody = await res.json()

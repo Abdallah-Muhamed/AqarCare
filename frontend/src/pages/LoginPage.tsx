@@ -7,12 +7,14 @@ import './LoginPage.css'
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
+  const searchParams = new URLSearchParams(location.search)
+  const fromQuery = searchParams.get('from')
   const fromState = (location.state as any)?.from
   const targetPath = fromState
     ? `${fromState.pathname || '/'}${fromState.search || ''}`
-    : '/my-properties?action=add'
+    : (fromQuery || '/my-properties?action=add')
 
-  const isFromListProperty = fromState?.pathname === '/my-properties'
+  const isFromListProperty = fromState?.pathname === '/my-properties' || fromQuery?.includes('/my-properties')
 
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [currentUser, setCurrentUser] = useState(getStoredUser())
