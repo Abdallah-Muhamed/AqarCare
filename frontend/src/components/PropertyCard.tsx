@@ -1,10 +1,9 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import { BedDouble, Bath, Maximize2, MapPin, Star, Play, MessageCircle } from 'lucide-react'
+import { BedDouble, Bath, Maximize2, MapPin, Star, Play } from 'lucide-react'
 import type { PropertyListItem } from '../types'
 import { formatFloorsText } from '../utils/formatters'
 import { getPropertyPlaceholder } from '../constants/placeholders'
-import { getPropertyWhatsAppUrl } from '../utils/analytics'
 import './PropertyCard.css'
 
 interface Props { property: PropertyListItem }
@@ -76,17 +75,6 @@ export default function PropertyCard({ property: p }: Props) {
     ? (isLand || isShop || minPpm === maxPpm ? `${minPpm.toLocaleString('ar-EG')} ج/م²` : `يبدأ من ${minPpm.toLocaleString('ar-EG')} ج/م²`)
     : null
 
-  const waUrl = getPropertyWhatsAppUrl({
-    id: p.id,
-    title: p.title,
-    price: p.price,
-    installmentPrice: p.installmentPrice,
-    district: p.district,
-    city: p.city,
-    propertyType: p.propertyType,
-    isSold,
-  })
-  
   return (
     <Link to={`/properties/${p.id}`} className={`prop-card card ${isSold ? 'prop-card--sold' : ''}`}>
       {/* Image */}
@@ -380,23 +368,6 @@ export default function PropertyCard({ property: p }: Props) {
               </div>
             );
           })()}
-        </div>
-
-        {/* Quick WhatsApp Action */}
-        <div className="prop-card__action-row">
-          <button
-            type="button"
-            className="prop-card__wa-btn"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              window.open(waUrl, '_blank', 'noopener,noreferrer');
-            }}
-            title={isSold ? 'استفسار عن بدائل مماثلة عبر واتساب' : 'تواصل فوري عبر واتساب'}
-          >
-            <MessageCircle size={15} />
-            <span>{isSold ? 'طلب بديل مماثل' : 'استفسار واتساب'}</span>
-          </button>
         </div>
       </div>
     </Link>

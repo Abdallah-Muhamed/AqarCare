@@ -56,3 +56,169 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 10px rgba(183, 121, 61, 0.15);
 }
+
+/* ── Hero List CTA Button ──────────────────────────────────── */
+.hero__list-btn {
+  background: linear-gradient(135deg, #d4a373 0%, #b8860b 100%) !important;
+  color: #ffffff !important;
+  font-weight: 800;
+  border: 1px solid rgba(184, 134, 11, 0.3);
+  box-shadow: 0 4px 14px rgba(184, 134, 11, 0.28);
+}
+
+.hero__list-btn:hover {
+  background: linear-gradient(135deg, #dfaf7e 0%, #c49214 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(184, 134, 11, 0.38);
+}
+
+/* ── Owner & Broker Marketing Section ──────────────────────── */
+.owner-agent-section {
+  background: linear-gradient(180deg, #fbf9f5 0%, #f4f0e8 100%);
+  border-top: 1px solid rgba(216, 207, 189, 0.6);
+  border-bottom: 1px solid rgba(216, 207, 189, 0.6);
+  padding: 4.5rem 0;
+}
+
+.owner-agent-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+
+.owner-card,
+.agent-card {
+  background: #ffffff;
+  border-radius: 20px;
+  padding: 2.25rem 2rem;
+  border: 1px solid rgba(216, 207, 189, 0.7);
+  box-shadow: 0 10px 30px rgba(45, 74, 62, 0.06);
+  display: flex;
+  flex-direction: column;
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.owner-card:hover,
+.agent-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 40px rgba(45, 74, 62, 0.12);
+  border-color: rgba(200, 146, 42, 0.5);
+}
+
+.owner-card__badge,
+.agent-card__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  width: fit-content;
+  margin-bottom: 1rem;
+}
+
+.owner-card__badge {
+  background: #edf6f1;
+  color: #245e43;
+  border: 1px solid rgba(36, 94, 67, 0.2);
+}
+
+.agent-card__badge {
+  background: #fbf5e8;
+  color: #a46d14;
+  border: 1px solid rgba(200, 146, 42, 0.3);
+}
+
+.owner-card__title,
+.agent-card__title {
+  font-size: 1.28rem;
+  font-weight: 800;
+  color: #1f382e;
+  margin: 0 0 0.75rem;
+  line-height: 1.35;
+}
+
+.owner-card__desc,
+.agent-card__desc {
+  font-size: 0.92rem;
+  color: #55675e;
+  line-height: 1.6;
+  margin: 0 0 1.5rem;
+}
+
+.owner-card__features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  flex: 1;
+}
+
+.owner-card__features li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.88rem;
+  color: #3b4e45;
+  line-height: 1.5;
+}
+
+.owner-card__features li svg {
+  color: #2d4a3e;
+  flex-shrink: 0;
+  margin-top: 3px;
+}
+
+.agent-card .owner-card__features li svg {
+  color: #b8860b;
+}
+
+.owner-card__cta,
+.agent-card__cta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.owner-card__btn {
+  width: 100%;
+  padding: 0.85rem 1.25rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.agent-card__login-link {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #2d4a3e;
+  text-align: center;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.agent-card__login-link:hover {
+  color: #b8860b;
+}
+
+@media (max-width: 860px) {
+  .owner-agent-grid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+  .owner-card,
+  .agent-card {
+    padding: 1.75rem 1.5rem;
+  }
+}

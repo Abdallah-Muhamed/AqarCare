@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { Menu, X, User, LogOut, MessageSquare, Shield } from 'lucide-react'
+import { Menu, X, User, LogOut, MessageSquare, Shield, PlusCircle } from 'lucide-react'
 import { getStoredUser, clearAuth, getAuthToken } from '../api'
+import ListPropertyModal from './ListPropertyModal'
 import './Navbar.css'
 
 export default function Navbar() {
   const [open, setOpen] = useState(false)
   const [scrolled, setScrolled] = useState(false)
+  const [listModalOpen, setListModalOpen] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -86,6 +88,23 @@ export default function Navbar() {
 
         {/* Auth Actions (Desktop & Mobile) */}
         <div className="navbar__actions">
+          {/* List Property CTA for owners & brokers */}
+          <button
+            type="button"
+            className="navbar__cta-btn"
+            onClick={() => {
+              if (user?.role === 'Admin' || user?.role === 'Agent') {
+                navigate('/admin')
+              } else {
+                setListModalOpen(true)
+              }
+            }}
+            title="اعرض عقارك للبيع أو الإيجار معنا كمالك أو وسيط"
+          >
+            <PlusCircle size={15} />
+            <span>اعرض عقارك</span>
+          </button>
+
           {hasToken && user ? (
             <div className="navbar__user-pill" title={`${user.fullName} (${roleLabel})`}>
               <div className="navbar__user-avatar">{userInitial}</div>
@@ -154,6 +173,24 @@ export default function Navbar() {
           </div>
         )}
 
+        <div className="navbar__drawer-cta">
+          <button
+            type="button"
+            className="navbar__drawer-cta-btn"
+            onClick={() => {
+              setOpen(false)
+              if (user?.role === 'Admin' || user?.role === 'Agent') {
+                navigate('/admin')
+              } else {
+                setListModalOpen(true)
+              }
+            }}
+          >
+            <PlusCircle size={16} />
+            <span>اعرض عقارك معنا (مالك / وسيط)</span>
+          </button>
+        </div>
+
         <div className="navbar__drawer-nav">
           {baseLinks.map(l => (
             <Link
@@ -186,6 +223,11 @@ export default function Navbar() {
           )}
         </div>
       </div>
+
+      <ListPropertyModal
+        isOpen={listModalOpen}
+        onClose={() => setListModalOpen(false)}
+      />
     </header>
   )
 }

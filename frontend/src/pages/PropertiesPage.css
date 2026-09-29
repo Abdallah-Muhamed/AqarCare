@@ -395,3 +395,68 @@
   }
 }
 
+/* ── Marketing List Property Banner ── */
+.props-list-banner {
+  background: linear-gradient(135deg, #fdfbf7 0%, #f4eee2 100%);
+  border-top: 1px solid rgba(216, 207, 189, 0.6);
+  border-bottom: 1px solid rgba(216, 207, 189, 0.6);
+  padding: 1.15rem 0;
+}
+
+.props-list-banner__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.props-list-banner__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.props-list-banner__text strong {
+  font-size: 1rem;
+  color: #1f382e;
+  font-weight: 800;
+}
+
+.props-list-banner__text span {
+  font-size: 0.84rem;
+  color: #55675e;
+}
+
+.props-list-banner__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.props-list-banner__btn {
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  font-weight: 800;
+  border-radius: 99px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+@media (max-width: 680px) {
+  .props-list-banner__inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.85rem;
+  }
+  .props-list-banner__actions {
+    width: 100%;
+  }
+  .props-list-banner__btn {
+    flex: 1;
+    justify-content: center;
+  }
+}
+

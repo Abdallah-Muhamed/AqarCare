@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { SlidersHorizontal, Search, Map as MapIcon, List, Check, RotateCcw, Sparkles } from 'lucide-react'
+import { SlidersHorizontal, Search, Map as MapIcon, List, Check, RotateCcw, Sparkles, PlusCircle } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
 import { getTotalAvailableUnits, fuzzyArabicMatch } from '../utils/formatters'
 import PropertyCard from '../components/PropertyCard'
 import HeroSearchBar from '../components/home/HeroSearchBar'
+import ListPropertyModal from '../components/ListPropertyModal'
 import './PropertiesPage.css'
 
 export function isNearFloor(p: PropertyListItem): boolean {
@@ -99,6 +100,8 @@ export default function PropertiesPage() {
   const [rawItems, setRawItems] = useState<PropertyListItem[]>([])
   const [loading, setLoading]   = useState(true)
   const [showFilters, setShowFilters] = useState(false)
+  const [listModalOpen, setListModalOpen] = useState(false)
+  const [listModalRole, setListModalRole] = useState<'owner' | 'agent'>('owner')
   const [query, setQuery]       = useState<PropertyQuery>({ sortBy: 'newest' })
   const setPage = (_?: number) => {}
 
@@ -920,6 +923,39 @@ export default function PropertiesPage() {
         </div>
       </div>
 
+      {/* List Property Marketing Banner */}
+      <div className="props-list-banner">
+        <div className="container props-list-banner__inner">
+          <div className="props-list-banner__text">
+            <strong>هل تملك عقاراً أو تعمل كوسيط بالمحلة الكبرى؟</strong>
+            <span>اعرض عقارك معنا كمالك أو انضم كوسيط وسوّق وحداتك مباشرة عبر عقار كير</span>
+          </div>
+          <div className="props-list-banner__actions">
+            <button
+              type="button"
+              className="btn btn-primary props-list-banner__btn"
+              onClick={() => {
+                setListModalRole('owner')
+                setListModalOpen(true)
+              }}
+            >
+              <PlusCircle size={15} />
+              اعرض كمالك (مجاناً)
+            </button>
+            <button
+              type="button"
+              className="btn btn-gold props-list-banner__btn"
+              onClick={() => {
+                setListModalRole('agent')
+                setListModalOpen(true)
+              }}
+            >
+              اعرض كوسيط عقاري
+            </button>
+          </div>
+        </div>
+      </div>
+
       {/* Results */}
       <div className="container section-sm">
         {loading ? (
@@ -952,6 +988,12 @@ export default function PropertiesPage() {
           </>
         )}
       </div>
+
+      <ListPropertyModal
+        isOpen={listModalOpen}
+        onClose={() => setListModalOpen(false)}
+        initialRole={listModalRole}
+      />
     </div>
   )
 }

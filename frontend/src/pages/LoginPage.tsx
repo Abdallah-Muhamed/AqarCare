@@ -103,9 +103,9 @@ export default function LoginPage() {
           </div>
 
           <div className="login-card__actions" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', marginTop: 'var(--space-lg)' }}>
-            {currentUser.role === 'Admin' && (
+            {(currentUser.role === 'Admin' || currentUser.role === 'Agent') && (
               <Link to="/admin" className="btn btn-primary">
-                الانتقال إلى لوحة الإدارة
+                {currentUser.role === 'Admin' ? 'الانتقال إلى لوحة الإدارة' : 'لوحة إدارة وإضافة العقارات'}
               </Link>
             )}
             <Link to="/my-inquiries" className="btn btn-outline">
@@ -218,7 +218,7 @@ export default function LoginPage() {
                     checked={regRole === 'Customer'}
                     onChange={() => setRegRole('Customer')}
                   />
-                  عميل باحث عن عقار
+                  عميل باحث عن عقار / مالك
                 </label>
                 <label className={`role-pill ${regRole === 'Agent' ? 'active' : ''}`}>
                   <input
@@ -228,7 +228,7 @@ export default function LoginPage() {
                     checked={regRole === 'Agent'}
                     onChange={() => setRegRole('Agent')}
                   />
-                  وسيط / وكيل عقاري
+                  وسيط عقاري (إضافة وتسويق عقارات)
                 </label>
               </div>
             </div>
