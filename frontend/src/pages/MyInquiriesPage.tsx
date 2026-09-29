@@ -31,7 +31,7 @@ export default function MyInquiriesPage() {
 
   if (!user) {
     return (
-      <div className="container section-sm">
+      <div className="container section-sm" style={{ paddingTop: 'calc(var(--navbar-h) + var(--space-xl))' }}>
         <div className="card" style={{ padding: 'var(--space-2xl)', textAlign: 'center', maxWidth: 540, margin: '0 auto' }}>
           <MessageSquare size={44} style={{ color: 'var(--clr-gold)', margin: '0 auto var(--space-md)' }} />
           <h2>تسجيل الدخول مطلوب</h2>
@@ -47,7 +47,7 @@ export default function MyInquiriesPage() {
   }
 
   return (
-    <div className="container section-sm">
+    <div className="container section-sm" style={{ paddingTop: 'calc(var(--navbar-h) + var(--space-xl))' }}>
       <div className="section-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
         <div>
           <span className="badge badge-gold">سجل التواصل</span>
