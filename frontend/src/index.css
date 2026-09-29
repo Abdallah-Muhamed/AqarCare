@@ -34,7 +34,7 @@
   --navbar-h: 64px;
 }
 html { scroll-behavior: smooth; }
-body { margin: 0; font-family: var(--font-main); background: var(--clr-bg); color: var(--clr-text); line-height: 1.7; direction: rtl; -webkit-font-smoothing: antialiased; }
+body { margin: 0; padding-top: var(--navbar-h); font-family: var(--font-main); background: var(--clr-bg); color: var(--clr-text); line-height: 1.7; direction: rtl; -webkit-font-smoothing: antialiased; }
 a { color: inherit; text-decoration: none !important; } img { max-width: 100%; display: block; } button { font: inherit; cursor: pointer; border: 0; }
 ::-webkit-scrollbar { width: 8px; } ::-webkit-scrollbar-track { background: var(--clr-bg3); } ::-webkit-scrollbar-thumb { background: #cbbda8; border-radius: 99px; }
 .container { max-width: var(--container); margin-inline: auto; padding-inline: var(--space-xl); }
