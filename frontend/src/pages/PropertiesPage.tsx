@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import { SlidersHorizontal, Search, Map as MapIcon, List, Check, RotateCcw, Sparkles, PlusCircle } from 'lucide-react'
-import { api } from '../api'
+import { api, getStoredUser } from '../api'
 import type { PropertyListItem, PropertyQuery } from '../types'
 import { setPageSeo } from '../utils/seo'
 import { getTotalAvailableUnits, fuzzyArabicMatch } from '../utils/formatters'
@@ -934,11 +934,18 @@ export default function PropertiesPage() {
               type="button"
               className="btn btn-primary props-list-banner__btn"
               onClick={() => {
-                setListModalOpen(true)
+                const u = getStoredUser()
+                if (u?.role === 'Admin') {
+                  navigate('/admin')
+                } else if (u) {
+                  navigate('/my-properties?action=add')
+                } else {
+                  navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
+                }
               }}
             >
               <PlusCircle size={15} />
-              اعرض كمالك (مجاناً)
+              اعرض عقارك كمالك (إضافة وحدة)
             </button>
             <Link
               to="/my-properties"

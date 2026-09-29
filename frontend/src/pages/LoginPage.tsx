@@ -7,7 +7,12 @@ import './LoginPage.css'
 export default function LoginPage() {
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as any)?.from?.pathname || '/'
+  const fromState = (location.state as any)?.from
+  const targetPath = fromState
+    ? `${fromState.pathname || '/'}${fromState.search || ''}`
+    : '/my-properties?action=add'
+
+  const isFromListProperty = fromState?.pathname === '/my-properties'
 
   const [mode, setMode] = useState<'login' | 'register'>('login')
   const [currentUser, setCurrentUser] = useState(getStoredUser())
@@ -44,7 +49,7 @@ export default function LoginPage() {
         if (auth.role === 'Admin') {
           navigate('/admin')
         } else {
-          navigate(from === '/' ? '/my-properties' : from)
+          navigate(targetPath === '/' ? '/my-properties?action=add' : targetPath)
         }
       }, 700)
     } catch (err: any) {
@@ -75,7 +80,7 @@ export default function LoginPage() {
         if (auth.role === 'Admin') {
           navigate('/admin')
         } else {
-          navigate(from === '/' ? '/my-properties' : from)
+          navigate(targetPath === '/' ? '/my-properties?action=add' : targetPath)
         }
       }, 700)
     } catch (err: any) {
@@ -129,6 +134,25 @@ export default function LoginPage() {
   return (
     <div className="login-page container section-sm">
       <div className="login-card">
+        {isFromListProperty && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(200,146,42,0.12), rgba(30,58,138,0.06))',
+            border: '1px solid rgba(200,146,42,0.3)',
+            borderRadius: '12px',
+            padding: '12px 16px',
+            marginBottom: '1.25rem',
+            textAlign: 'right',
+            lineHeight: 1.5,
+          }}>
+            <div style={{ fontWeight: 800, fontSize: '0.92rem', color: '#92400e', marginBottom: '3px' }}>
+              ✨ عرض وإدارة عقارك في عقار كير
+            </div>
+            <div style={{ fontSize: '0.84rem', color: '#475569' }}>
+              سجّل الدخول أو أنشئ حسابك مجاناً لتتمكن من إضافة وحداتك، رفع الصور، ومتابعة اعتماد الإدارة ونشرها.
+            </div>
+          </div>
+        )}
+
         {/* Mode switcher tabs */}
         <div className="login-tabs">
           <button

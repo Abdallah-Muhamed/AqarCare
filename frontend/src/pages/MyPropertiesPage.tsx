@@ -69,11 +69,24 @@ export default function MyPropertiesPage() {
 
   useEffect(() => {
     if (!user) {
-      navigate('/login', { state: { from: { pathname: '/my-properties' } } })
+      navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
       return
     }
     loadProperties()
-  }, [])
+
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('action') === 'add') {
+      openAddModal()
+    }
+
+    const handleCustomOpen = () => {
+      openAddModal()
+    }
+    window.addEventListener('aqarcare:open-add-property', handleCustomOpen)
+    return () => {
+      window.removeEventListener('aqarcare:open-add-property', handleCustomOpen)
+    }
+  }, [window.location.search])
 
   const loadProperties = async () => {
     setLoading(true)

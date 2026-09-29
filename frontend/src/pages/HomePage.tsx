@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { Link } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { ArrowLeft, Building2, Map, Star, TrendingUp, Shield, Sparkles, PlusCircle, UserCheck, CheckCircle } from 'lucide-react'
-import { api } from '../api'
+import { api, getStoredUser } from '../api'
 import type { PropertyListItem } from '../types'
 import { setPageSeo } from '../utils/seo'
 // PackageListItem, PackageCard, api.getPackages — kept for future use, currently hidden
@@ -11,12 +11,20 @@ import ListPropertyModal from '../components/ListPropertyModal'
 import './HomePage.css'
 
 export default function HomePage() {
+  const navigate = useNavigate()
   const [featuredProps, setFeaturedProps] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [listModalOpen, setListModalOpen] = useState(false)
 
-  const handleOpenListModal = () => {
-    setListModalOpen(true)
+  const handleListProperty = () => {
+    const user = getStoredUser()
+    if (user?.role === 'Admin') {
+      navigate('/admin')
+    } else if (user) {
+      navigate('/my-properties?action=add')
+    } else {
+      navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
+    }
   }
 
   useEffect(() => {
@@ -71,7 +79,7 @@ export default function HomePage() {
             <button
               type="button"
               className="btn btn-gold hero__list-btn"
-              onClick={handleOpenListModal}
+              onClick={handleListProperty}
             >
               <PlusCircle size={18} />
               اعرض عقارك معنا
@@ -243,10 +251,10 @@ export default function HomePage() {
                 <button
                   type="button"
                   className="btn btn-primary owner-card__btn"
-                  onClick={handleOpenListModal}
+                  onClick={handleListProperty}
                 >
                   <PlusCircle size={17} />
-                  اعرض عقارك كمالك (واتساب سريع)
+                  اعرض عقارك كمالك (إضافة وحدة)
                 </button>
               </div>
             </div>
@@ -303,7 +311,7 @@ export default function HomePage() {
               <button
                 type="button"
                 className="btn btn-gold"
-                onClick={handleOpenListModal}
+                onClick={handleListProperty}
               >
                 اعرض عقارك كمالك
               </button>

@@ -106,9 +106,13 @@ export default function Navbar() {
               if (user?.role === 'Admin') {
                 navigate('/admin')
               } else if (hasToken) {
-                navigate('/my-properties')
+                if (location.pathname === '/my-properties') {
+                  window.dispatchEvent(new CustomEvent('aqarcare:open-add-property'))
+                } else {
+                  navigate('/my-properties?action=add')
+                }
               } else {
-                setListModalOpen(true)
+                navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
               }
             }}
             title="اعرض عقارك للبيع أو الإيجار بعد اعتماده من الإدارة"
@@ -194,14 +198,18 @@ export default function Navbar() {
               if (user?.role === 'Admin') {
                 navigate('/admin')
               } else if (hasToken) {
-                navigate('/my-properties')
+                if (location.pathname === '/my-properties') {
+                  window.dispatchEvent(new CustomEvent('aqarcare:open-add-property'))
+                } else {
+                  navigate('/my-properties?action=add')
+                }
               } else {
-                setListModalOpen(true)
+                navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
               }
             }}
           >
             <PlusCircle size={16} />
-            <span>اعرض عقارك معنا (مراجعة واعتماد)</span>
+            <span>اعرض عقارك معنا (إضافة وحدة)</span>
           </button>
         </div>
 
