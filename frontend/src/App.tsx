@@ -9,6 +9,8 @@ import PackagesPage from './pages/PackagesPage'
 import PackageDetailPage from './pages/PackageDetailPage'
 import AdminPanelPage from './pages/AdminPanelPage'
 import MapPage from './pages/MapPage'
+import LoginPage from './pages/LoginPage'
+import MyInquiriesPage from './pages/MyInquiriesPage'
 import NotFoundPage from './pages/NotFoundPage'
 import { initUtmTracking } from './utils/analytics'
 
@@ -33,6 +35,8 @@ export default function App() {
           <Route path="/finishing-packages/:slug" element={<PackageDetailPage />} />
           <Route path="/admin" element={<AdminPanelPage />} />
           <Route path="/map" element={<MapPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/my-inquiries" element={<MyInquiriesPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
@@ -40,4 +44,3 @@ export default function App() {
     </div>
   )
 }
-

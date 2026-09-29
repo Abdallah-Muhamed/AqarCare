@@ -50,8 +50,9 @@ public class ApiKeyAuthMiddleware
                     return;
                 }
 
-                // Agent has access to properties and inquiries endpoints under /api/admin
-                if (isAgent && context.Request.Path.StartsWithSegments("/api/admin/properties", StringComparison.OrdinalIgnoreCase))
+                // Agent has access to properties and inquiries endpoints
+                if (isAgent && (context.Request.Path.StartsWithSegments("/api/admin/properties", StringComparison.OrdinalIgnoreCase)
+                    || context.Request.Path.StartsWithSegments("/api/inquiries", StringComparison.OrdinalIgnoreCase)))
                 {
                     await _next(context);
                     return;

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AqarCare.Data.Entities;
 using AqarCare.DTOs;
+using AqarCare.Filters;
 using AqarCare.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -70,7 +71,7 @@ public class InquiriesController : ControllerBase
     /// <param name="ct">Cancellation token.</param>
     /// <response code="200">Returns list of inquiries submitted by this customer.</response>
     /// <response code="401">User is not authenticated.</response>
-    [Authorize(Roles = UserRoles.Customer)]
+    [Authorize]
     [HttpGet("inquiries/my")]
     [ProducesResponseType(typeof(IReadOnlyList<PropertyInquiryDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
@@ -96,6 +97,7 @@ public class InquiriesController : ControllerBase
     /// <param name="ct">Cancellation token.</param>
     /// <response code="200">List of accessible inquiries.</response>
     /// <response code="403">Caller does not have Admin or Agent role.</response>
+    [AdminApiKey]
     [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Agent}")]
     [HttpGet("inquiries")]
     [ProducesResponseType(typeof(IReadOnlyList<PropertyInquiryDto>), StatusCodes.Status200OK)]
@@ -136,6 +138,7 @@ public class InquiriesController : ControllerBase
     /// <response code="400">Invalid status or validation error.</response>
     /// <response code="403">Insufficient permissions to manage this inquiry.</response>
     /// <response code="404">Inquiry not found.</response>
+    [AdminApiKey]
     [Authorize(Roles = $"{UserRoles.Admin},{UserRoles.Agent}")]
     [HttpPatch("inquiries/{id:int}/status")]
     [ProducesResponseType(typeof(PropertyInquiryDto), StatusCodes.Status200OK)]

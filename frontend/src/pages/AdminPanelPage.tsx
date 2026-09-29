@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import './AdminPanelPage.css';
 import { API_BASE_URL } from '../constants/api';
 import MapPickerModal from '../components/admin/MapPickerModal';
+import AdminInquiries from '../components/admin/AdminInquiries';
+import { getAuthToken, getStoredUser, clearAuth } from '../api';
 import type { PropertyFloor } from '../types';
 import { formatFloorsText, parseMultiFloorNumbers, formatFloorsFinishingSummary } from '../utils/formatters';
 import { getPropertyPlaceholder } from '../constants/placeholders';
@@ -86,6 +88,7 @@ export default function AdminPanelPage() {
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold'>('all');
+  const [adminSection, setAdminSection] = useState<'properties' | 'inquiries'>('properties');
   const [floorViewMode, setFloorViewMode] = useState<'cards' | 'table'>('cards');
 
   const [formData, setFormData] = useState({
@@ -146,13 +149,28 @@ export default function AdminPanelPage() {
 
   // ── helpers ──────────────────────────────────────────────────────────────────
 
-  const auth = (key: string) => ({ 'X-Api-Key': key });
+  const auth = (key: string) => {
+    const headers: Record<string, string> = {};
+    if (key) headers['X-Api-Key'] = key;
+    const token = getAuthToken();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    return headers;
+  };
 
-  const adminFetch = (path: string, options: RequestInit = {}, key = apiKey) =>
-    fetch(`${API_BASE_URL}${path}`, {
+  const adminFetch = (path: string, options: RequestInit = {}, key = apiKey) => {
+    const headers = new Headers(options.headers || {});
+    if (key) {
+      headers.set('X-Api-Key', key);
+    }
+    const token = getAuthToken();
+    if (token && !headers.has('Authorization')) {
+      headers.set('Authorization', `Bearer ${token}`);
+    }
+    return fetch(`${API_BASE_URL}${path}`, {
       ...options,
-      headers: { ...options.headers as Record<string, string>, 'X-Api-Key': key },
+      headers,
     });
+  };
 
   // ── login ─────────────────────────────────────────────────────────────────────
 
@@ -182,10 +200,16 @@ export default function AdminPanelPage() {
 
   useEffect(() => {
     const saved = sessionStorage.getItem('adminApiKey');
+    const token = getAuthToken();
+    const storedUser = getStoredUser();
+
     if (saved) {
       setApiKey(saved);
       setIsAuthenticated(true);
       fetchProperties(saved);
+    } else if (token && (storedUser?.role === 'Admin' || storedUser?.role === 'Agent')) {
+      setIsAuthenticated(true);
+      fetchProperties('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -867,8 +891,10 @@ export default function AdminPanelPage() {
   const handleLogout = () => {
     setIsAuthenticated(false);
     sessionStorage.removeItem('adminApiKey');
+    clearAuth();
     setApiKey('');
     setProperties([]);
+    window.location.href = '/';
   };
 
   // ── stats ─────────────────────────────────────────────────────────────────────
@@ -945,16 +971,44 @@ export default function AdminPanelPage() {
             <span className="admin-header__sub">عقار كير — نظام الإدارة</span>
           </div>
         </div>
-        <div className="admin-header__actions">
-          <button className="admin-add-btn" onClick={openAddForm}>
-            <span>＋</span> إضافة عقار
+
+        <div style={{ display: 'flex', gap: '8px', marginInline: 'auto' }}>
+          <button
+            type="button"
+            className={`filter-tab ${adminSection === 'properties' ? 'active' : ''}`}
+            onClick={() => { setAdminSection('properties'); setShowForm(false); }}
+            style={{ fontSize: '0.9rem', padding: '0.5rem 1.1rem', cursor: 'pointer' }}
+          >
+            🏢 العقارات
           </button>
+          <button
+            type="button"
+            className={`filter-tab ${adminSection === 'inquiries' ? 'active' : ''}`}
+            onClick={() => { setAdminSection('inquiries'); setShowForm(false); }}
+            style={{ fontSize: '0.9rem', padding: '0.5rem 1.1rem', cursor: 'pointer' }}
+          >
+            📬 استفسارات العملاء
+          </button>
+        </div>
+
+        <div className="admin-header__actions">
+          {adminSection === 'properties' && (
+            <button className="admin-add-btn" onClick={openAddForm}>
+              <span>＋</span> إضافة عقار
+            </button>
+          )}
           <button onClick={handleLogout} className="logout-btn">خروج ↩</button>
         </div>
       </header>
 
       <div className="admin-body">
-        {/* ── Stats Dashboard ── */}
+        {adminSection === 'inquiries' ? (
+          <div className="admin-content" style={{ marginTop: '1rem' }}>
+            <AdminInquiries />
+          </div>
+        ) : (
+          <>
+            {/* ── Stats Dashboard ── */}
         {!showForm && (
           <div className="admin-stats">
             <div className="stat-card stat-card--total">
@@ -2384,6 +2438,8 @@ export default function AdminPanelPage() {
             </div>
           )}
         </div>
+        </>
+        )}
       </div>
 
       {mapPickerProperty && (
@@ -2396,7 +2452,7 @@ export default function AdminPanelPage() {
         />
       )}
 
-      {!showForm && (
+      {!showForm && adminSection === 'properties' && (
         <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار">
           ＋
         </button>

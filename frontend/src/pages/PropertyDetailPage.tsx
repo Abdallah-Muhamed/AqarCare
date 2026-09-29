@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link } from 'react-router-dom'
-import { ArrowRight, ArrowUpDown, BedDouble, Bath, Building2, Droplets, Flame, Maximize2, MapPin, MessageCircle, Star, Calendar, Tag, CheckCircle2, Zap } from 'lucide-react'
+import { ArrowRight, ArrowUpDown, BedDouble, Bath, Building2, Droplets, Flame, Maximize2, MapPin, MessageCircle, Star, Calendar, Tag, CheckCircle2, Zap, Send } from 'lucide-react'
 import { api } from '../api'
 import type { PropertyDetail } from '../types'
 import { groupFloors } from '../utils/formatters'
@@ -8,6 +8,7 @@ import { setPageSeo } from '../utils/seo'
 import { getPropertyPlaceholder } from '../constants/placeholders'
 import { getPropertyWhatsAppUrl } from '../utils/analytics'
 import ImageGallery from '../components/ImageGallery'
+import InquiryModal from '../components/InquiryModal'
 import './PropertyDetailPage.css'
 
 const typeLabel: Record<string, string>     = { Apartment: 'شقة', House: 'بيت', Villa: 'بيت', Land: 'أرض', Shop: 'محل' }
@@ -33,6 +34,7 @@ export default function PropertyDetailPage() {
   const [prop, setProp]     = useState<PropertyDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError]   = useState(false)
+  const [inquiryModalOpen, setInquiryModalOpen] = useState(false)
 
   useEffect(() => {
     if (!id) return
@@ -675,6 +677,15 @@ export default function PropertyDetailPage() {
                 <div className="price-card__feature"><CheckCircle2 size={15} />متابعة مستمرة</div>
               </div>
 
+              <button
+                type="button"
+                onClick={() => setInquiryModalOpen(true)}
+                className="btn btn-primary"
+                style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)' }}
+              >
+                <Send size={16} /> {isSold ? 'طلب استفسار عن بدائل' : 'إرسال طلب استفسار ومعاينة'}
+              </button>
+
               {(() => {
                 const waUrl = getPropertyWhatsAppUrl({
                   id: prop.id,
@@ -688,8 +699,8 @@ export default function PropertyDetailPage() {
                 })
 
                 return (
-                  <a href={waUrl} target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-lg)', background: '#25d366', color: '#fff' }}>
-                    <MessageCircle size={16} /> {isSold ? 'استفسار عن بدائل مماثلة عبر واتساب' : 'تواصل معنا عبر واتساب'}
+                  <a href={waUrl} target="_blank" rel="noreferrer" className="btn" style={{ width: '100%', justifyContent: 'center', marginTop: 'var(--space-sm)', background: '#25d366', color: '#fff' }}>
+                    <MessageCircle size={16} /> {isSold ? 'محادثة عبر واتساب' : 'تواصل معنا عبر واتساب'}
                   </a>
                 )
               })()}
@@ -744,26 +755,41 @@ export default function PropertyDetailPage() {
               </span>
             </div>
             <div className="detail-mobile-cta__btns">
+              <button
+                type="button"
+                onClick={() => setInquiryModalOpen(true)}
+                className="btn btn-primary"
+                style={{ minHeight: 42, padding: '0 0.85rem', fontSize: '0.82rem' }}
+              >
+                <Send size={14} /> استفسار
+              </button>
               <a
                 href={waUrl}
                 target="_blank"
                 rel="noreferrer"
                 className="btn"
-                style={{ background: '#25d366', color: '#fff', minHeight: 42, padding: '0 1rem' }}
+                style={{ background: '#25d366', color: '#fff', minHeight: 42, padding: '0 0.85rem', fontSize: '0.82rem' }}
               >
-                <MessageCircle size={16} /> {isSold ? 'بدائل مماثلة' : 'تواصل'}
+                <MessageCircle size={15} /> واتساب
               </a>
               <Link
                 to={`/map?propertyId=${prop.id}`}
                 className="btn btn-outline"
-                style={{ minHeight: 42, padding: '0 0.9rem', fontSize: '0.82rem' }}
+                style={{ minHeight: 42, padding: '0 0.75rem', fontSize: '0.82rem' }}
               >
-                🗺️ الخريطة
+                🗺️
               </Link>
             </div>
           </div>
         )
       })()}
+
+      <InquiryModal
+        propertyId={prop.id}
+        propertyTitle={prop.title}
+        isOpen={inquiryModalOpen}
+        onClose={() => setInquiryModalOpen(false)}
+      />
     </div>
   )
 }

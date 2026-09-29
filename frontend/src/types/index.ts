@@ -234,3 +234,70 @@ export interface MapFilters {
   maxPrice?: number
 }
 
+// ── Auth & User types ────────────────────────────────────────────
+export type UserRole = 'Admin' | 'Agent' | 'Customer'
+
+export interface AuthResponse {
+  token: string
+  username: string
+  role: string
+  expiresAt: string
+  userId?: number
+  fullName?: string
+}
+
+export interface UserProfile {
+  id: number
+  username: string
+  fullName: string
+  email?: string
+  phoneNumber?: string
+  roles: string[]
+  primaryRole: string
+  isAuthenticated: boolean
+}
+
+export interface LoginPayload {
+  username: string
+  password: string
+}
+
+export interface RegisterPayload {
+  username: string
+  email: string
+  password: string
+  fullName: string
+  phoneNumber?: string
+  role?: string
+}
+
+// ── Inquiry types ────────────────────────────────────────────────
+export interface PropertyInquiry {
+  id: number
+  propertyUnitId: number
+  propertyTitle?: string | null
+  customerId?: number | null
+  customerName: string
+  customerPhone: string
+  customerEmail?: string | null
+  message: string
+  status: 'Pending' | 'Contacted' | 'Closed' | string
+  createdAt: string
+}
+
+export interface CreateInquiryPayload {
+  customerName: string
+  customerPhone: string
+  customerEmail?: string
+  message: string
+}
+
+export interface ApiError {
+  statusCode?: number
+  message?: string
+  details?: string
+  traceId?: string
+  validationErrors?: Record<string, string[]>
+}
+
+
