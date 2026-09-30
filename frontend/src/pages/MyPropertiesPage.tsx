@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './AdminPanelPage.css';
 import './MyPropertiesPage.css';
-import { api, getStoredUser, getAuthToken } from '../api';
+import { api, getStoredUser, getAuthToken, clearAuth } from '../api';
 import type { PropertyFloor, PropertyListItem } from '../types';
-import { formatFloorsText, parseMultiFloorNumbers } from '../utils/formatters';
+import { formatFloorsText, parseMultiFloorNumbers, formatFloorsFinishingSummary } from '../utils/formatters';
 import { getPropertyPlaceholder } from '../constants/placeholders';
 
 // Map English finishingStatus values → Arabic display labels
@@ -32,7 +32,7 @@ export default function MyPropertiesPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
-  const [activeTab, setActiveTab] = useState<'all' | 'published' | 'pending'>('all');
+  const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold' | 'pending'>('all');
   const [floorViewMode, setFloorViewMode] = useState<'cards' | 'table'>('cards');
 
   const [formData, setFormData] = useState({
@@ -55,7 +55,9 @@ export default function MyPropertiesPage() {
     address: '',
     detailedAddress: '',
     status: 'Available',
+    isFeatured: false,
     isUnderConstruction: false,
+    isPublished: false,
     waterMeterAvailable: false,
     electricityMeterAvailable: false,
     gasMeterAvailable: false,
@@ -100,7 +102,6 @@ export default function MyPropertiesPage() {
     } catch (err: any) {
       console.warn('Could not load customer properties:', err);
       setProperties([]);
-      // Do not clearAuth or kick user out — keep them logged in so they can add properties
       if (err.statusCode !== 401) {
         setError(err.message || 'تعذر تحميل عقاراتك. يرجى إعادة المحاولة.');
       }
@@ -285,10 +286,12 @@ export default function MyPropertiesPage() {
       if (i !== index) return f;
       const updated = { ...f, ...patch };
 
+      // Effective area for this floor (fallback to general area)
       const effectiveArea = (updated.areaSqm && updated.areaSqm > 0)
         ? updated.areaSqm
         : (formData.areaSqm ? parseFloat(formData.areaSqm) : 0);
 
+      // If price (cash) was updated
       if ('price' in patch) {
         if (updated.price && effectiveArea > 0) {
           updated.pricePerMeter = Math.round(updated.price / effectiveArea);
@@ -299,17 +302,46 @@ export default function MyPropertiesPage() {
             updated.pricePerMeter = null;
           }
         }
-      } else if ('installmentPrice' in patch) {
+      }
+      // If installmentPrice was updated
+      else if ('installmentPrice' in patch) {
         if (!updated.price && updated.installmentPrice && effectiveArea > 0) {
           updated.pricePerMeter = Math.round(updated.installmentPrice / effectiveArea);
         } else if (!updated.price && !updated.installmentPrice) {
           updated.pricePerMeter = null;
         }
-      } else if ('areaSqm' in patch && effectiveArea > 0) {
-        if (updated.price) {
-          updated.pricePerMeter = Math.round(updated.price / effectiveArea);
-        } else if (updated.installmentPrice) {
-          updated.pricePerMeter = Math.round(updated.installmentPrice / effectiveArea);
+      }
+      // If pricePerMeter was updated
+      else if ('pricePerMeter' in patch) {
+        if (updated.pricePerMeter && effectiveArea > 0) {
+          if (!updated.price && updated.installmentPrice) {
+            updated.installmentPrice = Math.round(updated.pricePerMeter * effectiveArea);
+          } else {
+            updated.price = Math.round(updated.pricePerMeter * effectiveArea);
+          }
+        } else if (!updated.pricePerMeter) {
+          if (!updated.price && updated.installmentPrice) {
+            updated.installmentPrice = null;
+          } else {
+            updated.price = null;
+          }
+        }
+      }
+      // If areaSqm was updated
+      else if ('areaSqm' in patch) {
+        if (updated.areaSqm && updated.areaSqm > 0) {
+          if (updated.pricePerMeter && updated.pricePerMeter > 0) {
+            if (!updated.price && updated.installmentPrice) {
+              updated.installmentPrice = Math.round(updated.pricePerMeter * updated.areaSqm);
+            } else {
+              updated.price = Math.round(updated.pricePerMeter * updated.areaSqm);
+            }
+          } else {
+            const baseP = updated.price ?? updated.installmentPrice;
+            if (baseP && baseP > 0) {
+              updated.pricePerMeter = Math.round(baseP / updated.areaSqm);
+            }
+          }
         }
       }
 
@@ -319,11 +351,39 @@ export default function MyPropertiesPage() {
 
   const removeFloor = (index: number) => {
     setFloors(prev => {
-      const next = prev.filter((_, i) => i !== index);
+      const nextFloors = prev.filter((_, i) => i !== index);
       if (formData.propertyType === 'House') {
-        syncHouseApartmentCounts(next);
+        syncHouseApartmentCounts(nextFloors);
       }
-      return next;
+      return nextFloors;
+    });
+  };
+
+  const expandFloorIfMultiple = (index: number) => {
+    setFloors(prev => {
+      const target = prev[index];
+      if (!target || !target.floorName) return prev;
+
+      const detectedFloors = parseMultiFloorNumbers(target.floorName);
+      if (detectedFloors.length <= 1) return prev;
+
+      const newFloors: PropertyFloor[] = detectedFloors.map((floorNum, idx) => ({
+        ...target,
+        id: idx === 0 ? target.id : undefined,
+        floorNumber: floorNum,
+        floorName: `الدور ${floorNum}`,
+        sortOrder: floorNum,
+      }));
+
+      setTimeout(() => {
+        setSuccessMsg(`تم نسخ وتوزيع بيانات الدور تلقائياً على الأدوار (${detectedFloors.join('، ')})`);
+      }, 50);
+
+      return [
+        ...prev.slice(0, index),
+        ...newFloors,
+        ...prev.slice(index + 1),
+      ];
     });
   };
 
@@ -334,6 +394,7 @@ export default function MyPropertiesPage() {
     setLoading(true);
     setError('');
     try {
+      // Auto-expand any floor that has multi-floor notation (e.g. 2/3/4 or 2-4)
       const finalFloors: PropertyFloor[] = [];
       for (const f of floors) {
         const multi = parseMultiFloorNumbers(f.floorName);
@@ -421,7 +482,9 @@ export default function MyPropertiesPage() {
         address: formData.address,
         detailedAddress: formData.detailedAddress,
         status: formData.status,
+        isFeatured: false,
         isUnderConstruction: formData.propertyType === 'Land' ? false : formData.isUnderConstruction,
+        isPublished: false, // Customers submissions are always unapproved until admin review
         waterMeterAvailable: formData.waterMeterAvailable,
         electricityMeterAvailable: formData.electricityMeterAvailable,
         gasMeterAvailable: formData.gasMeterAvailable,
@@ -449,7 +512,7 @@ export default function MyPropertiesPage() {
       if (editingProperty) {
         const updated = await api.updateMyProperty(editingProperty.id, payload);
         savedPropertyId = updated.id;
-        setSuccessMsg('تم تحديث العقار بنجاح! تم إرساله لمراجعة واعتماد الإدارة.');
+        setSuccessMsg('تم حفظ وتحديث العقار بنجاح! تم إرساله لمراجعة واعتماد الإدارة.');
       } else {
         const created = await api.createMyProperty(payload);
         savedPropertyId = created.id;
@@ -504,6 +567,10 @@ export default function MyPropertiesPage() {
 
   const handleEdit = async (property: PropertyListItem) => {
     setEditingProperty(property);
+    const isHouseProp = property.propertyType === 'House';
+    const isLandProp  = property.propertyType === 'Land';
+    const isShopProp  = property.propertyType === 'Shop';
+
     setFormData({
       title: property.title ?? '',
       description: '',
@@ -524,7 +591,9 @@ export default function MyPropertiesPage() {
       address: property.address ?? '',
       detailedAddress: property.detailedAddress ?? '',
       status: property.status ?? 'Available',
+      isFeatured: false,
       isUnderConstruction: property.isUnderConstruction ?? false,
+      isPublished: property.isPublished ?? false,
       waterMeterAvailable: property.waterMeterAvailable ?? false,
       electricityMeterAvailable: property.electricityMeterAvailable ?? false,
       gasMeterAvailable: property.gasMeterAvailable ?? false,
@@ -544,10 +613,49 @@ export default function MyPropertiesPage() {
       hasGas: property.hasGas ?? false,
     });
 
-    if (property.floors && property.floors.length > 0) {
-      setFloors(property.floors);
-    } else {
+    const propArea = property.areaSqm;
+    const propBedrooms = property.bedrooms;
+    const propBathrooms = property.bathrooms;
+
+    const mapFloorData = (f: PropertyFloor, index: number): PropertyFloor => ({
+      ...f,
+      areaSqm: f.areaSqm ?? propArea,
+      bedrooms: isShopProp ? null : (f.bedrooms ?? propBedrooms),
+      bathrooms: f.bathrooms ?? propBathrooms,
+      finishingStatus: f.finishingStatus ?? (isHouseProp ? 'Ultra-Super-Lux' : property.finishingStatus),
+      floorNumber: f.floorNumber ?? (property.floorNumber ?? index + 1),
+      floorName: f.floorName || (f.floorNumber ? `الدور ${f.floorNumber}` : (property.floorNumber ? `الدور ${property.floorNumber}` : `الدور ${index + 1}`)),
+      price: isHouseProp ? null : (f.price ?? property.price),
+      installmentPrice: isHouseProp ? null : (f.installmentPrice ?? property.installmentPrice),
+      pricePerMeter: isHouseProp ? null : (f.pricePerMeter ?? (
+        (f.price ?? f.installmentPrice ?? property.price ?? property.installmentPrice) && (f.areaSqm ?? propArea)
+          ? Math.round((f.price ?? f.installmentPrice ?? property.price ?? property.installmentPrice)! / (f.areaSqm ?? propArea)!)
+          : null
+      )),
+      isAvailable: isHouseProp ? true : (f.isAvailable !== false),
+      sortOrder: f.sortOrder ?? index,
+    });
+
+    if (isHouseProp || isLandProp || isShopProp) {
       setFloors([]);
+    } else if (property.floors && property.floors.length > 0) {
+      setFloors(property.floors.map(mapFloorData));
+    } else {
+      setFloors([{
+        floorNumber: property.floorNumber ?? 1,
+        floorName: property.floorNumber ? `الدور ${property.floorNumber}` : 'الدور 1',
+        price: property.price,
+        pricePerMeter: (property.price && property.areaSqm)
+          ? Math.round(property.price / property.areaSqm)
+          : ((property.installmentPrice && property.areaSqm) ? Math.round(property.installmentPrice / property.areaSqm) : null),
+        installmentPrice: property.installmentPrice,
+        soldPrice: null,
+        areaSqm: property.areaSqm,
+        bedrooms: property.bedrooms,
+        bathrooms: property.bathrooms,
+        isAvailable: property.status !== 'Sold',
+        sortOrder: 0,
+      }]);
     }
 
     try {
@@ -558,9 +666,16 @@ export default function MyPropertiesPage() {
           description: full.description || '',
           soldPrice: full.soldPrice?.toString() || '',
           installmentAvailable: full.installmentAvailable ?? prev.installmentAvailable,
+          ...(isHouseProp ? {
+            numberOfFloors: full.numberOfFloors?.toString() ?? prev.numberOfFloors,
+            apartmentsPerFloor: full.apartmentsPerFloor?.toString() ?? prev.apartmentsPerFloor,
+            finishedApartments: full.finishedApartments?.toString() ?? prev.finishedApartments,
+            semiFinishedApartments: full.semiFinishedApartments?.toString() ?? prev.semiFinishedApartments,
+            coreShellApartments: full.coreShellApartments?.toString() ?? prev.coreShellApartments,
+          } : {}),
         }));
-        if (full.floors && full.floors.length > 0) {
-          setFloors(full.floors);
+        if (!isHouseProp && !isLandProp && !isShopProp && full.floors && full.floors.length > 0) {
+          setFloors(full.floors.map(mapFloorData));
         }
       }
     } catch {
@@ -592,7 +707,9 @@ export default function MyPropertiesPage() {
       address: '',
       detailedAddress: '',
       status: 'Available',
+      isFeatured: false,
       isUnderConstruction: false,
+      isPublished: false,
       waterMeterAvailable: false,
       electricityMeterAvailable: false,
       gasMeterAvailable: false,
@@ -628,6 +745,11 @@ export default function MyPropertiesPage() {
     }
   };
 
+  const handleLogout = () => {
+    clearAuth();
+    navigate('/');
+  };
+
   // ── stats ─────────────────────────────────────────────────────────────────────
 
   const totalFloorUnits = properties.reduce((acc, p) => acc + (p.floors?.length || 1), 0);
@@ -640,67 +762,99 @@ export default function MyPropertiesPage() {
 
   const stats = {
     total: properties.length,
-    published: properties.filter(p => p.isPublished === true).length,
-    pending: properties.filter(p => !p.isPublished).length,
     available: properties.filter(p => p.status === 'Available').length,
     sold: properties.filter(p => p.status === 'Sold').length,
+    published: properties.filter(p => p.isPublished === true).length,
+    pending: properties.filter(p => !p.isPublished).length,
     totalUnits: totalFloorUnits,
     totalSoldUnits: totalSoldUnits,
   };
 
   const filteredProperties = properties.filter(p => {
-    if (activeTab === 'published') return p.isPublished === true;
+    if (activeTab === 'available') return p.status === 'Available';
+    if (activeTab === 'sold') return p.status === 'Sold' || p.status === 'Rented';
     if (activeTab === 'pending') return !p.isPublished;
     return true;
   });
 
   return (
-    <div className="admin-panel my-props-page">
-      {/* ── Page In-Flow Hero (Below Global Navbar) ── */}
-      <div className="my-props-hero">
-        <div className="admin-body" style={{ paddingBottom: '0.25rem', paddingTop: '0.75rem' }}>
-          <div className="my-props-header">
-            <div>
-              <span className="badge badge-gold" style={{ marginBottom: '0.4rem' }}>بوابة الملاك والعملاء</span>
-              <h1 className="my-props-title">عقاراتي المعروضة</h1>
-              <p className="my-props-sub">
-                أهلاً بك، {user?.fullName || user?.username}. يمكنك إضافة عقاراتك وتعديلها ومتابعة حالة اعتمادها من إدارة عقار كير.
-              </p>
-            </div>
-
-            <div className="my-props-header-actions">
-              <button className="admin-add-btn" onClick={openAddForm}>
-                <span>＋</span> إضافة عقار جديد
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-body" style={{ paddingTop: '1rem' }}>
-        {/* Notice Banner */}
-        <div style={{
-          background: 'linear-gradient(135deg, rgba(30,58,138,0.06), rgba(200,146,42,0.08))',
-          border: '1px solid rgba(200,146,42,0.3)',
-          borderRadius: '12px',
-          padding: '14px 16px',
-          margin: '0 0 1.5rem 0',
-          display: 'flex',
-          alignItems: 'flex-start',
-          gap: '12px',
-          fontSize: '0.88rem',
-          lineHeight: '1.5'
-        }}>
-          <span style={{ fontSize: '1.4rem', flexShrink: 0, marginTop: '2px' }}>🛡️</span>
+    <div className="admin-panel">
+      {/* ── Top Header Matching Admin Panel ── */}
+      <header className="admin-header">
+        <div className="admin-header__brand" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+          <span className="admin-header__logo">🏠</span>
           <div>
-            <strong style={{ color: '#1e3a8a' }}>ملاحظة هامة للملاك والعملاء:</strong>{' '}
-            <span>
-              جميع العقارات المضافة أو المعدلة تخضع لمراجعة واعتماد إدارة عقار كير الرسمية قبل نشرها على المنصة. كافة استفسارات المشترين تتم مركزياً عبر رقم الشركة <strong>(01055937687)</strong> لحفظ خصوصيتك وسرية بياناتك.
-            </span>
+            <h1>لوحة عقاراتي</h1>
+            <span className="admin-header__sub">عقار كير — بوابة إدارة العقارات</span>
           </div>
         </div>
 
-        {/* ── Stats Dashboard (Exact Match) ── */}
+        <div className="portal-nav-tabs" style={{ display: 'flex', gap: '8px', marginInline: 'auto' }}>
+          <button
+            type="button"
+            className="filter-tab active"
+            onClick={() => { setShowForm(false); }}
+            style={{ fontSize: '0.88rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
+          >
+            🏢 عقاراتي
+          </button>
+          <button
+            type="button"
+            className="filter-tab"
+            onClick={() => navigate('/my-inquiries')}
+            style={{ fontSize: '0.88rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
+          >
+            📬 طلباتي
+          </button>
+          <button
+            type="button"
+            className="filter-tab"
+            onClick={() => navigate('/properties')}
+            style={{ fontSize: '0.88rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
+          >
+            🌐 تصفح العقارات
+          </button>
+        </div>
+
+        <div className="admin-header__actions">
+          <button className="admin-add-btn" onClick={openAddForm}>
+            <span>＋</span> إضافة عقار
+          </button>
+          <button
+            onClick={() => navigate('/')}
+            className="logout-btn"
+            style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--clr-text)', borderColor: 'rgba(255,255,255,0.2)' }}
+            title="العودة للصفحة الرئيسية للموقع"
+          >
+            🏠 الرئيسية
+          </button>
+          <button onClick={handleLogout} className="logout-btn">خروج ↩</button>
+        </div>
+      </header>
+
+      <div className="admin-body">
+        {/* ── Notice Banner (Executive Dark Slate & Gold) ── */}
+        {!showForm && (
+          <div style={{
+            background: 'rgba(30,41,59,0.7)',
+            border: '1px solid rgba(201,168,76,0.3)',
+            borderRadius: 'var(--radius-lg)',
+            padding: '12px 18px',
+            marginBottom: 'var(--space-lg)',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '12px',
+            fontSize: '0.88rem',
+            color: 'var(--clr-text-muted)'
+          }}>
+            <span style={{ fontSize: '1.3rem' }}>🛡️</span>
+            <div>
+              <strong style={{ color: 'var(--clr-gold)' }}>ملاحظة هامة:</strong> أي عقار جديد أو معدل يخضع لمراجعة واعتماد إدارة عقار كير قبل نشره على الموقع. تواصل المشترين يتم مركزياً عبر خدمة عملاء عقار كير الرسمية (01055937687) لضمان خصوصيتك.
+            </div>
+          </div>
+        )}
+
+        {/* ── Stats Dashboard Matching Admin Panel ── */}
         {!showForm && (
           <div className="admin-stats">
             <div className="stat-card stat-card--total">
@@ -710,18 +864,23 @@ export default function MyPropertiesPage() {
             </div>
             <div className="stat-card stat-card--available">
               <div className="stat-card__icon">✅</div>
-              <div className="stat-card__val">{stats.published}</div>
-              <div className="stat-card__lbl">معتمد ومنشور على الموقع</div>
+              <div className="stat-card__val">{stats.available}</div>
+              <div className="stat-card__lbl">عقارات متاحة</div>
+            </div>
+            <div className="stat-card stat-card--sold">
+              <div className="stat-card__icon">🔑</div>
+              <div className="stat-card__val">{stats.sold}</div>
+              <div className="stat-card__lbl">عقارات مُباعة بالكامل</div>
             </div>
             <div className="stat-card" style={{ borderColor: '#f59e0b', background: 'rgba(245,158,11,0.06)' }}>
               <div className="stat-card__icon">⏳</div>
               <div className="stat-card__val" style={{ color: '#d97706' }}>{stats.pending}</div>
               <div className="stat-card__lbl">قيد مراجعة واعتماد الإدارة</div>
             </div>
-            <div className="stat-card stat-card--sold">
-              <div className="stat-card__icon">🔑</div>
-              <div className="stat-card__val">{stats.sold}</div>
-              <div className="stat-card__lbl">عقارات تم بيعها</div>
+            <div className="stat-card stat-card--featured">
+              <div className="stat-card__icon">⭐</div>
+              <div className="stat-card__val">{stats.published}</div>
+              <div className="stat-card__lbl">عقارات معتمدة ومنشورة</div>
             </div>
           </div>
         )}
@@ -731,7 +890,7 @@ export default function MyPropertiesPage() {
             /* ── Property Form (100% Matching Admin Form) ── */
             <div className="property-form-container">
               <div className="form-header">
-                <h2>{editingProperty ? '✏️ تعديل بيانات العقار' : '➕ إضافة عقار جديد'}</h2>
+                <h2>{editingProperty ? '✏️ تعديل العقار' : '➕ إضافة عقار جديد'}</h2>
                 <button
                   type="button"
                   className="form-close-btn"
@@ -740,48 +899,95 @@ export default function MyPropertiesPage() {
               </div>
 
               <form onSubmit={handleSubmit} className="property-form">
-                {error && <div className="form-error" style={{ padding: '0.8rem 1rem', background: '#fef2f2', color: '#b91c1c', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #fecaca', fontWeight: 600 }}>⚠️ {error}</div>}
-                {successMsg && <div className="form-success" style={{ padding: '0.8rem 1rem', background: '#ecfdf5', color: '#047857', borderRadius: '8px', marginBottom: '1rem', border: '1px solid #a7f3d0', fontWeight: 600 }}>✨ {successMsg}</div>}
+                {error && <div className="form-error" style={{ padding: '0.8rem 1rem', background: '#fef2f2', color: '#b91c1c', borderRadius: 'var(--radius-md)', marginBottom: '1rem', border: '1px solid #fecaca', fontWeight: 600 }}>⚠️ {error}</div>}
+                {successMsg && <div className="form-success" style={{ padding: '0.8rem 1rem', background: '#ecfdf5', color: '#047857', borderRadius: 'var(--radius-md)', marginBottom: '1rem', border: '1px solid #a7f3d0', fontWeight: 600 }}>✨ {successMsg}</div>}
 
                 {/* Section: Basic Info */}
                 <div className="form-section">
                   <h3 className="form-section__title">📋 المعلومات الأساسية</h3>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label>عنوان العقار / الإعلان <span style={{ color: 'red' }}>*</span></label>
+                      <label>العنوان</label>
                       <input
                         type="text"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="مثال: شقة سوبر لوكس للبيع في منشية البكري دور ثالث"
+                        placeholder="مثال: شقة 3 غرف مدينة نصر"
                         required
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>نوع العقار</label>
+                      <label>النوع</label>
                       <select
                         value={formData.propertyType}
-                        onChange={(e) => setFormData({ ...formData, propertyType: e.target.value })}
+                        onChange={(e) => {
+                          const newType = e.target.value;
+                          setFormData({
+                            ...formData,
+                            propertyType: newType,
+                            ...(newType === 'Land' ? {
+                              isUnderConstruction: false,
+                              waterMeterAvailable: false,
+                              electricityMeterAvailable: false,
+                              gasMeterAvailable: false,
+                              elevatorAvailable: false,
+                              finishingStatus: '',
+                              bedrooms: '',
+                              bathrooms: '',
+                              floorNumber: '',
+                            } : {}),
+                          });
+                          if (newType === 'Land' || newType === 'Shop' || newType === 'House') {
+                            setFloors([]);
+                          } else if (floors.length === 0) {
+                            setFloors([{
+                              floorNumber: 1,
+                              floorName: 'الدور 1',
+                              price: null,
+                              pricePerMeter: null,
+                              installmentPrice: null,
+                              soldPrice: null,
+                              areaSqm: formData.areaSqm ? parseFloat(formData.areaSqm) : null,
+                              bedrooms: null,
+                              bathrooms: null,
+                              isAvailable: true,
+                              sortOrder: 0,
+                            }]);
+                          }
+                        }}
                       >
-                        <option value="Apartment">شقة سكنية</option>
-                        <option value="House">منزل / بيت مستقل</option>
-                        <option value="Villa">فيلا</option>
-                        <option value="Land">أرض فضاء / للبناء</option>
-                        <option value="Shop">محل تجاري / إداري</option>
+                        <option value="Apartment">شقة</option>
+                        <option value="House">بيت</option>
+                        <option value="Land">أرض</option>
+                        <option value="Shop">محل</option>
                       </select>
                     </div>
 
                     <div className="form-group">
-                      <label>نوع العرض</label>
+                      <label>نوع الإعلان</label>
                       <select
                         value={formData.listingType}
                         onChange={(e) => setFormData({ ...formData, listingType: e.target.value })}
                       >
-                        <option value="Sale">للبيع</option>
-                        <option value="Rent">للإيجار</option>
+                        <option value="Sale">بيع</option>
+                        <option value="Rent">إيجار</option>
                       </select>
                     </div>
+
+                    {formData.propertyType !== 'House' && formData.propertyType !== 'Land' && (
+                      <div className="form-group">
+                        <label>حالة التشطيب</label>
+                        <select
+                          value={formData.finishingStatus}
+                          onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
+                        >
+                          {FINISHING_OPTIONS.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
 
                     <div className="form-group">
                       <label>الحالة</label>
@@ -794,227 +1000,384 @@ export default function MyPropertiesPage() {
                         <option value="Rented">مؤجر</option>
                       </select>
                     </div>
-                  </div>
-                </div>
 
-                {/* Land Specific Fields */}
-                {formData.propertyType === 'Land' && (
-                  <div className="form-section">
-                    <h3 className="form-section__title">🌿 مواصفات وتراخيص الأرض</h3>
-                    <div className="form-grid">
+                    {formData.propertyType === 'Apartment' && (
                       <div className="form-group">
-                        <label>عرض الواجهة (متر)</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={formData.frontageWidth}
-                          onChange={(e) => setFormData({ ...formData, frontageWidth: e.target.value })}
-                          placeholder="مثال: 12.5"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>عمق الواجهة / الطول (متر)</label>
-                        <input
-                          type="number"
-                          step="0.1"
-                          value={formData.frontageLength}
-                          onChange={(e) => setFormData({ ...formData, frontageLength: e.target.value })}
-                          placeholder="مثال: 20"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>عرض الشارع أمام الأرض</label>
-                        <input
-                          type="text"
-                          value={formData.streetWidth}
-                          onChange={(e) => setFormData({ ...formData, streetWidth: e.target.value })}
-                          placeholder="مثال: شارع 10 متر أو 12 متر"
-                        />
-                      </div>
-                    </div>
-                    <div className="checkbox-row" style={{ marginTop: '1rem' }}>
-                      <label className="checkbox-card">
-                        <input
-                          type="checkbox"
-                          checked={formData.hasBuildingLicense}
-                          onChange={(e) => setFormData({ ...formData, hasBuildingLicense: e.target.checked })}
-                        />
-                        <span>📜 بها رخصة بناء معتمدة</span>
-                      </label>
-                      <label className="checkbox-card">
-                        <input
-                          type="checkbox"
-                          checked={formData.hasElectricity}
-                          onChange={(e) => setFormData({ ...formData, hasElectricity: e.target.checked })}
-                        />
-                        <span>⚡ واصل كهرباء</span>
-                      </label>
-                      <label className="checkbox-card">
-                        <input
-                          type="checkbox"
-                          checked={formData.hasWater}
-                          onChange={(e) => setFormData({ ...formData, hasWater: e.target.checked })}
-                        />
-                        <span>💧 واصل مياه</span>
-                      </label>
-                      <label className="checkbox-card">
-                        <input
-                          type="checkbox"
-                          checked={formData.hasSewerage}
-                          onChange={(e) => setFormData({ ...formData, hasSewerage: e.target.checked })}
-                        />
-                        <span>🚽 واصل صرف صحي</span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                {/* House / Villa Breakdown */}
-                {formData.propertyType === 'House' && (
-                  <div className="form-section">
-                    <h3 className="form-section__title">🏠 مواصفات البيت المستقل والأدوار</h3>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label>عدد الأدوار الإجمالي</label>
-                        <input
-                          type="number"
-                          value={formData.numberOfFloors}
-                          onChange={(e) => setFormData({ ...formData, numberOfFloors: e.target.value })}
-                          placeholder="مثال: 4"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>عدد الشقق بكل دور</label>
+                        <label>عدد الشقق في الدور</label>
                         <input
                           type="number"
                           value={formData.apartmentsPerFloor}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setFormData({ ...formData, apartmentsPerFloor: val });
-                            if (floors.length > 0) syncHouseApartmentCounts(floors, val);
-                          }}
-                          placeholder="مثال: 1 أو 2"
+                          onChange={(e) => setFormData({ ...formData, apartmentsPerFloor: e.target.value })}
+                          placeholder="مثال: 3"
+                          min="1"
                         />
                       </div>
-                      <div className="form-group">
-                        <label>شقق متشطبة</label>
-                        <input
-                          type="number"
-                          value={formData.finishedApartments}
-                          onChange={(e) => setFormData({ ...formData, finishedApartments: e.target.value })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>شقق نص تشطيب</label>
-                        <input
-                          type="number"
-                          value={formData.semiFinishedApartments}
-                          onChange={(e) => setFormData({ ...formData, semiFinishedApartments: e.target.value })}
-                          placeholder="0"
-                        />
-                      </div>
-                      <div className="form-group">
-                        <label>شقق عظم</label>
-                        <input
-                          type="number"
-                          value={formData.coreShellApartments}
-                          onChange={(e) => setFormData({ ...formData, coreShellApartments: e.target.value })}
-                          placeholder="0"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )}
+                    )}
 
-                {/* Section: Floor Management for Apartments */}
-                {formData.propertyType === 'Apartment' && (
+                    {formData.propertyType === 'House' && (
+                      <div className="house-breakdown-box" style={{
+                        gridColumn: 'span 2',
+                        background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+                        border: '1.5px solid #10b981',
+                        borderRadius: '12px',
+                        padding: '16px',
+                        margin: '6px 0 10px',
+                        boxShadow: '0 2px 8px rgba(16,185,129,0.08)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', borderBottom: '1px solid #a7f3d0', paddingBottom: '8px', flexWrap: 'wrap', gap: '6px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.25rem' }}>🏠</span>
+                            <strong style={{ color: '#065f46', fontSize: '0.98rem' }}>مواصفات وتقسيم البيت:</strong>
+                          </div>
+                          <span style={{ fontSize: '0.78rem', color: '#047857', background: '#d1fae5', padding: '3px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            لا يوجد تشطيب عام — يتم تحديد عدد الشقق حسب نوع التشطيب
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#065f46', fontSize: '0.82rem' }}>🏢 عدد الأدوار *</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={formData.numberOfFloors}
+                              onChange={(e) => setFormData({ ...formData, numberOfFloors: e.target.value })}
+                              placeholder="مثال: 6"
+                              style={{ background: '#fff', borderColor: '#6ee7b7', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#065f46', fontSize: '0.82rem' }}>🚪 كم شقة في الدور</label>
+                            <input
+                              type="number"
+                              min="1"
+                              value={formData.apartmentsPerFloor}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setFormData({ ...formData, apartmentsPerFloor: val });
+                                if (floors.length > 0) {
+                                  syncHouseApartmentCounts(floors, val);
+                                }
+                              }}
+                              placeholder="مثال: 1"
+                              style={{ background: '#fff', borderColor: '#6ee7b7', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#047857', fontSize: '0.82rem' }}>✨ عدد الشقق المتشطبة</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.finishedApartments}
+                              onChange={(e) => setFormData({ ...formData, finishedApartments: e.target.value })}
+                              placeholder="مثال: 3"
+                              style={{ background: '#fff', borderColor: '#6ee7b7', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#b45309', fontSize: '0.82rem' }}>🧱 عدد الشقق النص تشطيب</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.semiFinishedApartments}
+                              onChange={(e) => setFormData({ ...formData, semiFinishedApartments: e.target.value })}
+                              placeholder="مثال: 3"
+                              style={{ background: '#fff', borderColor: '#fcd34d', fontWeight: 700 }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label style={{ fontWeight: 700, color: '#475569', fontSize: '0.82rem' }}>🏗️ عدد الشقق العظم</label>
+                            <input
+                              type="number"
+                              min="0"
+                              value={formData.coreShellApartments}
+                              onChange={(e) => setFormData({ ...formData, coreShellApartments: e.target.value })}
+                              placeholder="مثال: 0"
+                              style={{ background: '#fff', borderColor: '#cbd5e1', fontWeight: 700 }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* General Price & Area for House, Land, and Shop */}
+                    {(formData.propertyType === 'House' || formData.propertyType === 'Land' || formData.propertyType === 'Shop') && (
+                      <>
+                        <div className="form-group">
+                          <label>
+                            {formData.propertyType === 'House' ? 'سعر البيت كاش (جنيه) *' :
+                             formData.propertyType === 'Land' ? 'سعر الأرض كاش (جنيه) *' :
+                             'سعر المحل كاش (جنيه) *'}
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                            placeholder="0"
+                            required
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>سعر التقسيط (جنيه)</label>
+                          <input
+                            type="number"
+                            value={formData.installmentPrice}
+                            onChange={(e) => setFormData({ ...formData, installmentPrice: e.target.value })}
+                            placeholder="0 (اختياري)"
+                          />
+                        </div>
+
+                        <div className="form-group">
+                          <label>
+                            {formData.propertyType === 'House' ? 'المساحة الإجمالية للبيت (م²) *' :
+                             formData.propertyType === 'Land' ? 'مساحة الأرض (م²) *' :
+                             'مساحة المحل (م²) *'}
+                          </label>
+                          <input
+                            type="number"
+                            value={formData.areaSqm}
+                            onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
+                            placeholder="مثال: 150"
+                            required
+                          />
+                        </div>
+
+                        {formData.propertyType === 'Land' && (
+                          <>
+                            <div className="form-group" style={{ background: '#f8fafc', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #cbd5e1' }}>
+                              <label style={{ color: '#0f172a', fontWeight: 800 }}>
+                                📏 طول الواجهة (متر) *
+                              </label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={formData.frontageLength}
+                                onChange={(e) => setFormData({ ...formData, frontageLength: e.target.value })}
+                                placeholder="مثال: 12"
+                                required
+                                style={{ background: '#fff', borderColor: '#94a3b8', fontWeight: 700 }}
+                              />
+                              <small style={{ color: '#64748b', fontSize: '0.78rem' }}>
+                                طول واجهة الأرض على الشارع بالمتر (معلومة أساسية للأراضي).
+                              </small>
+                            </div>
+
+                            <div className="form-group">
+                              <label>عرض الشارع (متر)</label>
+                              <input
+                                type="text"
+                                value={formData.streetWidth}
+                                onChange={(e) => setFormData({ ...formData, streetWidth: e.target.value })}
+                                placeholder="مثال: 10 متر أو شارع 8 متر"
+                              />
+                            </div>
+
+                            <div className="form-group">
+                              <label>عرض / عمق الأرض (متر اختياري)</label>
+                              <input
+                                type="number"
+                                step="0.1"
+                                value={formData.frontageWidth}
+                                onChange={(e) => setFormData({ ...formData, frontageWidth: e.target.value })}
+                                placeholder="مثال: 15"
+                              />
+                            </div>
+                          </>
+                        )}
+
+                        {formData.propertyType === 'Shop' && (
+                          <div className="form-group">
+                            <label>الحمامات (اختياري)</label>
+                            <input
+                              type="number"
+                              value={formData.bathrooms}
+                              onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
+                              placeholder="0"
+                            />
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </div>
+
+                {/* Section: Floors & Pricing */}
+                {formData.propertyType !== 'House' && formData.propertyType !== 'Land' && formData.propertyType !== 'Shop' && (
                   <div className="form-section">
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
-                      <h3 className="form-section__title" style={{ margin: 0 }}>🏢 إدارة الأدوار والوحدات</h3>
-                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                        <button type="button" className="btn-secondary" onClick={addFloor}>
-                          ＋ إضافة دور
-                        </button>
-                        <button type="button" className="btn-secondary" onClick={duplicateLastFloor}>
-                          📋 تكرار الدور الأخير
-                        </button>
+                    <div className="form-section__header-row">
+                      <div>
+                        <h3 className="form-section__title">
+                          🏢 الأدوار والأسعار وسعر المتر
+                        </h3>
+                        <p className="form-section__sub">
+                          حدد بيانات وأسعار كل دور على حدة مع الحساب التلقائي لسعر الكاش أو سعر المتر، وتمييز حالة الدور (متاح 🟢 أو مباع 🔴).
+                        </p>
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {floors.length > 0 && (
+                          <div className="floor-view-toggle">
+                            <button
+                              type="button"
+                              className={`floor-view-btn ${floorViewMode === 'cards' ? 'active' : ''}`}
+                              onClick={() => setFloorViewMode('cards')}
+                              title="عرض بطاقات تفصيلي بدون سكرول أفقي"
+                            >
+                              🗂️ بطاقات (مريح)
+                            </button>
+                            <button
+                              type="button"
+                              className={`floor-view-btn ${floorViewMode === 'table' ? 'active' : ''}`}
+                              onClick={() => setFloorViewMode('table')}
+                              title="عرض جدول مضغوط"
+                            >
+                              📊 جدول
+                            </button>
+                          </div>
+                        )}
                         <button
                           type="button"
-                          className="btn-secondary"
-                          onClick={() => setFloorViewMode(floorViewMode === 'cards' ? 'table' : 'cards')}
+                          className="btn-add-floor"
+                          onClick={addFloor}
                         >
-                          {floorViewMode === 'cards' ? '📊 عرض جدول' : '🃏 عرض بطاقات'}
+                          <span>＋</span> إضافة دور
                         </button>
+                        {floors.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn-add-floor"
+                            onClick={duplicateLastFloor}
+                            style={{ background: '#2563eb', borderColor: '#1d4ed8' }}
+                            title="إضافة دور جديد بنفس مواصفات الدور السابق لتوفير الوقت"
+                          >
+                            <span>📋</span> تكرار بيانات الدور الأخير
+                          </button>
+                        )}
                       </div>
                     </div>
 
-                    {/* Bulk Floor Generator */}
-                    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px 16px', marginBottom: '14px' }}>
-                      <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#1e3a8a', marginBottom: '8px' }}>
-                        ⚡ مولّد الأدوار السريع:
+                    {floors.length > 0 && (() => {
+                      const floorCash = floors.map(f => f.price).filter((p): p is number => p != null && p > 0);
+                      const floorInst = floors.map(f => f.installmentPrice).filter((p): p is number => p != null && p > 0);
+                      const minCash = floorCash.length > 0 ? Math.min(...floorCash) : null;
+                      const maxCash = floorCash.length > 0 ? Math.max(...floorCash) : null;
+                      const minInst = floorInst.length > 0 ? Math.min(...floorInst) : null;
+                      const maxInst = floorInst.length > 0 ? Math.max(...floorInst) : null;
+                      return (
+                        <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '10px 0 16px', padding: '10px 16px', background: 'rgba(45,74,62,0.06)', border: '1px solid rgba(45,74,62,0.16)', borderRadius: '10px', fontSize: '0.9rem', alignItems: 'center' }}>
+                          <span style={{ color: '#182821', fontWeight: 700 }}>
+                            💵 سعر الكاش للعقار: <span style={{ color: '#047857', fontSize: '1.05rem', fontWeight: 900 }}>{minCash != null ? (minCash === maxCash ? `${minCash.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                          </span>
+                          <span style={{ color: '#1e40af', fontWeight: 700 }}>
+                            💳 سعر التقسيط: <span style={{ color: '#2563eb', fontSize: '1.05rem', fontWeight: 900 }}>{minInst != null ? (minInst === maxInst ? `${minInst.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: '#64748b', marginRight: 'auto' }}>
+                            ℹ️ يُحسب السعر الإجمالي للعقار تلقائياً ومباشرة من أقل سعر مسجل في الأدوار بالأسفل
+                          </span>
+                        </div>
+                      );
+                    })()}
+
+                    {/* ── Bulk Multi-Floor Generator (One-Shot Entry) ── */}
+                    <div className="bulk-floor-generator" style={{
+                      background: 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)',
+                      border: '1.5px dashed #059669',
+                      borderRadius: '12px',
+                      padding: '14px 16px',
+                      margin: '10px 0 16px',
+                      boxShadow: '0 2px 8px rgba(5,150,105,0.06)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '1.25rem' }}>⚡</span>
+                          <strong style={{ color: '#065f46', fontSize: '0.96rem' }}>إضافة مجموعة أدوار دفعة واحدة (إدخال سريع):</strong>
+                          <span style={{ fontSize: '0.8rem', color: '#047857', background: '#d1fae5', padding: '2px 8px', borderRadius: '6px', fontWeight: 700 }}>
+                            أدخل نطاق الأدوار والتشطيب لإضافتهم دفعة واحدة بضغطة زر
+                          </span>
+                        </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                          <span>من:</span>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(125px, 1fr))', gap: '10px', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>من الدور</label>
                           <input
                             type="number"
+                            min="0"
                             value={bulkFromFloor}
                             onChange={(e) => setBulkFromFloor(e.target.value)}
-                            style={{ width: '60px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0', fontWeight: 700 }}
                           />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                          <span>إلى:</span>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>إلى الدور</label>
                           <input
                             type="number"
+                            min="0"
                             value={bulkToFloor}
                             onChange={(e) => setBulkToFloor(e.target.value)}
-                            style={{ width: '60px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0', fontWeight: 700 }}
                           />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                          <span>التشطيب:</span>
+
+                        <div className="form-group" style={{ margin: 0, minWidth: '145px' }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>تشطيب هذه الأدوار</label>
                           <select
                             value={bulkFinishing}
                             onChange={(e) => setBulkFinishing(e.target.value)}
-                            style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0', fontWeight: 700, color: '#065f46' }}
                           >
-                            {FINISHING_OPTIONS.map(o => (
-                              <option key={o.value} value={o.value}>{o.label}</option>
+                            {FINISHING_OPTIONS.filter(o => o.value !== 'Mixed').map(opt => (
+                              <option key={opt.value} value={opt.value}>{opt.label}</option>
                             ))}
                           </select>
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                          <span>المساحة:</span>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>المساحة (م²)</label>
                           <input
                             type="number"
                             value={bulkArea}
+                            placeholder={formData.areaSqm || '0'}
                             onChange={(e) => setBulkArea(e.target.value)}
-                            placeholder="م²"
-                            style={{ width: '60px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0' }}
                           />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                          <span>غرف:</span>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>غرف النوم</label>
                           <input
                             type="number"
+                            min="0"
                             value={bulkBedrooms}
+                            placeholder={formData.bedrooms || '0'}
                             onChange={(e) => setBulkBedrooms(e.target.value)}
-                            placeholder="3"
-                            style={{ width: '50px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0' }}
                           />
                         </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '0.85rem' }}>
-                          <span>حمامات:</span>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label style={{ fontSize: '0.82rem', color: '#065f46', fontWeight: 700 }}>الحمامات</label>
                           <input
                             type="number"
+                            min="0"
                             value={bulkBathrooms}
+                            placeholder={formData.bathrooms || '0'}
                             onChange={(e) => setBulkBathrooms(e.target.value)}
-                            placeholder="1"
-                            style={{ width: '50px', padding: '4px 8px', borderRadius: '6px', border: '1px solid #cbd5e1' }}
+                            className="floor-input"
+                            style={{ background: '#fff', borderColor: '#a7f3d0' }}
                           />
                         </div>
+
                         <button
                           type="button"
                           onClick={handleAddBulkFloors}
@@ -1022,23 +1385,42 @@ export default function MyPropertiesPage() {
                             background: '#059669',
                             color: '#fff',
                             border: 'none',
-                            borderRadius: '6px',
-                            padding: '6px 14px',
-                            fontWeight: 700,
+                            borderRadius: '8px',
+                            padding: '10px 14px',
+                            fontWeight: 800,
+                            fontSize: '0.88rem',
                             cursor: 'pointer',
-                            fontSize: '0.84rem'
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            height: '38px',
+                            whiteSpace: 'nowrap',
+                            boxShadow: '0 2px 4px rgba(5,150,105,0.2)'
                           }}
                         >
-                          إضافة دفعة واحدة
+                          <span>⚡</span> إضافة دفعة واحدة
                         </button>
                       </div>
                     </div>
 
+                    {floors.some(f => Boolean(f.finishingStatus)) && (
+                      <div style={{ margin: '6px 0 14px', padding: '9px 14px', background: 'rgba(5,150,105,0.06)', border: '1px solid rgba(5,150,105,0.2)', borderRadius: '8px', fontSize: '0.88rem', color: '#065f46', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800 }}>🎨 ملخص تشطيب الأدوار المحسوب:</span>
+                        <span style={{ background: '#fff', border: '1px solid #a7f3d0', padding: '3px 10px', borderRadius: '6px', fontWeight: 800, color: '#047857' }}>
+                          {formatFloorsFinishingSummary(floors)}
+                        </span>
+                        <span style={{ fontSize: '0.8rem', color: '#64748b' }}>
+                          (إجمالي {floors.length} أدوار)
+                        </span>
+                      </div>
+                    )}
+
                     {floors.length === 0 ? (
                       <div className="no-floors-box">
                         <span>🏢</span>
-                        <p>لم يتم تحديد أدوار منفصلة. يرجى تحديد سعر الكاش وسعر التقسيط العام للعقار أدناه:</p>
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', maxWidth: '600px', margin: '14px auto 0' }}>
+                        <p>لم يتم إضافة أدوار بعد. يمكنك إما الضغط على "＋ إضافة دور" لتسعير كل دور على حدة، أو تحديد السعر العام للعقار أدناه:</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', maxWidth: '600px', margin: '14px auto 0', textAlign: 'right' }}>
                           <div className="form-group" style={{ margin: 0 }}>
                             <label>سعر الكاش (جنيه)</label>
                             <input
@@ -1059,77 +1441,359 @@ export default function MyPropertiesPage() {
                           </div>
                         </div>
                       </div>
-                    ) : (
+                    ) : floorViewMode === 'cards' ? (
+                      /* ── Responsive Floor Cards Layout (No Horizontal Scroll) ── */
                       <div className="floors-cards-list">
                         {floors.map((floor, index) => (
-                          <div key={index} className="floor-card">
+                          <div key={index} className={`floor-card ${(!floor.isAvailable && formData.propertyType !== 'House') ? 'floor-card--sold' : ''}`}>
                             <div className="floor-card__header">
-                              <input
-                                type="text"
-                                className="floor-card__name-input"
-                                value={floor.floorName ?? `الدور ${floor.floorNumber ?? index + 1}`}
-                                onChange={(e) => updateFloor(index, { floorName: e.target.value })}
-                                placeholder={`الدور ${index + 1}`}
-                              />
-                              <div style={{ display: 'flex', gap: '6px' }}>
-                                <button type="button" className="btn-icon" onClick={() => duplicateFloor(index)} title="تكرار الدور">
-                                  📋
+                              <div className="floor-card__title-wrap">
+                                <span className="floor-card__badge">#{index + 1}</span>
+                                <input
+                                  type="text"
+                                  value={floor.floorName ?? ''}
+                                  placeholder={`الدور ${index + 1}`}
+                                  onChange={(e) => {
+                                    const digits = e.target.value.match(/\d+/);
+                                    updateFloor(index, {
+                                      floorName: e.target.value,
+                                      floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                    });
+                                  }}
+                                  onBlur={() => expandFloorIfMultiple(index)}
+                                  className="floor-card__name-input"
+                                  title="اسم أو مسمى الدور (يمكنك كتابة 2/3/4 لتكرار البيانات للأدوار تلقائياً)"
+                                />
+                                {parseMultiFloorNumbers(floor.floorName).length > 1 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => expandFloorIfMultiple(index)}
+                                    className="btn-expand-floors"
+                                    title="انقر لنسخ وتوزيع البيانات على أدوار منفصلة تلقائياً"
+                                  >
+                                    ⚡ نسخ للأدوار ({parseMultiFloorNumbers(floor.floorName).length})
+                                  </button>
+                                )}
+                              </div>
+
+                              <div className="floor-card__header-actions">
+                                {formData.propertyType !== 'House' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => updateFloor(index, {
+                                      isAvailable: !floor.isAvailable,
+                                      soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
+                                    })}
+                                    className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
+                                    title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
+                                  >
+                                    {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
+                                  </button>
+                                )}
+
+                                <button
+                                  type="button"
+                                  onClick={() => duplicateFloor(index)}
+                                  className="floor-card__btn-action"
+                                  title="نسخ مواصفات هذا الدور في دور جديد"
+                                >
+                                  📋 نسخ
                                 </button>
-                                <button type="button" className="btn-icon btn-icon--del" onClick={() => removeFloor(index)} title="حذف الدور">
-                                  ✕
+
+                                <button
+                                  type="button"
+                                  onClick={() => removeFloor(index)}
+                                  className="floor-card__btn-action floor-card__btn-action--delete"
+                                  title="حذف هذا الدور"
+                                >
+                                  ✕ حذف
                                 </button>
                               </div>
                             </div>
-                            <div className="floor-card__grid">
-                              <div className="floor-field">
-                                <label>سعر الكاش (جنيه)</label>
-                                <input
-                                  type="number"
-                                  value={floor.price ?? ''}
-                                  placeholder="0"
-                                  onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
-                                />
-                              </div>
-                              <div className="floor-field">
-                                <label>سعر التقسيط (جنيه)</label>
-                                <input
-                                  type="number"
-                                  value={floor.installmentPrice ?? ''}
-                                  placeholder="0"
-                                  onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
-                                />
-                              </div>
-                              <div className="floor-field">
+
+                            <div className="floor-card__body">
+                              <div className="floor-card__field">
                                 <label>المساحة (م²)</label>
                                 <input
                                   type="number"
                                   value={floor.areaSqm ?? ''}
-                                  placeholder={formData.areaSqm || 'م²'}
+                                  placeholder={formData.areaSqm || '0'}
                                   onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
+                                  className="floor-input"
                                 />
                               </div>
-                              <div className="floor-field">
-                                <label>التشطيب</label>
+
+                              <div className="floor-card__field">
+                                <label>غرف النوم</label>
+                                <input
+                                  type="number"
+                                  value={floor.bedrooms ?? ''}
+                                  placeholder="0"
+                                  min="0"
+                                  onChange={(e) => updateFloor(index, { bedrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                  className="floor-input"
+                                />
+                              </div>
+
+                              <div className="floor-card__field">
+                                <label>الحمامات</label>
+                                <input
+                                  type="number"
+                                  value={floor.bathrooms ?? ''}
+                                  placeholder="0"
+                                  min="0"
+                                  onChange={(e) => updateFloor(index, { bathrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                  className="floor-input"
+                                />
+                              </div>
+
+                              <div className="floor-card__field">
+                                <label>تشطيب الدور</label>
                                 <select
-                                  value={floor.finishingStatus ?? 'Core-Shell'}
-                                  onChange={(e) => updateFloor(index, { finishingStatus: e.target.value })}
+                                  value={floor.finishingStatus ?? ''}
+                                  onChange={(e) => updateFloor(index, { finishingStatus: e.target.value || null })}
+                                  className="floor-input"
+                                  style={{ fontWeight: floor.finishingStatus ? 600 : 400 }}
                                 >
-                                  {FINISHING_OPTIONS.map(o => (
-                                    <option key={o.value} value={o.value}>{o.label}</option>
+                                  <option value="">-- اختياري --</option>
+                                  {FINISHING_OPTIONS.filter(o => o.value && o.value !== 'Mixed').map((opt) => (
+                                    <option key={opt.value} value={opt.value}>
+                                      {opt.label}
+                                    </option>
                                   ))}
                                 </select>
                               </div>
+
+                              {formData.propertyType !== 'House' && (
+                                <>
+                                  <div className="floor-card__field">
+                                    <label>سعر المتر (جنيه)</label>
+                                    <input
+                                      type="number"
+                                      value={floor.pricePerMeter ?? ''}
+                                      placeholder="0"
+                                      onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
+                                      className="floor-input"
+                                      title="يتم حساب سعر الكاش أو التقسيط تلقائياً بناءً على سعر المتر والمساحة"
+                                    />
+                                  </div>
+
+                                  <div className="floor-card__field">
+                                    <label>سعر الكاش (جنيه)</label>
+                                    <input
+                                      type="number"
+                                      value={floor.price ?? ''}
+                                      placeholder="0"
+                                      onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
+                                      className="floor-input"
+                                      title="يتم حساب سعر المتر تلقائياً بناءً على سعر الكاش والمساحة"
+                                    />
+                                  </div>
+
+                                  <div className="floor-card__field">
+                                    <label>سعر التقسيط (جنيه)</label>
+                                    <input
+                                      type="number"
+                                      value={floor.installmentPrice ?? ''}
+                                      placeholder="0"
+                                      onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                      className="floor-input"
+                                      title="في حال عدم وجود سعر كاش، يتم حساب سعر المتر تلقائياً بناءً على سعر التقسيط والمساحة"
+                                    />
+                                  </div>
+
+                                  {!floor.isAvailable && (
+                                    <div className="floor-card__field floor-card__field--sold-price">
+                                      <label style={{ color: '#ef4444', fontWeight: 700 }}>سعر البيع الفعلي</label>
+                                      <input
+                                        type="number"
+                                        value={floor.soldPrice ?? ''}
+                                        placeholder="سعر البيع الفعلي"
+                                        onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                        style={{ borderColor: '#ef4444', background: '#fef2f2', color: '#b91c1c', fontWeight: 700 }}
+                                        title="أدخل سعر البيع الفعلي الذي تم الاتفاق عليه لهذا الدور"
+                                      />
+                                    </div>
+                                  )}
+                                </>
+                              )}
                             </div>
                           </div>
                         ))}
+                      </div>
+                    ) : (
+                      /* ── Classic Table Layout ── */
+                      <div className="floors-table-container">
+                        <table className="floors-table">
+                          <thead>
+                            <tr>
+                              <th>الدور / الاسم</th>
+                              <th>المساحة (م²)</th>
+                              <th>غرف النوم</th>
+                              <th>الحمامات</th>
+                              <th>التشطيب</th>
+                              {formData.propertyType !== 'House' && (
+                                <>
+                                  <th>سعر المتر (جنيه)</th>
+                                  <th>سعر الكاش (جنيه)</th>
+                                  <th>سعر التقسيط (جنيه)</th>
+                                  <th style={{ minWidth: '115px', textAlign: 'center' }}>الحالة</th>
+                                  <th style={{ minWidth: '120px', textAlign: 'center' }}>سعر البيع الفعلي</th>
+                                </>
+                              )}
+                              <th style={{ textAlign: 'center' }}>حذف</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {floors.map((floor, index) => (
+                              <tr key={index} className={(!floor.isAvailable && formData.propertyType !== 'House') ? 'floor-row--sold' : ''}>
+                                <td>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    <input
+                                      type="text"
+                                      value={floor.floorName ?? ''}
+                                      placeholder={`الدور ${index + 1}`}
+                                      onChange={(e) => {
+                                        const digits = e.target.value.match(/\d+/);
+                                        updateFloor(index, {
+                                          floorName: e.target.value,
+                                          floorNumber: digits ? parseInt(digits[0], 10) : (floor.floorNumber ?? index + 1)
+                                        });
+                                      }}
+                                      onBlur={() => expandFloorIfMultiple(index)}
+                                      className="floor-input"
+                                      title="اسم أو مسمى الدور"
+                                    />
+                                  </div>
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    value={floor.areaSqm ?? ''}
+                                    placeholder={formData.areaSqm || '0'}
+                                    onChange={(e) => updateFloor(index, { areaSqm: e.target.value ? parseFloat(e.target.value) : null })}
+                                    className="floor-input"
+                                    style={{ width: '80px' }}
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    value={floor.bedrooms ?? ''}
+                                    placeholder="0"
+                                    min="0"
+                                    onChange={(e) => updateFloor(index, { bedrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                    className="floor-input"
+                                    style={{ width: '65px' }}
+                                  />
+                                </td>
+                                <td>
+                                  <input
+                                    type="number"
+                                    value={floor.bathrooms ?? ''}
+                                    placeholder="0"
+                                    min="0"
+                                    onChange={(e) => updateFloor(index, { bathrooms: e.target.value ? parseInt(e.target.value) : null })}
+                                    className="floor-input"
+                                    style={{ width: '65px' }}
+                                  />
+                                </td>
+                                <td>
+                                  <select
+                                    value={floor.finishingStatus ?? ''}
+                                    onChange={(e) => updateFloor(index, { finishingStatus: e.target.value || null })}
+                                    className="floor-input"
+                                    style={{ minWidth: '110px', fontSize: '12px' }}
+                                  >
+                                    <option value="">-- اختياري --</option>
+                                    {FINISHING_OPTIONS.filter(o => o.value && o.value !== 'Mixed').map((opt) => (
+                                      <option key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </option>
+                                    ))}
+                                  </select>
+                                </td>
+                                {formData.propertyType !== 'House' && (
+                                  <>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        value={floor.pricePerMeter ?? ''}
+                                        placeholder="0"
+                                        onChange={(e) => updateFloor(index, { pricePerMeter: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        value={floor.price ?? ''}
+                                        placeholder="0"
+                                        onChange={(e) => updateFloor(index, { price: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                      />
+                                    </td>
+                                    <td>
+                                      <input
+                                        type="number"
+                                        value={floor.installmentPrice ?? ''}
+                                        placeholder="0"
+                                        onChange={(e) => updateFloor(index, { installmentPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                        className="floor-input"
+                                      />
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => updateFloor(index, {
+                                          isAvailable: !floor.isAvailable,
+                                          soldPrice: !floor.isAvailable ? null : (floor.soldPrice ?? floor.price)
+                                        })}
+                                        className={`btn-floor-status ${floor.isAvailable ? 'btn-floor-status--available' : 'btn-floor-status--sold'}`}
+                                        title={floor.isAvailable ? 'اضغط لتمييز هذا الدور كـ (مباع)' : 'اضغط لتمييز هذا الدور كـ (متاح)'}
+                                      >
+                                        {floor.isAvailable ? '🟢 متاح' : '🔴 مباع'}
+                                      </button>
+                                    </td>
+                                    <td style={{ textAlign: 'center' }}>
+                                      {!floor.isAvailable ? (
+                                        <input
+                                          type="number"
+                                          value={floor.soldPrice ?? ''}
+                                          placeholder="سعر البيع"
+                                          onChange={(e) => updateFloor(index, { soldPrice: e.target.value ? parseFloat(e.target.value) : null })}
+                                          className="floor-input"
+                                          style={{ width: '100px', borderColor: '#ef4444', background: '#fef2f2', fontWeight: 700 }}
+                                        />
+                                      ) : (
+                                        <span style={{ color: 'var(--clr-text-muted)', fontSize: '0.8rem' }}>—</span>
+                                      )}
+                                    </td>
+                                  </>
+                                )}
+                                <td style={{ textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => removeFloor(index)}
+                                    className="btn-delete-floor"
+                                    title="حذف الدور"
+                                  >
+                                    ✕
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
                       </div>
                     )}
                   </div>
                 )}
 
-                {/* Section: Location & Address */}
+                {/* Section: Location */}
                 <div className="form-section">
-                  <h3 className="form-section__title">📍 الموقع والعنوان</h3>
+                  <h3 className="form-section__title">📍 الموقع</h3>
                   <div className="form-grid">
                     <div className="form-group">
                       <label>المدينة</label>
@@ -1137,100 +1801,97 @@ export default function MyPropertiesPage() {
                         type="text"
                         value={formData.city}
                         onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                        placeholder="المحلة الكبرى"
+                        placeholder="مثال: المحلة الكبرى"
                       />
                     </div>
 
                     <div className="form-group">
-                      <label>الحي / المنطقة</label>
+                      <label>الحي</label>
                       <input
                         type="text"
                         value={formData.district}
                         onChange={(e) => setFormData({ ...formData, district: e.target.value })}
-                        placeholder="مثال: منشية البكري، الشعبية، شكري القوتلي"
+                        placeholder="مثال: منشية البكري"
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label>العنوان والشارع</label>
+                      <label>العنوان / الشارع</label>
                       <input
                         type="text"
                         value={formData.address}
                         onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                        placeholder="مثال: شارع عبد الحي شاهين متفرع من شارع الجمهورية"
+                        placeholder="مثال: شارع البحر، المحلة الكبرى"
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label>العنوان التفصيلي / علامة مميزة</label>
+                      <label>العنوان التفصيلي / المعالم</label>
                       <input
                         type="text"
                         value={formData.detailedAddress}
                         onChange={(e) => setFormData({ ...formData, detailedAddress: e.target.value })}
-                        placeholder="مثال: بجوار مسجد السلام - عمارة الأمل"
+                        placeholder="مثال: برج الصفوة، أمام مسجد البكري"
                       />
+                      <small style={{ color: 'var(--clr-text-muted)', fontSize: '0.78rem' }}>
+                        يظهر هذا العنوان كاملاً على كارت العقار وصفحة التفاصيل لتوجيه العملاء بدقة.
+                      </small>
                     </div>
                   </div>
                 </div>
 
-                {/* Section: Specifications */}
-                {formData.propertyType !== 'Land' && (
-                  <div className="form-section">
-                    <h3 className="form-section__title">📐 المواصفات والمساحة العامة</h3>
-                    <div className="form-grid">
-                      <div className="form-group">
-                        <label>المساحة الإجمالية (م²)</label>
+                {/* Section: Utilities & Services */}
+                <div className="form-section">
+                  <h3 className="form-section__title">
+                    {formData.propertyType === 'Land' ? '📜 الترخيص والمرافق' : '🛠️ الخدمات'}
+                  </h3>
+                  {formData.propertyType === 'Land' ? (
+                    <div className="checkbox-row">
+                      <label className="checkbox-card" style={{
+                        borderColor: formData.hasBuildingLicense ? 'var(--clr-gold)' : undefined,
+                        background: formData.hasBuildingLicense ? 'rgba(183,121,61,0.08)' : undefined,
+                        fontWeight: 700,
+                      }}>
                         <input
-                          type="number"
-                          value={formData.areaSqm}
-                          onChange={(e) => setFormData({ ...formData, areaSqm: e.target.value })}
-                          placeholder="مثال: 135"
+                          type="checkbox"
+                          checked={formData.hasBuildingLicense}
+                          onChange={(e) => setFormData({ ...formData, hasBuildingLicense: e.target.checked })}
                         />
-                      </div>
+                        <span className="checkbox-card__icon">📜</span>
+                        <span>يوجد رخصة بناء (مرخصة)</span>
+                      </label>
 
-                      {formData.propertyType !== 'House' && (
-                        <>
-                          <div className="form-group">
-                            <label>عدد الغرف</label>
-                            <input
-                              type="number"
-                              value={formData.bedrooms}
-                              onChange={(e) => setFormData({ ...formData, bedrooms: e.target.value })}
-                              placeholder="3"
-                            />
-                          </div>
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.hasElectricity}
+                          onChange={(e) => setFormData({ ...formData, hasElectricity: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">⚡</span>
+                        <span>دخول كهرباء</span>
+                      </label>
 
-                          <div className="form-group">
-                            <label>عدد الحمامات</label>
-                            <input
-                              type="number"
-                              value={formData.bathrooms}
-                              onChange={(e) => setFormData({ ...formData, bathrooms: e.target.value })}
-                              placeholder="1"
-                            />
-                          </div>
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.hasWater}
+                          onChange={(e) => setFormData({ ...formData, hasWater: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">💧</span>
+                        <span>دخول مياه</span>
+                      </label>
 
-                          <div className="form-group">
-                            <label>نوع التشطيب العام</label>
-                            <select
-                              value={formData.finishingStatus}
-                              onChange={(e) => setFormData({ ...formData, finishingStatus: e.target.value })}
-                            >
-                              {FINISHING_OPTIONS.map(o => (
-                                <option key={o.value} value={o.value}>{o.label}</option>
-                              ))}
-                            </select>
-                          </div>
-                        </>
-                      )}
+                      <label className="checkbox-card">
+                        <input
+                          type="checkbox"
+                          checked={formData.hasSewerage}
+                          onChange={(e) => setFormData({ ...formData, hasSewerage: e.target.checked })}
+                        />
+                        <span className="checkbox-card__icon">🚽</span>
+                        <span>شبكة صرف صحي</span>
+                      </label>
                     </div>
-                  </div>
-                )}
-
-                {/* Section: Utilities & Meters */}
-                {formData.propertyType !== 'Land' && (
-                  <div className="form-section">
-                    <h3 className="form-section__title">💧⚡ العدادات والمرافق</h3>
+                  ) : (
                     <div className="checkbox-row">
                       <label className="checkbox-card">
                         <input
@@ -1261,7 +1922,6 @@ export default function MyPropertiesPage() {
                         <span className="checkbox-card__icon">🔥</span>
                         <span>عداد غاز متاح</span>
                       </label>
-
                       <label className="checkbox-card">
                         <input
                           type="checkbox"
@@ -1272,49 +1932,49 @@ export default function MyPropertiesPage() {
                         <span>يوجد أسانسير</span>
                       </label>
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
 
-                {/* Section: Description & Media Upload */}
+                {/* Section: Description & Media */}
                 <div className="form-section">
                   <h3 className="form-section__title">📝 الوصف والوسائط</h3>
                   <div className="form-grid">
                     <div className="form-group full-width">
-                      <label>وصف العقار ومميزاته</label>
+                      <label>الوصف</label>
                       <textarea
                         value={formData.description}
                         onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={4}
-                        placeholder="اكتب وصفاً جذاباً وشاملاً للعقار، الشوارع المحيطة، المرافق، وتفاصيل السندات..."
+                        rows={5}
+                        placeholder="اكتب وصفاً تفصيلياً للعقار..."
                       />
                     </div>
 
                     <div className="form-group full-width">
-                      <label>إرفاق الصور والفيديوهات</label>
+                      <label>الصور والفيديو</label>
                       <div className="file-upload-area">
                         <input
                           type="file"
                           multiple
                           accept="image/*,video/*"
                           onChange={(e) => setMediaFiles(Array.from(e.target.files || []))}
-                          id="my-prop-media"
+                          id="customer-media-upload"
                           className="file-upload-input"
                         />
-                        <label htmlFor="my-prop-media" className="file-upload-label">
+                        <label htmlFor="customer-media-upload" className="file-upload-label">
                           <span>📁</span>
                           {mediaFiles.length > 0
                             ? `${mediaFiles.length} ملف تم اختياره`
-                            : 'اضغط لاختيار صور أو فيديو للوحدة'}
+                            : 'اضغط لاختيار الصور أو الفيديو'}
                         </label>
                       </div>
-                      {uploading && <p className="uploading">⏳ جاري رفع الوسائط وحفظها...</p>}
+                      {uploading && <p className="uploading">⏳ جاري رفع الوسائط...</p>}
                     </div>
                   </div>
                 </div>
 
-                {/* Section: Options */}
+                {/* Section: Flags */}
                 <div className="form-section">
-                  <h3 className="form-section__title">⚙️ خيارات إضافية</h3>
+                  <h3 className="form-section__title">⚙️ الإعدادات</h3>
                   <div className="checkbox-row">
                     <label className="checkbox-card">
                       <input
@@ -1325,7 +1985,6 @@ export default function MyPropertiesPage() {
                       <span className="checkbox-card__icon">💳</span>
                       <span>متاح بالتقسيط</span>
                     </label>
-
                     {formData.propertyType !== 'Land' && (
                       <label className="checkbox-card">
                         <input
@@ -1340,11 +1999,13 @@ export default function MyPropertiesPage() {
                   </div>
                 </div>
 
+                {error && <p className="error-msg">⚠ {error}</p>}
+
                 <div className="form-actions">
                   <button type="submit" disabled={loading} className="btn-save">
                     {loading ? (
                       <><span className="btn-spinner" /> جاري الحفظ...</>
-                    ) : editingProperty ? '💾 تحديث العقار' : '➕ إضافة العقار واعتماده'}
+                    ) : editingProperty ? '💾 تحديث العقار' : 'اضافة'}
                   </button>
                   <button
                     type="button"
@@ -1369,10 +2030,16 @@ export default function MyPropertiesPage() {
                     الكل ({stats.total})
                   </button>
                   <button
-                    className={`filter-tab ${activeTab === 'published' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('published')}
+                    className={`filter-tab ${activeTab === 'available' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('available')}
                   >
-                    معتمدة ومنشورة ({stats.published})
+                    متاحة ({stats.available})
+                  </button>
+                  <button
+                    className={`filter-tab ${activeTab === 'sold' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('sold')}
+                  >
+                    مباعة/مؤجرة ({stats.sold})
                   </button>
                   <button
                     className={`filter-tab ${activeTab === 'pending' ? 'active' : ''}`}
@@ -1483,16 +2150,32 @@ export default function MyPropertiesPage() {
                           📍 {[property.city, property.district].filter(Boolean).join('، ') || 'غير محدد'}
                         </p>
 
-                        <p className="details">
-                          🛏 {property.bedrooms ?? '—'} غرف &nbsp;•&nbsp;
-                          🚿 {property.bathrooms ?? '—'} حمام &nbsp;•&nbsp;
-                          📐 {property.areaSqm ?? '—'} م²
-                        </p>
-
-                        {property.finishingStatus && (
-                          <p className="finishing">
-                            🎨 {finishingLabel(property.finishingStatus)}
-                          </p>
+                        {(property.propertyType === 'House' || property.propertyType === 'Villa') ? (
+                          <div style={{ fontSize: '0.82rem', color: '#1e3a8a', background: 'rgba(37,99,235,0.06)', padding: '6px 10px', borderRadius: '6px', margin: '6px 0', lineHeight: 1.6 }}>
+                            <div style={{ fontWeight: 700 }}>
+                              🏢 {property.numberOfFloors ?? (property.floors?.length || '—')} أدوار 
+                              {property.apartmentsPerFloor ? ` • 🚪 ${property.apartmentsPerFloor === 1 ? 'شقة بالدور' : `${property.apartmentsPerFloor} شقق بالدور`}` : ''}
+                              {property.areaSqm ? ` • 📐 ${property.areaSqm} م²` : ''}
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '3px', fontWeight: 700, fontSize: '0.78rem' }}>
+                              {(property.finishedApartments ?? 0) > 0 && <span style={{ color: '#047857' }}>✨ {property.finishedApartments} متشطب</span>}
+                              {(property.semiFinishedApartments ?? 0) > 0 && <span style={{ color: '#b45309' }}>🧱 {property.semiFinishedApartments} نص تشطيب</span>}
+                              {(property.coreShellApartments ?? 0) > 0 && <span style={{ color: '#475569' }}>🏗️ {property.coreShellApartments} عظم</span>}
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            <p className="details">
+                              🛏 {property.bedrooms ?? '—'} غرف &nbsp;•&nbsp;
+                              🚿 {property.bathrooms ?? '—'} حمام &nbsp;•&nbsp;
+                              📐 {property.areaSqm ?? '—'} م²
+                            </p>
+                            {property.finishingStatus && (
+                              <p className="finishing">
+                                🎨 {finishingLabel(property.finishingStatus)}
+                              </p>
+                            )}
+                          </>
                         )}
 
                         {/* Available meters */}
@@ -1521,9 +2204,9 @@ export default function MyPropertiesPage() {
                             style={{
                               fontSize: '0.78rem',
                               fontWeight: 800,
-                              background: property.isPublished ? '#ecfdf5' : '#fef3c7',
-                              color: property.isPublished ? '#047857' : '#b45309',
-                              border: `1px solid ${property.isPublished ? '#a7f3d0' : '#fde68a'}`
+                              background: property.isPublished ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+                              color: property.isPublished ? '#10b981' : '#f59e0b',
+                              border: `1px solid ${property.isPublished ? 'rgba(16, 185, 129, 0.3)' : 'rgba(245, 158, 11, 0.3)'}`
                             }}
                           >
                             {property.isPublished ? '✅ معتمد ومنشور' : '⏳ قيد مراجعة واعتماد الإدارة'}
@@ -1557,7 +2240,7 @@ export default function MyPropertiesPage() {
       </div>
 
       {!showForm && (
-        <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار جديد">
+        <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار">
           ＋
         </button>
       )}

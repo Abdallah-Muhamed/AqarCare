@@ -17,7 +17,7 @@ import { initUtmTracking } from './utils/analytics'
 
 export default function App() {
   const { pathname, search } = useLocation()
-  const isAdmin = pathname.startsWith('/admin')
+  const isPortal = pathname.startsWith('/admin') || pathname.startsWith('/my-properties')
   const isMap   = pathname === '/map'
 
   useEffect(() => {
@@ -26,7 +26,7 @@ export default function App() {
 
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-      {!isAdmin && <Navbar />}
+      {!isPortal && <Navbar />}
       <main style={{ flex: 1 }}>
         <Routes>
           <Route path="/" element={<HomePage />} />
@@ -42,7 +42,7 @@ export default function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </main>
-      {!isAdmin && !isMap && <Footer />}
+      {!isPortal && !isMap && <Footer />}
     </div>
   )
 }
