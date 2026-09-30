@@ -911,7 +911,15 @@
 }
 
 @media (max-width: 768px) {
-  .admin-header { padding: var(--space-md); }
+  .admin-header {
+    padding: var(--space-sm) var(--space-md);
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .admin-header__brand { gap: 0.5rem; }
+  .admin-header h1 { font-size: 0.98rem; }
+  .admin-add-btn { padding: 0.45rem 0.8rem; font-size: 0.82rem; }
+  .logout-btn { padding: 0.45rem 0.75rem; font-size: 0.82rem; }
   .admin-header__sub { display: none; }
   .admin-body { padding: var(--space-md); padding-bottom: 80px; }
   .admin-stats { grid-template-columns: repeat(3, 1fr); gap: var(--space-sm); }
@@ -929,10 +937,14 @@
 }
 
 @media (max-width: 480px) {
+  .admin-header { padding: 0.6rem 0.75rem; }
+  .admin-header h1 { font-size: 0.9rem; }
+  .admin-add-btn { padding: 0.4rem 0.65rem; font-size: 0.78rem; }
+  .logout-btn { padding: 0.4rem 0.55rem; font-size: 0.78rem; }
   .admin-stats { grid-template-columns: repeat(2, 1fr); }
   .stat-card--featured { grid-column: 1 / -1; }
-  .property-form-container { padding: var(--space-md); }
-  .form-section { padding: var(--space-md); }
+  .property-form-container { padding: var(--space-sm); }
+  .form-section { padding: var(--space-sm); }
 }
 
 @media (max-width: 360px) {

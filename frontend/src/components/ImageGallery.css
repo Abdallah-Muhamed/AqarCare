@@ -89,6 +89,13 @@
 
 @media (max-width: 768px) {
   .gallery__main { height: 260px; }
+  .gallery__thumbs {
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .gallery__thumbs::-webkit-scrollbar {
+    display: none;
+  }
   .gallery__thumb { width: 56px; height: 42px; }
   .gallery__nav { width: 34px; height: 34px; }
   .gallery__lb-img { max-width: 96vw; max-height: 80vh; }
@@ -96,5 +103,15 @@
   .gallery__lb-nav--prev { right: 10px; }
   .gallery__lb-nav--next { left: 10px; }
   .gallery__lb-close { top: 12px; left: 12px; }
+}
+
+@media (max-width: 480px) {
+  .gallery__main { height: 220px; }
+  .gallery__thumb { width: 48px; height: 36px; }
+}
+
+@media (max-width: 360px) {
+  .gallery__main { height: 190px; }
+  .gallery__thumb { width: 44px; height: 32px; }
 }
 

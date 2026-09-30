@@ -62,15 +62,30 @@ a { color: inherit; text-decoration: none !important; } img { max-width: 100%; d
 .skeleton { background: linear-gradient(90deg,#eee9df 25%,#f7f4ee 50%,#eee9df 75%); background-size:200% 100%; animation:shimmer 1.3s infinite; border-radius:var(--radius-lg); } @keyframes shimmer { to { background-position:-200% 0; } }.spinner { width:40px;height:40px;border:3px solid var(--clr-bg3);border-top-color:var(--clr-gold);border-radius:50%;animation:spin .8s linear infinite; } @keyframes spin { to { transform:rotate(360deg); } }.spinner-wrap { display:flex;justify-content:center;padding:var(--space-3xl); }.empty-state { text-align:center;padding:var(--space-3xl) var(--space-xl);color:var(--clr-text-muted); }.empty-state h3 { color:var(--clr-text); }
 .input,input[type="text"],input[type="number"],input[type="password"],input[type="email"],input[type="tel"],input[type="search"],select,textarea { width:100%; padding:.72rem .9rem; background:#fff; border:1px solid var(--clr-border2); border-radius:var(--radius-sm); color:var(--clr-text); font:inherit; outline:0; } input:focus,select:focus,textarea:focus { border-color:var(--clr-gold); box-shadow:0 0 0 3px var(--clr-gold-dim); }
 @media (max-width:768px) {
-  :root { --navbar-h:66px; --space-3xl:3.5rem; }
-  .container { padding-inline:1rem; }
-  .section { padding-block:3.5rem; }
-  .section-sm { padding-block:2.5rem; }
-  .section-header { margin-bottom:1.5rem; }
-  .section-title { font-size:1.7rem; }
-  .section-subtitle { font-size:.93rem; }
-  .btn { min-height:46px; }
-  .grid-3,.grid-2 { grid-template-columns:1fr; gap:1rem; }
+  :root {
+    --navbar-h: 66px;
+    --space-3xl: 2.75rem;
+    --space-2xl: 2rem;
+    --space-xl: 1.5rem;
+  }
+  .container {
+    padding-inline: 1rem;
+  }
+  .section { padding-block: 2.75rem; }
+  .section-sm { padding-block: 2rem; }
+  .section-header { margin-bottom: 1.25rem; }
+  .section-title { font-size: clamp(1.45rem, 5vw, 1.85rem); }
+  .section-subtitle { font-size: 0.9rem; }
+  .btn {
+    min-height: 44px;
+    touch-action: manipulation;
+  }
+  .grid-3, .grid-2 { grid-template-columns: 1fr; gap: 1rem; }
+
+  /* Prevent automatic iOS Safari zoom when focusing inputs */
+  input, select, textarea, .input {
+    font-size: 16px !important;
+  }
 
   /* Disable accidental text selection & callouts on mobile to prevent misclicks */
   *, *::before, *::after {
@@ -84,3 +99,21 @@ a { color: inherit; text-decoration: none !important; } img { max-width: 100%; d
     user-select: text !important;
   }
 }
+
+@media (max-width: 480px) {
+  .container {
+    padding-inline: 0.85rem;
+  }
+  .section { padding-block: 2.25rem; }
+  .section-sm { padding-block: 1.65rem; }
+  .section-title { font-size: 1.4rem; }
+  .section-subtitle { font-size: 0.86rem; }
+}
+
+@media (max-width: 360px) {
+  .container {
+    padding-inline: 0.65rem;
+  }
+  .section-title { font-size: 1.28rem; }
+}
+

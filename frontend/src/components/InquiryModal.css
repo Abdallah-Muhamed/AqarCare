@@ -93,3 +93,29 @@
   font-size: 0.92rem;
   line-height: 1.6;
 }
+
+@media (max-width: 600px) {
+  .inquiry-modal-overlay {
+    padding: 0.75rem;
+    align-items: center;
+  }
+  .inquiry-modal {
+    padding: 1.25rem 1rem;
+    border-radius: var(--radius-md);
+    max-height: calc(100dvh - 2rem);
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .inquiry-modal__header h3 {
+    font-size: 1.15rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .inquiry-modal-overlay {
+    padding: 0.5rem;
+  }
+  .inquiry-modal {
+    padding: 1rem 0.75rem;
+  }
+}

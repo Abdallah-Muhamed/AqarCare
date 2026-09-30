@@ -222,3 +222,49 @@
     padding: 1.75rem 1.5rem;
   }
 }
+
+@media (max-width: 600px) {
+  .owner-agent-section {
+    padding: 2.5rem 0;
+  }
+  .owner-card,
+  .agent-card {
+    padding: 1.35rem 1.15rem;
+    border-radius: 16px;
+  }
+  .hero__quick-filters {
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero__quick-tag {
+    padding: 4px 10px;
+    font-size: 0.74rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .owner-card,
+  .agent-card {
+    padding: 1.15rem 0.95rem;
+  }
+  .cta-banner {
+    padding: 2.25rem 1rem;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 360px) {
+  .hero__title {
+    font-size: 1.5rem;
+  }
+  .features-strip__grid {
+    grid-template-columns: 1fr;
+  }
+  .feature-item {
+    border-inline-start: 0;
+    border-top: 1px solid var(--clr-border);
+  }
+  .feature-item:first-child {
+    border-top: 0;
+  }
+}
