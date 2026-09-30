@@ -656,38 +656,42 @@ export default function MyPropertiesPage() {
 
   return (
     <div className="admin-panel my-props-page">
-      {/* ── Header Matching Admin Panel ── */}
-      <header className="admin-header">
-        <div className="admin-header__brand">
-          <span className="admin-header__logo">🏠</span>
-          <div>
-            <h1>لوحة عقاراتي المعروضة</h1>
-            <span className="admin-header__sub">بوابة إضافة وإدارة العقارات — {user?.fullName || user?.username}</span>
+      {/* ── Page In-Flow Hero (Below Global Navbar) ── */}
+      <div className="my-props-hero">
+        <div className="admin-body" style={{ paddingBottom: '0.25rem', paddingTop: '0.75rem' }}>
+          <div className="my-props-header">
+            <div>
+              <span className="badge badge-gold" style={{ marginBottom: '0.4rem' }}>بوابة الملاك والعملاء</span>
+              <h1 className="my-props-title">عقاراتي المعروضة</h1>
+              <p className="my-props-sub">
+                أهلاً بك، {user?.fullName || user?.username}. يمكنك إضافة عقاراتك وتعديلها ومتابعة حالة اعتمادها من إدارة عقار كير.
+              </p>
+            </div>
+
+            <div className="my-props-header-actions">
+              <button className="admin-add-btn" onClick={openAddForm}>
+                <span>＋</span> إضافة عقار جديد
+              </button>
+            </div>
           </div>
         </div>
+      </div>
 
-        <div className="admin-header__actions">
-          <button className="admin-add-btn" onClick={openAddForm}>
-            <span>＋</span> إضافة عقار جديد
-          </button>
-        </div>
-      </header>
-
-      <div className="admin-body">
+      <div className="admin-body" style={{ paddingTop: '1rem' }}>
         {/* Notice Banner */}
         <div style={{
           background: 'linear-gradient(135deg, rgba(30,58,138,0.06), rgba(200,146,42,0.08))',
           border: '1px solid rgba(200,146,42,0.3)',
           borderRadius: '12px',
-          padding: '12px 18px',
-          margin: '1rem var(--space-xl)',
+          padding: '14px 16px',
+          margin: '0 0 1.5rem 0',
           display: 'flex',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           gap: '12px',
           fontSize: '0.88rem',
           lineHeight: '1.5'
         }}>
-          <span style={{ fontSize: '1.4rem' }}>🛡️</span>
+          <span style={{ fontSize: '1.4rem', flexShrink: 0, marginTop: '2px' }}>🛡️</span>
           <div>
             <strong style={{ color: '#1e3a8a' }}>ملاحظة هامة للملاك والعملاء:</strong>{' '}
             <span>

@@ -935,6 +935,10 @@
   .form-section { padding: var(--space-md); }
 }
 
+@media (max-width: 360px) {
+  .admin-stats { grid-template-columns: 1fr; }
+}
+
 /* Light, focused workspace treatment for the management area */
 .admin-login { background: linear-gradient(135deg, #e5eee7, #f6eee2); }
 .login-card { background: #fffdf9; border: 1px solid #ddd3c3; box-shadow: 0 24px 55px rgba(42,54,44,.14); }
@@ -1724,6 +1728,12 @@
 
   .floor-card__body {
     grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .floor-card__body {
+    grid-template-columns: 1fr;
   }
 }
 

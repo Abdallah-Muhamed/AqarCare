@@ -122,7 +122,17 @@ export default function Navbar() {
           </button>
 
           {hasToken && user ? (
-            <div className="navbar__user-pill" title={`${user.fullName} (${roleLabel})`}>
+            <div
+              className="navbar__user-pill"
+              title={`${user.fullName} (${roleLabel})`}
+              onClick={() => {
+                if (window.innerWidth <= 860) {
+                  setOpen(o => !o)
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
               <div className="navbar__user-avatar">{userInitial}</div>
               <div className="navbar__user-details">
                 <span className="navbar__user-name">{user.fullName || user.username}</span>
@@ -131,7 +141,10 @@ export default function Navbar() {
               <button
                 type="button"
                 className="navbar__logout-btn"
-                onClick={handleLogout}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleLogout()
+                }}
                 title="تسجيل الخروج"
                 aria-label="تسجيل الخروج"
               >
