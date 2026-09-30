@@ -77,8 +77,31 @@ public class InquiriesController : ControllerBase
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<ActionResult<IReadOnlyList<PropertyInquiryDto>>> GetMyInquiries(CancellationToken ct)
     {
-        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        if (!int.TryParse(idClaim, out var customerId) || customerId <= 0)
+        var customerId = 0;
+        foreach (var claim in User.FindAll(ClaimTypes.NameIdentifier))
+        {
+            if (int.TryParse(claim.Value, out var parsed) && parsed > 0)
+            {
+                customerId = parsed;
+                break;
+            }
+        }
+
+        if (customerId <= 0)
+        {
+            var customClaims = new[] { "userId", "nameid", "id" };
+            foreach (var name in customClaims)
+            {
+                var val = User.FindFirstValue(name);
+                if (int.TryParse(val, out var parsed) && parsed > 0)
+                {
+                    customerId = parsed;
+                    break;
+                }
+            }
+        }
+
+        if (customerId <= 0)
         {
             return Unauthorized(new ApiErrorResponse(
                 StatusCode: StatusCodes.Status401Unauthorized,

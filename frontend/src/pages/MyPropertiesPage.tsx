@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import './AdminPanelPage.css';
 import './MyPropertiesPage.css';
-import { api, getStoredUser, clearAuth, getAuthToken } from '../api';
+import { api, getStoredUser, getAuthToken } from '../api';
 import type { PropertyFloor, PropertyListItem } from '../types';
 import { formatFloorsText, parseMultiFloorNumbers } from '../utils/formatters';
 import { getPropertyPlaceholder } from '../constants/placeholders';
@@ -98,12 +98,12 @@ export default function MyPropertiesPage() {
       const data = await api.getMyProperties();
       setProperties(data || []);
     } catch (err: any) {
-      if (err.statusCode === 401) {
-        clearAuth();
-        navigate(`/login?from=${encodeURIComponent(window.location.pathname + window.location.search)}`);
-        return;
+      console.warn('Could not load customer properties:', err);
+      setProperties([]);
+      // Do not clearAuth or kick user out — keep them logged in so they can add properties
+      if (err.statusCode !== 401) {
+        setError(err.message || 'تعذر تحميل عقاراتك. يرجى إعادة المحاولة.');
       }
-      setError(err.message || 'تعذر تحميل عقاراتك. يرجى إعادة المحاولة.');
     } finally {
       setLoading(false);
     }

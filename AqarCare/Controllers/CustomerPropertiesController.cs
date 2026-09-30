@@ -32,8 +32,23 @@ public class CustomerPropertiesController : ControllerBase
 
     private int GetCurrentUserId()
     {
-        var idClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-        return int.TryParse(idClaim, out var userId) ? userId : 0;
+        // 1. Check all ClaimTypes.NameIdentifier claims for integer ID
+        foreach (var claim in User.FindAll(ClaimTypes.NameIdentifier))
+        {
+            if (int.TryParse(claim.Value, out var parsed) && parsed > 0)
+                return parsed;
+        }
+
+        // 2. Check custom claims "userId", "nameid", "id"
+        var customClaims = new[] { "userId", "nameid", "id" };
+        foreach (var name in customClaims)
+        {
+            var val = User.FindFirstValue(name);
+            if (int.TryParse(val, out var parsed) && parsed > 0)
+                return parsed;
+        }
+
+        return 0;
     }
 
     /// <summary>
