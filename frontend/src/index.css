@@ -71,4 +71,16 @@ a { color: inherit; text-decoration: none !important; } img { max-width: 100%; d
   .section-subtitle { font-size:.93rem; }
   .btn { min-height:46px; }
   .grid-3,.grid-2 { grid-template-columns:1fr; gap:1rem; }
+
+  /* Disable accidental text selection & callouts on mobile to prevent misclicks */
+  *, *::before, *::after {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea, select, [contenteditable="true"] {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text !important;
+    user-select: text !important;
+  }
 }
