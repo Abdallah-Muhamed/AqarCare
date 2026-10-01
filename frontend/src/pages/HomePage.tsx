@@ -15,6 +15,7 @@ export default function HomePage() {
   const [featuredProps, setFeaturedProps] = useState<PropertyListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [listModalOpen, setListModalOpen] = useState(false)
+  const currentUser = getStoredUser()
 
   const handleListProperty = () => {
     const user = getStoredUser()
@@ -212,10 +213,10 @@ export default function HomePage() {
       {/* ── Owner & Customer Marketing Section ──────────────────────── */}
       <section className="section owner-agent-section">
         <div className="container">
-          <div className="section-header" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
+          <div className="section-header section-header--center" style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
             <span className="gold-line" style={{ margin: '0 auto 10px' }} />
             <h2 className="section-title">اعرض عقارك معنا في <span>عقار كير</span></h2>
-            <p className="section-subtitle">
+            <p className="section-subtitle" style={{ marginInline: 'auto', textAlign: 'center', maxWidth: 720 }}>
               نسوّق عقارك باحترافية واسعة ونجلب لك المشتري الجاد بالمحلة الكبرى — بعمولة 1.5% فقط عند إتمام البيع بنجاح دون أي تكاليف مسبقة.
             </p>
           </div>
@@ -286,13 +287,18 @@ export default function HomePage() {
               </ul>
 
               <div className="agent-card__cta">
-                <Link to="/my-properties" className="btn btn-gold owner-card__btn">
+                <Link
+                  to={currentUser?.role === 'Admin' ? '/admin' : '/my-properties'}
+                  className="btn btn-gold owner-card__btn"
+                >
                   <PlusCircle size={17} />
-                  الدخول إلى لوحة عقاراتي
+                  {currentUser?.role === 'Admin' ? 'الدخول إلى لوحة التحكم' : 'الدخول إلى لوحة عقاراتي'}
                 </Link>
-                <Link to="/login" className="agent-card__login-link">
-                  ليس لديك حساب؟ أنشئ حسابك كعميل الآن مجاناً ←
-                </Link>
+                {!currentUser && (
+                  <Link to="/login" className="agent-card__login-link">
+                    ليس لديك حساب؟ أنشئ حسابك كعميل الآن مجاناً ←
+                  </Link>
+                )}
               </div>
             </div>
           </div>
