@@ -246,7 +246,7 @@ export default function LoginPage() {
               textAlign: 'center',
               lineHeight: '1.5',
             }}>
-              💼 <strong>لملاك العقارات:</strong> نساعدك في تسويق عقارك وعرضه للمشترين بعمولة 1.5% عند إتمام البيع فقط دون أي رسوم مسبقة.
+              💼 <strong>لملاك العقارات:</strong> نساعدك في تسويق عقارك وعرضه للمهتمين بالشراء وتنظيم المعاينات بإشراف كامل دون أي رسوم مسبقة.
             </div>
 
             <div className="form-group">

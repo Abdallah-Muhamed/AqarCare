@@ -60,7 +60,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
       price.trim() ? `💰 *السعر المطلوب:* ${price.trim()} جنيه` : null,
       details.trim() ? `📝 *تفاصيل ومواصفات:* ${details.trim()}` : null,
       `━━━━━━━━━━━━━━━━━━`,
-      `💼 *خطة العمل:* تسويق العقار وجلب المشترين عبر عقار كير (عمولة 1.5% في حال إتمام البيع بنجاح).`,
+      `💼 *خطة العمل:* تسويق العقار وجلب المشترين عبر فريق عقار كير.`,
       `أرجو التواصل معي للتقييم والمعاينة. شكرًا لكم.`
     ].filter(Boolean).join('\n')
   }
@@ -92,7 +92,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
             </span>
             <h2 className="list-modal__title">اعرض عقارك معنا كمالك</h2>
             <p className="list-modal__subtitle">
-              نساعدك في تسويق عقارك وعرضه للمهتمين بالشراء في المحلة الكبرى — بعمولة 1.5% عند إتمام البيع فقط دون أي رسوم مسبقة.
+              نساعدك في تسويق عقارك وعرضه للمهتمين بالشراء في المحلة الكبرى وتنظيم المعاينات بإشراف كامل.
             </p>
           </div>
           <button type="button" className="list-modal__close" onClick={onClose} aria-label="إغلاق">
@@ -250,7 +250,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
               </div>
             </div>
 
-            {/* Marketing & 1.5% Commission Assurance Box */}
+            {/* Marketing & Service Assurance Box */}
             <div style={{
               background: 'linear-gradient(135deg, rgba(254,249,240,0.95) 0%, rgba(247,240,226,0.95) 100%)',
               border: '1px solid rgba(200, 146, 42, 0.35)',
@@ -262,11 +262,11 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
             }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#88551f', fontWeight: 800, fontSize: '0.9rem' }}>
                 <span style={{ fontSize: '1.15rem' }}>🤝</span>
-                <span>خطة التسويق ونسبة العمولة:</span>
+                <span>خطة التسويق والمعاينة:</span>
               </div>
               <div style={{ fontSize: '0.84rem', color: '#453523', lineHeight: '1.65' }}>
                 • <strong>تسويق وتنظيم المعاينات:</strong> نقوم بمعاينة وتصوير العقار وتنظيم مواعيد المعاينة مع الراغبين في الشراء بالتنسيق معك.<br />
-                • <strong>عمولة 1.5% عند إتمام البيع فقط:</strong> لا توجد أي مصاريف أو رسوم مسبقة؛ تُستحق العمولة عند إتمام صفقة البيع واستلام مستحقاتك.
+                • <strong>بدون أي مصاريف مسبقة:</strong> لا توجد أي رسوم أو تكاليف مسبقة لطلب العرض والمعاينة.
               </div>
             </div>
 

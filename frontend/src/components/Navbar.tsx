@@ -115,7 +115,7 @@ export default function Navbar() {
                 navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
               }
             }}
-            title="اعرض عقارك كمالك — نساعدك في تسويق وحدتك بعمولة 1.5% عند إتمام البيع فقط"
+            title="اعرض عقارك معنا كمالك — تسويق منظم وتنظيم للمعاينة"
           >
             <PlusCircle size={15} />
             <span>اعرض عقارك</span>

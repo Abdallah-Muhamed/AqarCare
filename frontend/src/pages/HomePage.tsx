@@ -130,8 +130,8 @@ export default function HomePage() {
           {/* Stats */}
           <div className="hero__stats">
             <div className="hero__stat">
-              <span className="hero__stat-val">المحلة</span>
-              <span className="hero__stat-lbl">نطاق العمل</span>
+              <span className="hero__stat-val">أفضل</span>
+              <span className="hero__stat-lbl">المواقع</span>
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">
@@ -140,8 +140,8 @@ export default function HomePage() {
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">
-              <span className="hero__stat-val">1.5%</span>
-              <span className="hero__stat-lbl">عمولة بيع</span>
+              <span className="hero__stat-val">100%</span>
+              <span className="hero__stat-lbl">موثوق</span>
             </div>
           </div>
         </div>
@@ -217,7 +217,7 @@ export default function HomePage() {
             <span className="gold-line" style={{ margin: '0 auto 10px' }} />
             <h2 className="section-title">اعرض عقارك معنا في <span>عقار كير</span></h2>
             <p className="section-subtitle" style={{ marginInline: 'auto', textAlign: 'center', maxWidth: 720 }}>
-              نساعدك في تسويق عقارك وعرضه للمهتمين بالشراء في المحلة الكبرى — بعمولة 1.5% عند إتمام البيع فقط دون أي رسوم مسبقة.
+              منصة متخصصة تدعم ملاك العقارات والعملاء بالمحلة الكبرى لتحقيق أسرع بيع وأفضل عائد بإشراف رسمي كامل
             </p>
           </div>
 
@@ -240,7 +240,7 @@ export default function HomePage() {
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>عمولة 1.5% عند إتمام البيع فقط:</strong> لا توجد أي رسوم أو مصاريف مسبقة؛ تُستحق العمولة فقط عند إتمام صفقة البيع واستلام مستحقاتك.</span>
+                  <span><strong>تقييم سعري واقعي:</strong> نساعدك في تحديد السعر العادل بناءً على حركة السوق الفعلية بالمحلة.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
@@ -311,7 +311,7 @@ export default function HomePage() {
           <div className="cta-banner">
             <div className="cta-banner__glow" />
             <h2 className="cta-banner__title">مستعد تبدأ رحلتك العقارية؟</h2>
-            <p className="cta-banner__sub">نساعدك في تسويق عقارك والوصول للمشتري المناسب بعمولة 1.5% عند إتمام البيع — تواصل معنا اليوم</p>
+            <p className="cta-banner__sub">استكشف الوحدات المتاحة على قائمتنا أو اعرض عقارك معنا اليوم</p>
             <div className="cta-banner__btns">
               <Link to="/properties" className="btn btn-primary">ابحث عن عقار</Link>
               <button
