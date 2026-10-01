@@ -1001,16 +1001,24 @@ export default function AdminPanelPage() {
         <div style={{ display: 'flex', gap: '8px', marginInline: 'auto' }}>
           <button
             type="button"
-            className={`filter-tab ${adminSection === 'properties' ? 'active' : ''}`}
-            onClick={() => { setAdminSection('properties'); setShowForm(false); }}
+            className={`filter-tab ${adminSection === 'properties' && !showForm ? 'active' : ''}`}
+            onClick={() => { setAdminSection('properties'); setShowForm(false); setEditingProperty(null); }}
             style={{ fontSize: '0.9rem', padding: '0.5rem 1.1rem', cursor: 'pointer' }}
           >
             🏢 العقارات
           </button>
           <button
             type="button"
+            className={`filter-tab ${adminSection === 'properties' && showForm ? 'active' : ''}`}
+            onClick={() => { setAdminSection('properties'); openAddForm(); }}
+            style={{ fontSize: '0.9rem', padding: '0.5rem 1.1rem', cursor: 'pointer' }}
+          >
+            {editingProperty ? '✏️ تعديل عقار' : '➕ إضافة عقار'}
+          </button>
+          <button
+            type="button"
             className={`filter-tab ${adminSection === 'inquiries' ? 'active' : ''}`}
-            onClick={() => { setAdminSection('inquiries'); setShowForm(false); }}
+            onClick={() => { setAdminSection('inquiries'); setShowForm(false); setEditingProperty(null); }}
             style={{ fontSize: '0.9rem', padding: '0.5rem 1.1rem', cursor: 'pointer' }}
           >
             📬 استفسارات العملاء
@@ -1019,9 +1027,19 @@ export default function AdminPanelPage() {
 
         <div className="admin-header__actions">
           {adminSection === 'properties' && (
-            <button className="admin-add-btn" onClick={openAddForm}>
-              <span>＋</span> إضافة عقار
-            </button>
+            showForm ? (
+              <button
+                className="admin-add-btn"
+                onClick={() => { setShowForm(false); setEditingProperty(null); }}
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--clr-text)', borderColor: 'rgba(255,255,255,0.2)' }}
+              >
+                <span>✕</span> إلغاء الإضافة
+              </button>
+            ) : (
+              <button className="admin-add-btn" onClick={openAddForm}>
+                <span>＋</span> إضافة عقار
+              </button>
+            )
           )}
           <button onClick={handleLogout} className="logout-btn">خروج ↩</button>
         </div>

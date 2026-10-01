@@ -544,6 +544,12 @@ export default function MyPropertiesPage() {
     }
   };
 
+  const closeForm = () => {
+    setShowForm(false);
+    setEditingProperty(null);
+    navigate('/my-properties', { replace: true });
+  };
+
   const openAddForm = () => {
     setEditingProperty(null);
     resetForm();
@@ -792,11 +798,19 @@ export default function MyPropertiesPage() {
         <div className="portal-nav-tabs" style={{ display: 'flex', gap: '8px', marginInline: 'auto' }}>
           <button
             type="button"
-            className="filter-tab active"
-            onClick={() => { setShowForm(false); }}
+            className={`filter-tab ${!showForm ? 'active' : ''}`}
+            onClick={closeForm}
             style={{ fontSize: '0.88rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
           >
             🏢 عقاراتي
+          </button>
+          <button
+            type="button"
+            className={`filter-tab ${showForm ? 'active' : ''}`}
+            onClick={openAddForm}
+            style={{ fontSize: '0.88rem', padding: '0.5rem 1rem', cursor: 'pointer' }}
+          >
+            {editingProperty ? '✏️ تعديل عقار' : '➕ إضافة عقار'}
           </button>
           <button
             type="button"
@@ -817,9 +831,19 @@ export default function MyPropertiesPage() {
         </div>
 
         <div className="admin-header__actions">
-          <button className="admin-add-btn" onClick={openAddForm}>
-            <span>＋</span> إضافة عقار
-          </button>
+          {showForm ? (
+            <button
+              className="admin-add-btn"
+              onClick={closeForm}
+              style={{ background: 'rgba(255,255,255,0.08)', color: 'var(--clr-text)', borderColor: 'rgba(255,255,255,0.2)' }}
+            >
+              <span>✕</span> إلغاء الإضافة
+            </button>
+          ) : (
+            <button className="admin-add-btn" onClick={openAddForm}>
+              <span>＋</span> إضافة عقار
+            </button>
+          )}
           <button
             onClick={() => navigate('/')}
             className="logout-btn"
@@ -894,7 +918,7 @@ export default function MyPropertiesPage() {
                 <button
                   type="button"
                   className="form-close-btn"
-                  onClick={() => { setShowForm(false); setEditingProperty(null); }}
+                  onClick={closeForm}
                 >✕ إغلاق</button>
               </div>
 
@@ -2030,7 +2054,7 @@ export default function MyPropertiesPage() {
                   <button
                     type="button"
                     className="btn-cancel"
-                    onClick={() => { setShowForm(false); setEditingProperty(null); }}
+                    onClick={closeForm}
                   >
                     إلغاء
                   </button>
