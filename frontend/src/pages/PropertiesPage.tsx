@@ -947,12 +947,6 @@ export default function PropertiesPage() {
               <PlusCircle size={15} />
               اعرض عقارك كمالك (إضافة وحدة)
             </button>
-            <Link
-              to="/my-properties"
-              className="btn btn-gold props-list-banner__btn"
-            >
-              لوحة عقاراتي (إدارة وحداتك)
-            </Link>
           </div>
         </div>
       </div>
