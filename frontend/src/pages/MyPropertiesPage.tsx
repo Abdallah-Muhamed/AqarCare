@@ -871,20 +871,40 @@ export default function MyPropertiesPage() {
         {/* ── Notice Banner (Executive Dark Slate & Gold) ── */}
         {!showForm && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(30,41,59,0.85) 0%, rgba(15,23,42,0.92) 100%)',
-            border: '1px solid rgba(201,168,76,0.35)',
-            borderRadius: 'var(--radius-lg)',
-            padding: '14px 18px',
+            background: 'linear-gradient(135deg, #fffdf8 0%, #fef8ee 100%)',
+            border: '1px solid rgba(183, 121, 61, 0.35)',
+            borderRight: '5px solid #b7793d',
+            borderRadius: '14px',
+            padding: '16px 20px',
             marginBottom: 'var(--space-lg)',
             display: 'flex',
             alignItems: 'center',
             gap: '14px',
-            fontSize: '0.88rem',
-            color: 'var(--clr-text-muted)'
+            fontSize: '0.92rem',
+            color: '#263b31',
+            boxShadow: '0 4px 18px rgba(183, 121, 61, 0.08)'
           }}>
-            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🤝</span>
-            <div style={{ lineHeight: '1.65' }}>
-              <strong style={{ color: 'var(--clr-gold)' }}>تسويق العقار ونسبة العمولة (1.5%):</strong> نساعدك في تسويق عقارك وتنظيم مواعيد المعاينة مع المهتمين بالشراء والتنسيق معك أولاً بأول. لا توجد أي مصاريف مسبقة؛ العمولة هي <span style={{ color: '#fff', fontWeight: 800 }}>1.5% عند إتمام البيع فقط</span>. وتتم كافة الاتصالات عبر خدمة عملاء عقار كير (01055937687) لتنظيم المواعيد وتجنب الإزعاج.
+            <span style={{ fontSize: '1.6rem', flexShrink: 0 }}>🤝</span>
+            <div style={{ lineHeight: '1.7', color: '#263b31' }}>
+              <strong style={{ color: '#92400e', fontWeight: 800, fontSize: '0.96rem', marginLeft: '6px' }}>
+                تسويق العقار ونسبة العمولة (1.5%):
+              </strong>
+              نساعدك في تسويق عقارك وتنظيم مواعيد المعاينة مع المهتمين بالشراء والتنسيق معك أولاً بأول. لا توجد أي مصاريف مسبقة؛ العمولة هي{' '}
+              <span style={{
+                color: '#b45309',
+                background: '#fef3c7',
+                padding: '2px 8px',
+                borderRadius: '6px',
+                fontWeight: 800,
+                border: '1px solid rgba(245, 158, 11, 0.35)'
+              }}>
+                1.5% عند إتمام البيع فقط
+              </span>
+              . وتتم كافة الاتصالات عبر خدمة عملاء عقار كير (
+              <a href="tel:01055937687" style={{ color: '#1e40af', fontWeight: 800, textDecoration: 'underline' }}>
+                01055937687
+              </a>
+              ) لتنظيم المواعيد وتجنب الإزعاج.
             </div>
           </div>
         )}
