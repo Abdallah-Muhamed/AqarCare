@@ -34,6 +34,7 @@ export default function MyPropertiesPage() {
   const [successMsg, setSuccessMsg] = useState('');
   const [activeTab, setActiveTab] = useState<'all' | 'available' | 'sold' | 'pending'>('all');
   const [floorViewMode, setFloorViewMode] = useState<'cards' | 'table'>('cards');
+  const [showCommissionModal, setShowCommissionModal] = useState(false);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -389,8 +390,18 @@ export default function MyPropertiesPage() {
 
   // ── form handlers ─────────────────────────────────────────────────────────────
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!editingProperty) {
+      // Trigger commission & marketing confirmation modal on Add
+      setShowCommissionModal(true);
+    } else {
+      executeSave();
+    }
+  };
+
+  const executeSave = async () => {
+    setShowCommissionModal(false);
     setLoading(true);
     setError('');
     try {
@@ -2045,11 +2056,30 @@ export default function MyPropertiesPage() {
 
                 {error && <p className="error-msg">⚠ {error}</p>}
 
+                {/* Commission & Marketing Agreement Notice */}
+                {!editingProperty && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(254, 243, 199, 0.25) 0%, rgba(253, 230, 138, 0.15) 100%)',
+                    border: '1px solid rgba(245, 158, 11, 0.4)',
+                    borderRadius: 'var(--radius-md)',
+                    padding: '12px 16px',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                  }}>
+                    <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>💼</span>
+                    <div style={{ fontSize: '0.86rem', color: 'var(--clr-text)', lineHeight: '1.6' }}>
+                      <strong style={{ color: 'var(--clr-gold)' }}>اتفاقية العمولة والتسويق:</strong> بالضغط على "اضافة"، أنت توافق على أن تتولى شركة عقار كير تسويق عقارك وجلب المشترين، بعمولة <strong>1.5% فقط</strong> تُستحق عند إتمام البيع بنجاح دون أي مصاريف مسبقة.
+                    </div>
+                  </div>
+                )}
+
                 <div className="form-actions">
                   <button type="submit" disabled={loading} className="btn-save">
                     {loading ? (
                       <><span className="btn-spinner" /> جاري الحفظ...</>
-                    ) : editingProperty ? '💾 تحديث العقار' : 'اضافة'}
+                    ) : editingProperty ? '💾 تحديث العقار' : 'اضافة (تأكيد العمولة 1.5%)'}
                   </button>
                   <button
                     type="button"
@@ -2282,6 +2312,102 @@ export default function MyPropertiesPage() {
           )}
         </div>
       </div>
+
+      {/* ── Commission & Marketing Agreement Confirmation Modal ── */}
+      {showCommissionModal && (
+        <div className="commission-modal-overlay" onClick={() => setShowCommissionModal(false)}>
+          <div className="commission-modal-dialog" onClick={e => e.stopPropagation()}>
+            <div className="commission-modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '1.6rem' }}>🤝</span>
+                <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: 'var(--clr-text)' }}>
+                  تأكيد إضافة العقار والعمولة (1.5%)
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowCommissionModal(false)}
+                className="form-close-btn"
+                style={{ width: 32, height: 32, padding: 0 }}
+                aria-label="إغلاق"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', padding: '12px 0' }}>
+              <p style={{ margin: 0, fontSize: '0.94rem', color: 'var(--clr-text)', lineHeight: '1.7' }}>
+                أهلاً بك يا <strong>{user?.fullName || 'عزيزي المالك'}</strong>، قبل إرسال عقارك <strong>"{formData.title || 'العقار'}"</strong> للاعتماد، يرجى تأكيد الشروط التالية:
+              </p>
+
+              <div style={{
+                background: 'rgba(30, 41, 59, 0.04)',
+                border: '1px solid var(--clr-border, #e2dacd)',
+                borderRadius: '12px',
+                padding: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+                fontSize: '0.88rem',
+                lineHeight: '1.6',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: 'var(--clr-success, #10b981)', fontWeight: 800 }}>✓</span>
+                  <div>
+                    <strong>تسويق كامل وجلب مشترين:</strong> نتولى تصوير وعرض عقارك وإدارة المعاينات والتفاوض مع المشترين الجادين دون أي إزعاج لوقتك.
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: 'var(--clr-gold)', fontWeight: 800 }}>✓</span>
+                  <div>
+                    <strong>عمولة 1.5% فقط عند إتمام البيع:</strong> لا توجد أي رسوم أو مصاريف مسبقة نهائياً؛ تبلغ عمولة عقار كير <strong>1.5% فقط</strong> تُستحق فقط عند إتمام البيع بنجاح واستلام مستحقاتك.
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
+                  <span style={{ color: '#3b82f6', fontWeight: 800 }}>✓</span>
+                  <div>
+                    <strong>حفظ الخصوصية:</strong> تواصل المشترين يتم مركزياً عبر خدمة عملاء عقار كير الرسمية (01055937687) لضمان أمان وجدية المعاملة.
+                  </div>
+                </div>
+              </div>
+
+              <div style={{
+                background: '#fef3c7',
+                color: '#92400e',
+                border: '1px solid #fde68a',
+                padding: '10px 14px',
+                borderRadius: '8px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                textAlign: 'center',
+              }}>
+                📢 العمولة: 1.5% من إجمالي سعر البيع الفعلي عند إتمام الصفقة فقط.
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', paddingTop: '10px', borderTop: '1px solid var(--clr-border, #e5dfd2)' }}>
+              <button
+                type="button"
+                className="btn-cancel"
+                onClick={() => setShowCommissionModal(false)}
+              >
+                رجوع للنموذج
+              </button>
+              <button
+                type="button"
+                className="btn-save"
+                onClick={executeSave}
+                disabled={loading}
+                style={{ minWidth: '170px' }}
+              >
+                {loading ? 'جاري الإرسال...' : 'موافق، إرسال العقار'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {!showForm && (
         <button className="admin-fab" onClick={openAddForm} aria-label="إضافة عقار">
