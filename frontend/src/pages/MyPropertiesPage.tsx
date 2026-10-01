@@ -884,7 +884,7 @@ export default function MyPropertiesPage() {
           }}>
             <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🤝</span>
             <div style={{ lineHeight: '1.65' }}>
-              <strong style={{ color: 'var(--clr-gold)' }}>تسويق عقارك وعمولة البيع (1.5%):</strong> نتولى في عقار كير تسويق عقارك باحترافية وجلب المشترين الجادين وتنسيق المعاينات. لا توجد أي مصاريف مقدمة؛ العمولة هي <span style={{ color: '#fff', fontWeight: 800 }}>1.5% فقط عند إتمام البيع بنجاح</span>. وتتم كافة اتصالات المشترين مركزياً عبر خدمة عملاء عقار كير (01055937687) لضمان خصوصيتك.
+              <strong style={{ color: 'var(--clr-gold)' }}>تسويق العقار ونسبة العمولة (1.5%):</strong> نساعدك في تسويق عقارك وتنظيم مواعيد المعاينة مع المهتمين بالشراء والتنسيق معك أولاً بأول. لا توجد أي مصاريف مسبقة؛ العمولة هي <span style={{ color: '#fff', fontWeight: 800 }}>1.5% عند إتمام البيع فقط</span>. وتتم كافة الاتصالات عبر خدمة عملاء عقار كير (01055937687) لتنظيم المواعيد وتجنب الإزعاج.
             </div>
           </div>
         )}
@@ -2070,7 +2070,7 @@ export default function MyPropertiesPage() {
                   }}>
                     <span style={{ fontSize: '1.4rem', flexShrink: 0 }}>💼</span>
                     <div style={{ fontSize: '0.86rem', color: 'var(--clr-text)', lineHeight: '1.6' }}>
-                      <strong style={{ color: 'var(--clr-gold)' }}>اتفاقية العمولة والتسويق:</strong> بالضغط على "اضافة"، أنت توافق على أن تتولى شركة عقار كير تسويق عقارك وجلب المشترين، بعمولة <strong>1.5% فقط</strong> تُستحق عند إتمام البيع بنجاح دون أي مصاريف مسبقة.
+                      <strong style={{ color: 'var(--clr-gold)' }}>اتفاقية العمولة والتسويق:</strong> بالضغط على "اضافة"، أنت توافق على أن تتولى عقار كير تسويق عقارك وعرضه للمشترين، بعمولة <strong>1.5%</strong> تُستحق عند إتمام البيع فقط دون أي مصاريف مسبقة.
                     </div>
                   </div>
                 )}
@@ -2354,21 +2354,21 @@ export default function MyPropertiesPage() {
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <span style={{ color: 'var(--clr-success, #10b981)', fontWeight: 800 }}>✓</span>
                   <div>
-                    <strong>تسويق كامل وجلب مشترين:</strong> نتولى تصوير وعرض عقارك وإدارة المعاينات والتفاوض مع المشترين الجادين دون أي إزعاج لوقتك.
+                    <strong>تسويق وتنظيم المعاينات:</strong> نتولى معاينة وتصوير العقار وعرضه على المنصة وإدارة المعاينات مع المهتمين بالتنسيق معك وتوفير وقتك.
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <span style={{ color: 'var(--clr-gold)', fontWeight: 800 }}>✓</span>
                   <div>
-                    <strong>عمولة 1.5% فقط عند إتمام البيع:</strong> لا توجد أي رسوم أو مصاريف مسبقة نهائياً؛ تبلغ عمولة عقار كير <strong>1.5% فقط</strong> تُستحق فقط عند إتمام البيع بنجاح واستلام مستحقاتك.
+                    <strong>عمولة 1.5% عند إتمام البيع فقط:</strong> لا توجد أي رسوم أو مصاريف مسبقة نهائياً؛ تبلغ عمولة عقار كير <strong>1.5%</strong> تُستحق فقط عند إتمام البيع واستلام مستحقاتك.
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px' }}>
                   <span style={{ color: '#3b82f6', fontWeight: 800 }}>✓</span>
                   <div>
-                    <strong>حفظ الخصوصية:</strong> تواصل المشترين يتم مركزياً عبر خدمة عملاء عقار كير الرسمية (01055937687) لضمان أمان وجدية المعاملة.
+                    <strong>حفظ الخصوصية:</strong> تواصل المشترين يتم عبر خدمة عملاء عقار كير (01055937687) لتنظيم المواعيد وتجنب الاتصالات غير الجادة.
                   </div>
                 </div>
               </div>

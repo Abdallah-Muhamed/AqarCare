@@ -14,7 +14,7 @@ export default function Footer() {
             <span className="footer__brand-name">Aqar Care</span>
           </div>
           <p className="footer__tagline">
-            منصة عقارية متكاملة لتسويق الوحدات السكنية وخدمات التشطيب الفاخرة في مصر.
+            منصة عقارية متخصصة لتسويق وعرض الوحدات السكنية والتجارية بالمحلة الكبرى.
           </p>
         </div>
 
@@ -32,7 +32,7 @@ export default function Footer() {
         <div className="footer__col">
           <h4 className="footer__heading">تواصل معنا</h4>
           <ul className="footer__list footer__list--contact">
-            <li><MapPin size={14} />مصر</li>
+            <li><MapPin size={14} />المحلة الكبرى، مصر</li>
             <li className="footer__contact-row">
               <span className="footer__contact-badge footer__contact-badge--whatsapp">
                 <Phone size={13} />واتساب

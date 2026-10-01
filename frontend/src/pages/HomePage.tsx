@@ -130,8 +130,8 @@ export default function HomePage() {
           {/* Stats */}
           <div className="hero__stats">
             <div className="hero__stat">
-              <span className="hero__stat-val">أفضل</span>
-              <span className="hero__stat-lbl">المواقع</span>
+              <span className="hero__stat-val">المحلة</span>
+              <span className="hero__stat-lbl">نطاق العمل</span>
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">
@@ -140,8 +140,8 @@ export default function HomePage() {
             </div>
             <div className="hero__stat-divider" />
             <div className="hero__stat">
-              <span className="hero__stat-val">100%</span>
-              <span className="hero__stat-lbl">موثوق</span>
+              <span className="hero__stat-val">1.5%</span>
+              <span className="hero__stat-lbl">عمولة بيع</span>
             </div>
           </div>
         </div>
@@ -157,10 +157,10 @@ export default function HomePage() {
       <section className="features-strip">
         <div className="container features-strip__grid">
           {[
-            { icon: <Shield size={22} />, title: 'بيانات موثوقة', desc: 'معلومات دقيقة لكل وحدة' },
-            { icon: <TrendingUp size={22} />, title: 'أسعار تنافسية', desc: 'خيارات تناسب كل ميزانية' },
-            { icon: <Map size={22} />, title: 'خريطة تفاعلية', desc: 'تصفح الوحدات جغرافيًا' },
-            { icon: <Building2 size={22} />, title: 'تنوع العقارات', desc: 'شقق، بيوت، محلات، أراضي' },
+            { icon: <Shield size={22} />, title: 'بيانات مدققة', desc: 'معاينة وتوثيق تفاصيل كل وحدة' },
+            { icon: <TrendingUp size={22} />, title: 'تسعير واقعي', desc: 'أسعار متوافقة مع حركة السوق' },
+            { icon: <Map size={22} />, title: 'خريطة تفاعلية', desc: 'تصفح الوحدات جغرافياً بالمحلة' },
+            { icon: <Building2 size={22} />, title: 'تنوع العقارات', desc: 'شقق، منازل، محلات، أراضي' },
           ].map((f, i) => (
             <div key={i} className="feature-item">
               <div className="feature-item__icon">{f.icon}</div>
@@ -217,7 +217,7 @@ export default function HomePage() {
             <span className="gold-line" style={{ margin: '0 auto 10px' }} />
             <h2 className="section-title">اعرض عقارك معنا في <span>عقار كير</span></h2>
             <p className="section-subtitle" style={{ marginInline: 'auto', textAlign: 'center', maxWidth: 720 }}>
-              نسوّق عقارك باحترافية واسعة ونجلب لك المشتري الجاد بالمحلة الكبرى — بعمولة 1.5% فقط عند إتمام البيع بنجاح دون أي تكاليف مسبقة.
+              نساعدك في تسويق عقارك وعرضه للمهتمين بالشراء في المحلة الكبرى — بعمولة 1.5% عند إتمام البيع فقط دون أي رسوم مسبقة.
             </p>
           </div>
 
@@ -226,25 +226,25 @@ export default function HomePage() {
             <div className="owner-card">
               <div className="owner-card__badge">
                 <UserCheck size={14} />
-                <span>تسويق العقار وجلب المشترين</span>
+                <span>تسويق العقار وتنظيم المعاينات</span>
               </div>
-              <h3 className="owner-card__title">هل تملك عقاراً وترغب في بيعه بأفضل سعر؟</h3>
+              <h3 className="owner-card__title">هل تملك عقاراً وترغب في عرضه للبيع بسعر عادل؟</h3>
               <p className="owner-card__desc">
-                تواصل مباشرة مع فريق شركة عقار كير. نقوم بمعاينة عقارك وتصويره وتسويقه لآلاف المشترين الجادين مع إدارة المفاوضات دون أي إزعاج لوقتك.
+                تواصل مباشرة مع فريق عقار كير. نقوم بمعاينة وتصوير عقارك وعرضه على المنصة، مع تنظيم المعاينات والتواصل مع الراغبين في الشراء وتوفير وقتك.
               </p>
 
               <ul className="owner-card__features">
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>تسويق واسع وجلب مشترين جادين:</strong> نصل بعقارك لآلاف المهتمين بالشراء الفعلي في المحلة والدلتا عبر منصتنا وقنواتنا الرسمية.</span>
+                  <span><strong>عرض منظم وتسويق مستهدف:</strong> نعرض عقارك للمهتمين بالشراء الفعلي في المحلة الكبرى عبر موقعنا وقنوات التواصل.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>عمولة 1.5% فقط عند إتمام البيع:</strong> لا تدفع أي مصاريف أو رسوم مسبقة؛ عمولتنا 1.5% فقط تُستحق عند إتمام البيع واستلام مستحقاتك.</span>
+                  <span><strong>عمولة 1.5% عند إتمام البيع فقط:</strong> لا توجد أي رسوم أو مصاريف مسبقة؛ تُستحق العمولة فقط عند إتمام صفقة البيع واستلام مستحقاتك.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>إشراف رسمي ومعاينات جادة:</strong> نتولى إدارة كافة الاتصالات والتفاوض والمعاينات مع المشترين الفعليين لضمان الجدية والأمان.</span>
+                  <span><strong>تنظيم المعاينات والتواصل:</strong> نتولى الرد على الاستفسارات وتحديد مواعيد المعاينة مع المشترين الجادين بالتنسيق المسبق معك.</span>
                 </li>
               </ul>
 
@@ -255,7 +255,7 @@ export default function HomePage() {
                   onClick={handleListProperty}
                 >
                   <PlusCircle size={17} />
-                  اعرض عقارك كمالك (تسويق فوري)
+                  اعرض عقارك معنا كمالك
                 </button>
               </div>
             </div>
@@ -268,21 +268,21 @@ export default function HomePage() {
               </div>
               <h3 className="agent-card__title">أضف عقارك بنفسك وتابع حالة تسويقه خطوة بخطوة</h3>
               <p className="agent-card__desc">
-                أنشئ حساب عميل مجاناً وتمتع بلوحة تحكم متكاملة لإضافة صور ومواصفات وحداتك وتعديل الأسعار ومتابعة حالة اعتمادها من الإدارة لبدء تسويقها فوراً.
+                أنشئ حسابك لإضافة تفاصيل وصور وحداتك بنفسك وتحديث الأسعار ومتابعة مراجعة العقار حتى اعتماده ونشره للجمهور.
               </p>
 
               <ul className="owner-card__features">
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>لوحة تحكم ذاتية مجانية:</strong> سجّل حسابك وتحكّم في كافة تفاصيل وحداتك وأسعارها وصورها بسهولة.</span>
+                  <span><strong>إدارة سهلة لبيانات وحداتك:</strong> سجّل حسابك وتحكّم في تفاصيل وحداتك وصورها وتحديث أسعارها بسهولة.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>اعتماد وتدقيق رسمي:</strong> تراجع الإدارة بيانات العقار قبل النشر لضمان المصداقية وبدء التسويق للمشترين فور الاعتماد.</span>
+                  <span><strong>مراجعة وتدقيق قبل النشر:</strong> يراجع فريق المنصة بيانات العقار لضمان دقة المعلومات قبل إتاحته للمشترين.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>تواصل مركزي وحفظ الخصوصية:</strong> فريق عقار كير يتولى الرد والتفاوض نيابةً عنك لحمايتك التامة من الإزعاج.</span>
+                  <span><strong>حفظ الخصوصية وتنظيم الاتصالات:</strong> يتولى فريق عقار كير استقبال الاتصالات نيابة عنك لتجنب الاتصالات العشوائية وغير الجادة.</span>
                 </li>
               </ul>
 
@@ -311,7 +311,7 @@ export default function HomePage() {
           <div className="cta-banner">
             <div className="cta-banner__glow" />
             <h2 className="cta-banner__title">مستعد تبدأ رحلتك العقارية؟</h2>
-            <p className="cta-banner__sub">نسوّق عقارك ونجلب لك المشتري الجاد بعمولة 1.5% فقط عند نجاح البيع — ابدأ اليوم بسهولة</p>
+            <p className="cta-banner__sub">نساعدك في تسويق عقارك والوصول للمشتري المناسب بعمولة 1.5% عند إتمام البيع — تواصل معنا اليوم</p>
             <div className="cta-banner__btns">
               <Link to="/properties" className="btn btn-primary">ابحث عن عقار</Link>
               <button

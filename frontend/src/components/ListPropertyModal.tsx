@@ -88,11 +88,11 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
           <div className="list-modal__title-box">
             <span className="list-modal__badge">
               <Sparkles size={13} />
-              تسويق فوري مع شركة عقار كير
+              عرض وتسويق العقار مع عقار كير
             </span>
             <h2 className="list-modal__title">اعرض عقارك معنا كمالك</h2>
             <p className="list-modal__subtitle">
-              نتولى تسويق عقارك باحترافية وجلب المشترين الجادين في المحلة الكبرى — بعمولة 1.5% فقط عند إتمام البيع بنجاح دون أي تكاليف مسبقة.
+              نساعدك في تسويق عقارك وعرضه للمهتمين بالشراء في المحلة الكبرى — بعمولة 1.5% عند إتمام البيع فقط دون أي رسوم مسبقة.
             </p>
           </div>
           <button type="button" className="list-modal__close" onClick={onClose} aria-label="إغلاق">
@@ -107,7 +107,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
             </div>
             <h3 className="list-modal__success-title">تم إرسال بيانات عقارك بنجاح!</h3>
             <p className="list-modal__success-desc">
-              تم فتح محادثة مباشرة مع فريق مبيعات وتسويق شركة <strong>عقار كير</strong> عبر واتساب. سيقوم مستشارنا العقاري بالتواصل معك لترتيب المعاينة وتدقيق البيانات.
+              تم فتح محادثة مباشرة مع فريق <strong>عقار كير</strong> عبر واتساب. سنتواصل معك لترتيب موعد المعاينة ومراجعة التفاصيل.
             </p>
 
             <div className="list-modal__success-actions">
@@ -265,8 +265,8 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
                 <span>خطة التسويق ونسبة العمولة:</span>
               </div>
               <div style={{ fontSize: '0.84rem', color: '#453523', lineHeight: '1.65' }}>
-                • <strong>تسويق كامل وجلب مشترين:</strong> نتولى تصوير وعرض عقارك وإدارة كافة المعاينات والتفاوض مع المشترين الجادين.<br />
-                • <strong>عمولة 1.5% فقط عند إتمام البيع:</strong> لا توجد أي مصاريف أو رسوم مسبقة؛ العمولة تُستحق فقط عند إتمام صفقة البيع بنجاح واستلام أموالك.
+                • <strong>تسويق وتنظيم المعاينات:</strong> نقوم بمعاينة وتصوير العقار وتنظيم مواعيد المعاينة مع الراغبين في الشراء بالتنسيق معك.<br />
+                • <strong>عمولة 1.5% عند إتمام البيع فقط:</strong> لا توجد أي مصاريف أو رسوم مسبقة؛ تُستحق العمولة عند إتمام صفقة البيع واستلام مستحقاتك.
               </div>
             </div>
 
@@ -274,7 +274,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
             <div className="list-modal__trust-box">
               <Building2 size={16} />
               <span>
-                جميع عمليات التواصل والتسويق والمعاينات تتم رسمياً وبإشراف فريق <strong>شركة عقار كير</strong> لحفظ حقوقك وخصوصيتك دون نشر رقمك الشخصي للعامة.
+                تتم مواعيد المعاينة والتواصل عبر فريق عقار كير لتنظيم الاتصالات وحفظ خصوصيتك دون نشر رقم هاتفك للعامة.
               </span>
             </div>
 
