@@ -836,20 +836,20 @@ export default function MyPropertiesPage() {
         {/* ── Notice Banner (Executive Dark Slate & Gold) ── */}
         {!showForm && (
           <div style={{
-            background: 'rgba(30,41,59,0.7)',
-            border: '1px solid rgba(201,168,76,0.3)',
+            background: 'linear-gradient(135deg, rgba(30,41,59,0.85) 0%, rgba(15,23,42,0.92) 100%)',
+            border: '1px solid rgba(201,168,76,0.35)',
             borderRadius: 'var(--radius-lg)',
-            padding: '12px 18px',
+            padding: '14px 18px',
             marginBottom: 'var(--space-lg)',
             display: 'flex',
             alignItems: 'center',
-            gap: '12px',
+            gap: '14px',
             fontSize: '0.88rem',
             color: 'var(--clr-text-muted)'
           }}>
-            <span style={{ fontSize: '1.3rem' }}>🛡️</span>
-            <div>
-              <strong style={{ color: 'var(--clr-gold)' }}>ملاحظة هامة:</strong> أي عقار جديد أو معدل يخضع لمراجعة واعتماد إدارة عقار كير قبل نشره على الموقع. تواصل المشترين يتم مركزياً عبر خدمة عملاء عقار كير الرسمية (01055937687) لضمان خصوصيتك.
+            <span style={{ fontSize: '1.5rem', flexShrink: 0 }}>🤝</span>
+            <div style={{ lineHeight: '1.65' }}>
+              <strong style={{ color: 'var(--clr-gold)' }}>تسويق عقارك وعمولة البيع (1.5%):</strong> نتولى في عقار كير تسويق عقارك باحترافية وجلب المشترين الجادين وتنسيق المعاينات. لا توجد أي مصاريف مقدمة؛ العمولة هي <span style={{ color: '#fff', fontWeight: 800 }}>1.5% فقط عند إتمام البيع بنجاح</span>. وتتم كافة اتصالات المشترين مركزياً عبر خدمة عملاء عقار كير (01055937687) لضمان خصوصيتك.
             </div>
           </div>
         )}
@@ -896,6 +896,26 @@ export default function MyPropertiesPage() {
                   className="form-close-btn"
                   onClick={() => { setShowForm(false); setEditingProperty(null); }}
                 >✕ إغلاق</button>
+              </div>
+
+              {/* Owner Commission & Marketing Info Card inside form */}
+              <div style={{
+                background: 'rgba(201,168,76,0.08)',
+                border: '1px solid rgba(201,168,76,0.3)',
+                borderRadius: 'var(--radius-md)',
+                padding: '12px 16px',
+                marginBottom: '1.25rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '12px',
+                fontSize: '0.86rem',
+                color: 'var(--clr-text)',
+                lineHeight: '1.6'
+              }}>
+                <span style={{ fontSize: '1.35rem', flexShrink: 0 }}>💼</span>
+                <div>
+                  <strong>خدمة تسويق العقار للملاك:</strong> بمجرد مراجعة واعتماد عقارك من الإدارة، نبدأ فوراً في خطة تسويقه وجلب المشترين الجادين وإدارة المعاينات. عمولتنا هي <strong>1.5% فقط عند إتمام البيع بنجاح</strong> دون أي رسوم مسبقة.
+                </div>
               </div>
 
               <form onSubmit={handleSubmit} className="property-form">

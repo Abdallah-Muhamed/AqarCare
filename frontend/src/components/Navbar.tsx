@@ -115,7 +115,7 @@ export default function Navbar() {
                 navigate('/login', { state: { from: { pathname: '/my-properties', search: '?action=add' } } })
               }
             }}
-            title="اعرض عقارك للبيع أو الإيجار بعد اعتماده من الإدارة"
+            title="اعرض عقارك كمالك — نسوّق وحدتك ونجلب لك المشتري بعمولة 1.5% فقط عند إتمام البيع"
           >
             <PlusCircle size={15} />
             <span>اعرض عقارك</span>

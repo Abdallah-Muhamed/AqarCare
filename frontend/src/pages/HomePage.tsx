@@ -216,7 +216,7 @@ export default function HomePage() {
             <span className="gold-line" style={{ margin: '0 auto 10px' }} />
             <h2 className="section-title">اعرض عقارك معنا في <span>عقار كير</span></h2>
             <p className="section-subtitle">
-              منصة متخصصة تدعم ملاك العقارات والعملاء بالمحلة الكبرى لتحقيق أسرع بيع وأفضل عائد بإشراف رسمي كامل
+              نسوّق عقارك باحترافية واسعة ونجلب لك المشتري الجاد بالمحلة الكبرى — بعمولة 1.5% فقط عند إتمام البيع بنجاح دون أي تكاليف مسبقة.
             </p>
           </div>
 
@@ -225,25 +225,25 @@ export default function HomePage() {
             <div className="owner-card">
               <div className="owner-card__badge">
                 <UserCheck size={14} />
-                <span>طلب معاينة وتقييم سريع</span>
+                <span>تسويق العقار وجلب المشترين</span>
               </div>
-              <h3 className="owner-card__title">هل تملك عقاراً وترغب في بيعه أو تأجيره؟</h3>
+              <h3 className="owner-card__title">هل تملك عقاراً وترغب في بيعه بأفضل سعر؟</h3>
               <p className="owner-card__desc">
-                تواصل مباشرة مع فريق شركة عقار كير لترتيب المعاينة والتقييم السعري. نقوم بتسويق وحدتك دون إزعاج وبحفظ كامل لخصوصيتك.
+                تواصل مباشرة مع فريق شركة عقار كير. نقوم بمعاينة عقارك وتصويره وتسويقه لآلاف المشترين الجادين مع إدارة المفاوضات دون أي إزعاج لوقتك.
               </p>
 
               <ul className="owner-card__features">
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>تسويق احترافي مجاني:</strong> تصوير عالي الدقة وإبراز مميزات عقارك على منصتنا وقنواتنا الرسمية.</span>
+                  <span><strong>تسويق واسع وجلب مشترين جادين:</strong> نصل بعقارك لآلاف المهتمين بالشراء الفعلي في المحلة والدلتا عبر منصتنا وقنواتنا الرسمية.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>تقييم سعري واقعي:</strong> نساعدك في تحديد السعر العادل بناءً على حركة السوق الفعلية بالمحلة.</span>
+                  <span><strong>عمولة 1.5% فقط عند إتمام البيع:</strong> لا تدفع أي مصاريف أو رسوم مسبقة؛ عمولتنا 1.5% فقط تُستحق عند إتمام البيع واستلام مستحقاتك.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>إشراف رسمي موثوق:</strong> جميع المعاينات والمفاوضات تتم بإشراف فريق الشركة لضمان الجدية.</span>
+                  <span><strong>إشراف رسمي ومعاينات جادة:</strong> نتولى إدارة كافة الاتصالات والتفاوض والمعاينات مع المشترين الفعليين لضمان الجدية والأمان.</span>
                 </li>
               </ul>
 
@@ -254,7 +254,7 @@ export default function HomePage() {
                   onClick={handleListProperty}
                 >
                   <PlusCircle size={17} />
-                  اعرض عقارك كمالك (إضافة وحدة)
+                  اعرض عقارك كمالك (تسويق فوري)
                 </button>
               </div>
             </div>
@@ -263,25 +263,25 @@ export default function HomePage() {
             <div className="agent-card">
               <div className="agent-card__badge" style={{ background: 'rgba(30,58,138,0.1)', color: '#1e3a8a', borderColor: 'rgba(30,58,138,0.2)' }}>
                 <Sparkles size={14} />
-                <span>لوحة عقاراتي (إدارة ذاتية)</span>
+                <span>لوحة عقاراتي (إدارة ومتابعة)</span>
               </div>
-              <h3 className="agent-card__title">أضف وتحكّم في عقاراتك بنفسك من حسابك</h3>
+              <h3 className="agent-card__title">أضف عقارك بنفسك وتابع حالة تسويقه خطوة بخطوة</h3>
               <p className="agent-card__desc">
-                أنشئ حساب عميل مجاناً وتمتع بلوحة تحكم خاصة لعرض عقاراتك وتعديل الأسعار وإرفاق الصور. تخضع جميع الوحدات لمراجعة واعتماد الإدارة قبل نشرها رسمياً.
+                أنشئ حساب عميل مجاناً وتمتع بلوحة تحكم متكاملة لإضافة صور ومواصفات وحداتك وتعديل الأسعار ومتابعة حالة اعتمادها من الإدارة لبدء تسويقها فوراً.
               </p>
 
               <ul className="owner-card__features">
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>حساب عميل مجاني:</strong> تسجيل فوري وبسيط لإدارة كافة وحداتك المعروضة في مكان واحد.</span>
+                  <span><strong>لوحة تحكم ذاتية مجانية:</strong> سجّل حسابك وتحكّم في كافة تفاصيل وحداتك وأسعارها وصورها بسهولة.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>اعتماد ومراجعة رسمية:</strong> تراجع الإدارة بيانات العقار قبل النشر لضمان المصداقية العالية.</span>
+                  <span><strong>اعتماد وتدقيق رسمي:</strong> تراجع الإدارة بيانات العقار قبل النشر لضمان المصداقية وبدء التسويق للمشترين فور الاعتماد.</span>
                 </li>
                 <li>
                   <CheckCircle size={16} />
-                  <span><strong>التواصل حصرياً عبر شركتنا:</strong> فريق عقار كير يتولى الرد والتفاوض نيابةً عنك لحمايتك التامة.</span>
+                  <span><strong>تواصل مركزي وحفظ الخصوصية:</strong> فريق عقار كير يتولى الرد والتفاوض نيابةً عنك لحمايتك التامة من الإزعاج.</span>
                 </li>
               </ul>
 
@@ -305,7 +305,7 @@ export default function HomePage() {
           <div className="cta-banner">
             <div className="cta-banner__glow" />
             <h2 className="cta-banner__title">مستعد تبدأ رحلتك العقارية؟</h2>
-            <p className="cta-banner__sub">استكشف الوحدات المتاحة على قائمتنا أو اعرض عقارك معنا اليوم</p>
+            <p className="cta-banner__sub">نسوّق عقارك ونجلب لك المشتري الجاد بعمولة 1.5% فقط عند نجاح البيع — ابدأ اليوم بسهولة</p>
             <div className="cta-banner__btns">
               <Link to="/properties" className="btn btn-primary">ابحث عن عقار</Link>
               <button

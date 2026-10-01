@@ -236,6 +236,19 @@ export default function LoginPage() {
               <p className="login-card__subtitle">أنشئ حسابك لإضافة وإدارة عقاراتك على عقار كير ومتابعة طلباتك</p>
             </div>
 
+            <div style={{
+              background: 'rgba(183,121,61,0.08)',
+              border: '1px solid rgba(183,121,61,0.25)',
+              borderRadius: '10px',
+              padding: '10px 14px',
+              fontSize: '0.84rem',
+              color: '#6c441c',
+              textAlign: 'center',
+              lineHeight: '1.5',
+            }}>
+              💼 <strong>لملاك العقارات:</strong> نسوّق عقارك ونجلب لك المشتري الجاد بعمولة 1.5% فقط عند إتمام البيع بنجاح.
+            </div>
+
             <div className="form-group">
               <label>الاسم بالكامل</label>
               <div className="input-with-icon">

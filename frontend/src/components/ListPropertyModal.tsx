@@ -60,6 +60,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
       price.trim() ? `💰 *السعر المطلوب:* ${price.trim()} جنيه` : null,
       details.trim() ? `📝 *تفاصيل ومواصفات:* ${details.trim()}` : null,
       `━━━━━━━━━━━━━━━━━━`,
+      `💼 *خطة العمل:* تسويق العقار وجلب المشترين عبر عقار كير (عمولة 1.5% في حال إتمام البيع بنجاح).`,
       `أرجو التواصل معي للتقييم والمعاينة. شكرًا لكم.`
     ].filter(Boolean).join('\n')
   }
@@ -91,7 +92,7 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
             </span>
             <h2 className="list-modal__title">اعرض عقارك معنا كمالك</h2>
             <p className="list-modal__subtitle">
-              نصل بعقارك لآلاف المشترين الجادين بالمحلة الكبرى عبر قنواتنا الرسمية المعتمدة والتواصل يتم حصرياً عبر شركتنا.
+              نتولى تسويق عقارك باحترافية وجلب المشترين الجادين في المحلة الكبرى — بعمولة 1.5% فقط عند إتمام البيع بنجاح دون أي تكاليف مسبقة.
             </p>
           </div>
           <button type="button" className="list-modal__close" onClick={onClose} aria-label="إغلاق">
@@ -246,6 +247,26 @@ export default function ListPropertyModal({ isOpen, onClose }: Props) {
                   value={details}
                   onChange={e => setDetails(e.target.value)}
                 />
+              </div>
+            </div>
+
+            {/* Marketing & 1.5% Commission Assurance Box */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(254,249,240,0.95) 0%, rgba(247,240,226,0.95) 100%)',
+              border: '1px solid rgba(200, 146, 42, 0.35)',
+              borderRadius: '12px',
+              padding: '12px 15px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '6px',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#88551f', fontWeight: 800, fontSize: '0.9rem' }}>
+                <span style={{ fontSize: '1.15rem' }}>🤝</span>
+                <span>خطة التسويق ونسبة العمولة:</span>
+              </div>
+              <div style={{ fontSize: '0.84rem', color: '#453523', lineHeight: '1.65' }}>
+                • <strong>تسويق كامل وجلب مشترين:</strong> نتولى تصوير وعرض عقارك وإدارة كافة المعاينات والتفاوض مع المشترين الجادين.<br />
+                • <strong>عمولة 1.5% فقط عند إتمام البيع:</strong> لا توجد أي مصاريف أو رسوم مسبقة؛ العمولة تُستحق فقط عند إتمام صفقة البيع بنجاح واستلام أموالك.
               </div>
             </div>
 
