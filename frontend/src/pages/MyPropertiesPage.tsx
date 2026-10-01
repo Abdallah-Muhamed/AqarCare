@@ -1325,13 +1325,10 @@ export default function MyPropertiesPage() {
                       return (
                         <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', margin: '10px 0 16px', padding: '10px 16px', background: 'rgba(45,74,62,0.06)', border: '1px solid rgba(45,74,62,0.16)', borderRadius: '10px', fontSize: '0.9rem', alignItems: 'center' }}>
                           <span style={{ color: '#182821', fontWeight: 700 }}>
-                            💵 سعر الكاش للعقار: <span style={{ color: '#047857', fontSize: '1.05rem', fontWeight: 900 }}>{minCash != null ? (minCash === maxCash ? `${minCash.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
+                            💵 سعر الكاش: <span style={{ color: '#047857', fontSize: '1.05rem', fontWeight: 900 }}>{minCash != null ? (minCash === maxCash ? `${minCash.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minCash.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
                           </span>
                           <span style={{ color: '#1e40af', fontWeight: 700 }}>
                             💳 سعر التقسيط: <span style={{ color: '#2563eb', fontSize: '1.05rem', fontWeight: 900 }}>{minInst != null ? (minInst === maxInst ? `${minInst.toLocaleString('ar-EG')} جنيه` : `يبدأ من ${minInst.toLocaleString('ar-EG')} جنيه`) : 'غير محدد'}</span>
-                          </span>
-                          <span style={{ fontSize: '0.78rem', color: '#64748b', marginRight: 'auto' }}>
-                            ℹ️ يُحسب السعر الإجمالي للعقار تلقائياً ومباشرة من أقل سعر مسجل في الأدوار بالأسفل
                           </span>
                         </div>
                       );
