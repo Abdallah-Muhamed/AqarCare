@@ -339,15 +339,17 @@ export default function PropertyDetailPage() {
                         </div>
                       </div>
                     )}
-                    <div className="detail-spec" style={{ borderColor: prop.hasBuildingLicense ? 'rgba(5,150,105,0.3)' : undefined, background: prop.hasBuildingLicense ? 'rgba(5,150,105,0.04)' : undefined }}>
-                      <span style={{ fontSize: '1.1rem' }}>📜</span>
-                      <div>
-                        <strong style={{ color: prop.hasBuildingLicense ? '#047857' : undefined }}>
-                          {prop.hasBuildingLicense ? 'يوجد رخصة بناء' : 'بدون رخصة بناء'}
-                        </strong>
-                        <small>رخصة البناء</small>
+                    {prop.hasBuildingLicense && (
+                      <div className="detail-spec" style={{ borderColor: 'rgba(5,150,105,0.3)', background: 'rgba(5,150,105,0.04)' }}>
+                        <span style={{ fontSize: '1.1rem' }}>📜</span>
+                        <div>
+                          <strong style={{ color: '#047857' }}>
+                            يوجد رخصة بناء
+                          </strong>
+                          <small>رخصة البناء</small>
+                        </div>
                       </div>
-                    </div>
+                    )}
                     {prop.streetWidth && (
                       <div className="detail-spec">
                         <span style={{ fontSize: '1.1rem' }}>🛣️</span>
