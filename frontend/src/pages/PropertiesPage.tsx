@@ -927,7 +927,7 @@ export default function PropertiesPage() {
         <div className="container props-list-banner__inner">
           <div className="props-list-banner__text">
             <strong>هل تملك عقاراً وترغب في بيعه أو تأجيره بالمحلة الكبرى؟</strong>
-            <span>اعرض عقارك كمالك — نساعدك في تسويق وحدتك والوصول للمشترين بعمولة 1.5% عند إتمام البيع فقط دون رسوم مسبقة.</span>
+            <span>اعرض عقارك معنا كمالك ليتم مراجعته واعتماده ونشره عبر منصة عقار كير.</span>
           </div>
           <div className="props-list-banner__actions">
             <button
